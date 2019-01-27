@@ -689,11 +689,19 @@ htop(){
 	docker_run_tty
 }
 htpasswd(){
-	docker run --rm -it \
-		--network none \
-		--name htpasswd \
-		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/htpasswd "$@"
+	local container_name="htpasswd"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htpasswd"
+	local network="none"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--log-driver none
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 http(){
 	docker run --rm -t \
