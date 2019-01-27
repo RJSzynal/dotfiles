@@ -703,11 +703,22 @@ htpasswd(){
 
 	docker_run_tty
 }
-http(){
-	docker run --rm -t \
+alias http=httpie
+httpie(){
+	local container_name="httpie"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie "$@"
+		--log-driver none
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 imagemin(){
 	local image=$1
