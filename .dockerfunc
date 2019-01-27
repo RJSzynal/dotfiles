@@ -610,6 +610,22 @@ gcalcli(){
 	docker_run_tty
 }
 dgcloud(){
+	local container_name="gcloud"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcloud"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.gcloud:/root/.config/gcloud"
+		-v "${HOME}/.ssh:/root/.ssh:ro"
+		-v "$(command -v docker):/usr/bin/docker"
+		-v /var/run/docker.sock:/var/run/docker.sock
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 	docker run --rm -it \
 		-v "${HOME}/.gcloud:/root/.config/gcloud" \
 		-v "${HOME}/.ssh:/root/.ssh:ro" \
