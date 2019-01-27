@@ -721,14 +721,24 @@ httpie(){
 	docker_run_tty
 }
 imagemin(){
-	local image=$1
-	local extension="${image##*.}"
-	local filename="${image%.*}"
+	local image_path=$(realpath "$1")
+	local directory=$(dirname "${image_path}")
+	local image_name=$(basename "${image_path}")
+	local extension="${image_name##*.}"
+	local filename="${image_name%.*}"
+	local container_name="imagemin"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${directory}:/root/Pictures"
+	)
+	local application_args=(
+		sh -c "imagemin /root/Pictures/${image_name} > /root/Pictures/${filename}_min.${extension}"
+	)
 
-	docker run --rm -it \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v "${HOME}/Pictures:/root/Pictures" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin sh -c "imagemin /root/Pictures/${image} > /root/Pictures/${filename}_min.${extension}"
+	docker_run_tty
 }
 irssi() {
 	del_stopped irssi
