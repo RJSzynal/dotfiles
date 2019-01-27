@@ -444,11 +444,21 @@ consul(){
 	browser-exec "http://${container_name}:8500"
 }
 dcos(){
-	docker run --rm -it \
-		-v "${HOME}/.dcos:/root/.dcos" \
-		-v "$(pwd):/root/apps" \
-		-w /root/apps \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/dcos-cli "$@"
+	local container_name="dcos"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/dcos-cli"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.dcos:/root/.dcos"
+		-v "$(pwd):/root/apps"
+		-w /root/apps
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 firefox(){
 	relies_on pulseaudio
