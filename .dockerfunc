@@ -458,47 +458,6 @@ chrome(){
 	fi
 
 	docker_run_gui
-
-	# del_stopped chrome
-
-	# SESSIONXAUTH=${XAUTHORITY:-${HOME}/.Xauthority}
-	# DOCKER_XAUTH=${SESSIONXAUTH}.docker
-	# cp --preserve=all ${SESSIONXAUTH} ${DOCKER_XAUTH}
-	# echo "ffff 0000  $(xauth nlist ${DISPLAY} | cut -d\  -f4-)" | xauth -f ${DOCKER_XAUTH} nmerge -
-
-	# xhost +"local:docker@"
-
-	# # one day remove /etc/hosts bind mount when effing
-	# # overlay support inotify, such bullshit
-	# docker run -d \
-	# 	--cpuset-cpus 0 \
-	# 	--memory 3gb \
-	# 	--shm-size=2g \
-	# 	-v "/etc/localtime:/etc/localtime:ro" \
-	# 	-v "/tmp/.X11-unix:/tmp/.X11-unix" \
-	# 	-e DISPLAY="unix${DISPLAY}" \
-	# 	-v "${DOCKER_XAUTH}:${DOCKER_XAUTH}:ro" \
-	# 	-e XAUTHORITY="${DOCKER_XAUTH}" \
-	# 	--device /dev/dri \
-	# 	--group-add video \
-	# 	--group-add audio \
-	# 	--network trusted \
-	# 	-e PULSE_SERVER="pulseaudio" \
-	# 	--device /dev/usb \
-	# 	--device /dev/bus/usb \
-	# 	-v "${HOME}/Downloads:/root/Downloads" \
-	# 	-v "${HOME}/Pictures:/root/Pictures" \
-	# 	-v "${HOME}/Torrents:/root/Torrents" \
-	# 	-v "${HOME}/.chrome:/data" \
-	# 	-v "/etc/hosts:/etc/hosts:ro" \
-	# 	--security-opt seccomp:${HOME}/seccomp/chrome.json \
-	# 	--name chrome \
-	# 	${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome \
-	# 		--user-data-dir=/data \
-	# 		--proxy-server="${proxy}" \
-	# 		--host-resolver-rules="${map}" "${args}"
-
-	# xhost -"local:docker@"
 }
 consul(){
 	local container_name="consul"
