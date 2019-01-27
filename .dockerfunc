@@ -583,27 +583,31 @@ fleetctl(){
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		--entrypoint fleetctl \
-		-v "${HOME}/.fleet://.fleet" \
+		--entrypoint fleetctl
+		-v "${HOME}/.fleet://.fleet"
 	)
 	local application_args=(
 		"$@"
 	)
 
 	docker_run_tty
-	docker run --rm -it \
-		--entrypoint fleetctl \
-		-v "${HOME}/.fleet://.fleet" \
-		r.j3ss.co/fleet "$@"
 }
 gcalcli(){
-	docker run --rm -it \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v "${HOME}/.gcalcli/home:/home/gcalcli/home" \
-		-v "${HOME}/.gcalcli/work/oauth:/home/gcalcli/.gcalcli_oauth" \
-		-v "${HOME}/.gcalcli/work/gcalclirc:/home/gcalcli/.gcalclirc" \
-		--name gcalcli \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/gcalcli "$@"
+	local container_name="gcalcli"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcalcli"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.gcalcli/home:/home/gcalcli/home"
+		-v "${HOME}/.gcalcli/work/oauth:/home/gcalcli/.gcalcli_oauth"
+		-v "${HOME}/.gcalcli/work/gcalclirc:/home/gcalcli/.gcalclirc"
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 dgcloud(){
 	docker run --rm -it \
