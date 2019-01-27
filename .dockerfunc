@@ -7,6 +7,101 @@ export MY_DOCKER_REPO_PREFIX=rjszynal
 #
 # Helper Functions
 #
+docker_args(){
+	local display_ip=
+	local audio_ip=
+	case ${network} in
+		none) ;;
+		host)
+			display_ip="127.0.0.1"
+			audio_ip="127.0.0.1"
+			;;
+		bridge)
+			if [[ "${extra_networks[@]}" != "" ]]; then
+				relies_on_networks ${extra_networks[@]};
+			fi
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			;;
+		*)
+			relies_on_networks ${network} ${extra_networks[@]}
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			;;
+	esac
+
+	common_docker_args=(
+		--network ${network}
+		-v /etc/localtime:/etc/localtime:ro
+	)
+	video_docker_args=(
+		-e DISPLAY="${display_ip}${DISPLAY}"
+		-e GDK_SCALE
+		-e GDK_DPI_SCALE
+		-e QT_DEVICE_PIXEL_RATIO
+		--group-add video
+	)
+	audio_docker_args=(
+		-e PULSE_SERVER=${audio_ip}
+		--group-add audio
+	)
+}
+docker_run_daemon(){
+	docker_args
+	del_stopped ${container_name} true
+
+	docker create \
+		${common_docker_args[@]} \
+		${extra_docker_args[@]} \
+		--name ${container_name} \
+		${image_name} \
+		${application_args[@]}
+
+	for net in "${extra_networks[@]}"; do
+		docker network connect ${net} ${container_name}
+	done
+
+	docker start ${container_name}
+
+	local format="{{.NetworkSettings.Networks.${network}.IPAddress}}"
+	container_ip=$(docker inspect --format ${format} ${container_name})
+}
+docker_run_gui(){
+	docker_args
+	del_stopped ${container_name} true
+
+	docker create --rm \
+		${common_docker_args[@]} \
+		${video_docker_args[@]} \
+		${audio_docker_args[@]} \
+		${extra_docker_args[@]} \
+		--name ${container_name} \
+		${image_name} \
+		${application_args[@]}
+
+	for net in "${extra_networks[@]}"; do
+		docker network connect ${net} ${container_name}
+	done
+
+	docker start ${container_name}
+}
+docker_run_tty(){
+	docker_args
+	del_stopped ${container_name} true
+
+	docker create --rm -it \
+		${common_docker_args[@]} \
+		${extra_docker_args[@]} \
+		--name ${container_name} \
+		${image_name} \
+		${application_args[@]}
+
+	for net in "${extra_networks[@]}"; do
+		docker network connect ${net} ${container_name}
+	done
+
+	docker start -i ${container_name}
+}
 dcleanup(){
 	local containers
 	mapfile -t containers < <(docker ps -aq 2>/dev/null)
@@ -20,11 +115,14 @@ dcleanup(){
 }
 del_stopped(){
 	local name=$1
+	local force=${2:-false}
 	local state
-	state=$(docker inspect --format "{{.State.Running}}" "$name" 2>/dev/null)
+	state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
 
-	if [[ "$state" == "false" ]]; then
-		docker rm "$name"
+	if [[ "${state}" == "false" ]]; then
+		docker rm "${name}"
+	elif [[ "${force}" == "true" ]]; then
+		docker rm -f "${name}"
 	fi
 }
 rmctr(){
@@ -36,7 +134,7 @@ relies_on(){
 		local state
 		state=$(docker inspect --format "{{.State.Running}}" "${container}" 2>/dev/null)
 
-		if [[ "$state" == "false" ]] || [[ "$state" == "" ]]; then
+		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			echo "${container} is not running, starting it for you."
 			${container}
 		fi
@@ -130,88 +228,126 @@ nginx_config(){
 #
 # Container Aliases
 #
-apt_file(){
-	docker run --rm -it \
-		--name apt-file \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/apt-file
-}
 alias apt-file="apt_file"
-audacity(){
-	del_stopped audacity
+apt_file(){
+	local container_name="apt-file"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/apt-file"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=()
+	local application_args=(
+		apt-file
+		"$@"
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--device /dev/snd \
-		--group-add audio \
-		--name audacity \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/audacity
+	docker_run_tty
+}
+audacity(){
+	local container_name="audacity"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/audacity"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=()
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_gui
 }
 aws(){
-	docker run --rm -it \
-		-v "${HOME}/.aws:/root/.aws" \
-		--log-driver none \
-		--name aws \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/awscli "$@"
+	local container_name="aws"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/awscli"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.aws:/root/.aws"
+		-e AWS_DEFAULT_REGION
+		-e AMAZON_ACCESS_KEY_ID
+		-e AMAZON_SECRET_ACCESS_KEY
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 az(){
-	docker run --rm -it \
-		-v "${HOME}/.azure:/root/.azure" \
-		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/azure-cli "$@"
+	local container_name="az"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/azure-cli"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.azure:/root/.azure"
+		--log-driver none
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 bees(){
-	docker run --rm -it \
-		-e NOTARY_TOKEN \
-		-v "${HOME}/.bees:/root/.bees" \
-		-v "${HOME}/.boto:/root/.boto" \
-		-v "${HOME}/.dev:/root/.ssh:ro" \
-		--log-driver none \
-		--name bees \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/beeswithmachineguns "$@"
+	local container_name="bees"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/beeswithmachineguns"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-e NOTARY_TOKEN
+		-v "${HOME}/.bees:/root/.bees"
+		-v "${HOME}/.boto:/root/.boto"
+		-v "${HOME}/.dev:/root/.ssh:ro"
+		--log-driver none
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
+}
+alias browser-exec=browser_exec
+browser_exec(){
+	xdg-open ${@}
 }
 cadvisor(){
-	docker run -d \
-		--restart always \
-		-v /:/rootfs:ro \
-		-v /var/run:/var/run:rw \
-		-v /sys:/sys:ro  \
-		-v /var/lib/docker/:/var/lib/docker:ro \
-		-p 1234:8080 \
-		--name cadvisor \
-		google/cadvisor
+	local container_name="cadvisor"
+	local image_name="google/cadvisor"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--restart always
+		-v /:/rootfs:ro
+		-v /var/run:/var/run:rw
+		-v /sys:/sys:ro
+		-v /var/lib/docker/:/var/lib/docker:ro
+	)
+	local application_args=(
+		"$@"
+	)
 
-	hostess add cadvisor "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' cadvisor)"
-	browser-exec "http://cadvisor:8080"
+	docker_run_daemon
+	hostess add ${container_name} ${container_ip}
+	browser-exec "http://${container_name}:8080"
 }
 cheese(){
-	del_stopped cheese
-	relies_on pulseaudio
+	local container_name="cheese"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/cheese"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/Pictures:/root/Pictures"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	SESSIONXAUTH=${XAUTHORITY:-${HOME}/.Xauthority}
-	DOCKER_XAUTH=${SESSIONXAUTH}.docker
-	cp --preserve=all ${SESSIONXAUTH} ${DOCKER_XAUTH}
-	echo "ffff 0000  $(xauth nlist ${DISPLAY} | cut -d\  -f4-)" | xauth -f ${DOCKER_XAUTH} nmerge -
-
-	xhost +"local:docker@"
-
-	docker run -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-v ${DOCKER_XAUTH}:${DOCKER_XAUTH}:ro \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--device /dev/dri \
-		-e PULSE_SERVER=pulseaudio \
-		--group-add video \
-		--group-add audio \
-		-v "${HOME}/Pictures:/root/Pictures" \
-		--name cheese \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/cheese
-
-	xhost -"local:docker@"
-
+	docker_run_gui
 }
 chrome(){
 	# add flags for proxy if passed
@@ -273,35 +409,39 @@ chrome(){
 	xhost -"local:docker@"
 }
 consul(){
-	del_stopped consul
-
+	local container_name="consul"
+	local image_name="consul"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local encrypt_key="$(docker run --rm ${image_name} keygen)"
+	local extra_docker_args=(
+		-v "${HOME}/.consul:/consul/config"
+		-v /var/run/docker.sock:/var/run/docker.sock:ro
+		-e GOMAXPROCS=2
+		--restart always
+	)
+	local application_args=(
+		agent
+		-bootstrap-expect 1
+		-encrypt "${encrypt_key}"
+		-ui
+		-server
+		-datacenter szynal
+		-bind 0.0.0.0
+		-client 0.0.0.0
+		"$@"
+	)
 	# check if we passed args and if consul is running
-	local state
-	state=$(docker inspect --format "{{.State.Running}}" consul 2>/dev/null)
-	if [[ "$state" == "true" ]] && [[ "$*" != "" ]]; then
-		docker exec -it consul consul "$@"
+	local state=$(docker inspect --format "{{.State.Running}}" ${container_name} 2>/dev/null)
+	if [[ "${state}" == "true" ]] && [[ "$*" != "" ]]; then
+		docker exec -it ${container_name} consul "$@"
 		return 0
 	fi
 
-	docker run -d \
-		--restart always \
-		-v "${HOME}/.consul:/etc/consul.d" \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		--network host \
-		-e GOMAXPROCS=2 \
-		--name consul \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/consul agent \
-		-bootstrap-expect 1 \
-		-config-dir /etc/consul.d \
-		-data-dir /data \
-		-encrypt "$(docker run --rm ${JESSFRAZ_DOCKER_REPO_PREFIX}/consul keygen)" \
-		-ui-dir /usr/src/consul \
-		-server \
-		-dc neverland \
-		-bind 0.0.0.0
-
-	hostess add consul "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' consul)"
-	browser-exec "http://consul:8500"
+	docker_run_daemon
+	hostess add ${container_name} ${container_ip}
+	browser-exec "http://${container_name}:8500"
 }
 dcos(){
 	docker run --rm -it \
@@ -322,9 +462,10 @@ firefox(){
 	local extra_docker_args=()
 	local name_suffix=
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local network="trusted"
 	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
+	local network="trusted"
+	local extra_networks=()
 	case "${run_type}" in
 		secure)
 			relies_on pia-vpn
@@ -836,23 +977,24 @@ privoxy(){
 	hostess add privoxy "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' privoxy)"
 }
 pulseaudio(){
-	del_stopped pulseaudio
-	relies_on_networks trusted untrusted
+	local container_name="pulseaudio"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio"
+	local network="trusted"
+	local extra_networks=(
+		untrusted
+	)
+	local container_ip
+	local extra_docker_args=(
+		--restart always
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker create \
-		--restart always \
-		-v /etc/localtime:/etc/localtime:ro \
-		--network trusted \
-		--device /dev/snd \
-		-p 4713:4713 \
-		--group-add audio \
-		--name pulseaudio \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio
+	docker_run_daemon
 
-	docker network connect untrusted pulseaudio
-	docker start pulseaudio
-
-	export PULSE_SERVER=$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' pulseaudio)
+	hostess add ${container_name} "$(docker inspect --format \"{{.NetworkSettings.Networks.${network}.IPAddress}}\" ${container_name})"
+	export PULSE_SERVER=${container_name}
 }
 rainbowstream(){
 	docker run --rm -it \
@@ -1188,7 +1330,6 @@ virt_viewer(){
 
 	docker run --rm -it \
 		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix  \
 		-e DISPLAY \
 		-v /run/libvirt:/var/run/libvirt \
 		-e PULSE_SERVER=pulseaudio \
@@ -1203,7 +1344,6 @@ visualstudio(){
 
 	docker run --rm -d \
 		-v /etc/localtime:/etc/localtime:ro \
-		-v /tmp/.X11-unix:/tmp/.X11-unix  \
 		-e DISPLAY \
 		--device /dev/dri \
 		--name visualstudio \
@@ -1307,7 +1447,7 @@ yubico_piv_tool(){
 }
 alias yubico-piv-tool="yubico_piv_tool"
 
-# Robert's extras
+## Robert's extras
 chrome-secure(){
 	del_stopped chrome-secure
 	del_stopped chrome-vpn
@@ -1358,7 +1498,7 @@ chrome-secure(){
 	docker rm -fv chrome-vpn
 }
 chromium(){
-	relies_on pulseaudio
+	# relies_on pulseaudio
 	local run_type=
 	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
 		run_type="$1"
@@ -1372,8 +1512,10 @@ chromium(){
 	local extra_docker_args=()
 	local name_suffix=
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local network="trusted"
 	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+	local audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+	local network="trusted"
+	local extra_networks=()
 
 	case "${run_type}" in
 		secure)
@@ -1381,6 +1523,7 @@ chromium(){
 			name_suffix="-secure"
 			network="container:pia-vpn"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 
 			extra_docker_args+=(
 				--tmpfs "/home/chromium/.cache"
@@ -1396,7 +1539,8 @@ chromium(){
 			relies_on torproxy
 			name_suffix="-tor"
 			network="untrusted"
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
 			extra_docker_args+=(
 				--tmpfs "/home/chromium/.cache"
@@ -1442,7 +1586,7 @@ chromium(){
 		-e GDK_SCALE \
 		-e GDK_DPI_SCALE \
 		--device /dev/dri \
-		-e PULSE_SERVER="pulseaudio" \
+		-e PULSE_SERVER="${audio_ip}" \
 		-v "${HOME}/Downloads:/home/chromium/Downloads" \
 		--security-opt seccomp:${HOME}/seccomp/chrome.json \
 		${extra_docker_args[@]} \
@@ -1451,6 +1595,22 @@ chromium(){
 			-new-instance \
 			--user-data-dir=/home/chromium/.config \
 			${extra_chromium_args[@]}
+}
+hostess(){
+	local container_name="hostess"
+	local image_name="ondrejmo/hostess"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v /etc/hosts:/tmp/hosts:rw
+		-e HOSTESS_PATH=/tmp/hosts
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 keepass2(){
 	del_stopped keepass2
@@ -1471,9 +1631,10 @@ keepass2(){
 		${MY_DOCKER_REPO_PREFIX}/keepass2
 }
 pia-vpn(){
-	local network="untrusted"
 	local region
 	local name_prefix=
+	local network="untrusted"
+	local extra_networks=()
 
 	case "${1}" in
 		host)
@@ -1512,9 +1673,10 @@ vivaldi(){
 	local extra_docker_args=()
 	local name_suffix=
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local network="trusted"
 	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
+	local network="trusted"
+	local extra_networks=()
 	case "${run_type}" in
 		secure)
 			relies_on pia-vpn
