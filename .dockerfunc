@@ -23,6 +23,12 @@ docker_args(){
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			;;
+		secure)
+			relies_on pia-vpn
+			network="container:pia-vpn"
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			;;
 		*)
 			relies_on_networks ${network} ${extra_networks[@]}
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
@@ -70,7 +76,7 @@ docker_run_gui(){
 	docker_args
 	del_stopped ${container_name} true
 
-	docker create --rm \
+	docker create -it \
 		${common_docker_args[@]} \
 		${video_docker_args[@]} \
 		${audio_docker_args[@]} \
@@ -83,7 +89,7 @@ docker_run_gui(){
 		docker network connect ${net} ${container_name}
 	done
 
-	docker start ${container_name}
+	docker start -i ${container_name}
 }
 docker_run_tty(){
 	docker_args
@@ -350,63 +356,149 @@ cheese(){
 	docker_run_gui
 }
 chrome(){
-	# add flags for proxy if passed
-	local proxy=
-	local map
-	local args=$*
-	if [[ "$1" == "tor" ]]; then
-		relies_on torproxy
-
-		map="MAP * ~NOTFOUND , EXCLUDE torproxy"
-		proxy="socks5://torproxy:9050"
-		args="https://check.torproject.org/api/ip ${*:2}"
+	local run_type=
+	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
+		run_type="$1"
+		shift
 	fi
+	local container_name="chrome"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--cpuset-cpus 0
+		--memory 3gb
+		--shm-size=2g
+		--device /dev/dri
+		--device /dev/usb
+		--device /dev/bus/usb
+		-e HOME=/home/chrome
+		-v "/etc/hosts:/etc/hosts:ro"
+		--security-opt seccomp:${HOME}/seccomp/chrome.json
+	)
+	local application_args=(
+		--user-data-dir="/home/chrome/.config/google-chrome"
+	)
 
-	del_stopped chrome
+	case "${run_type}" in
+		secure)
+			container_name="${container_name}-secure"
+			network="secure"
+
+			extra_docker_args+=(
+				--tmpfs "/home/chrome/.cache"
+				--tmpfs "/home/chrome/.config"
+				--tmpfs "/home/chrome/.pki"
+				--tmpfs "/home/chrome/.local"
+				--tmpfs "/home/chrome/.gnome"
+			)
+			application_args+=(
+				--incognito
+				--no-first-run
+				--no-default-browser-check
+			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://www.privateinternetaccess.com/
+				)
+			fi
+			;;
+		tor)
+			relies_on torproxy
+			container_name="${container_name}-tor"
+			network="untrusted"
+
+			extra_docker_args+=(
+				--tmpfs "/home/chrome/.cache"
+				--tmpfs "/home/chrome/.config"
+				--tmpfs "/home/chrome/.pki"
+				--tmpfs "/home/chrome/.local"
+				--tmpfs "/home/chrome/.gnome"
+			)
+			application_args+=(
+				--incognito
+				--no-first-run
+				--no-default-browser-check
+				--proxy-server="socks5://torproxy:9050"
+				--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE torproxy"
+			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://check.torproject.org/api/ip
+				)
+			fi
+			;;
+		*)
+			extra_docker_args+=(
+				-u $(id -u):$(id -g) \
+				-v ${HOME}/.chrome/cache:/home/chrome/.cache
+				-v ${HOME}/.chrome/config:/home/chrome/.config
+				-v ${HOME}/.chrome/pki:/home/chrome/.pki
+				-v ${HOME}/.chrome/local:/home/chrome/.local
+				-v ${HOME}/.chrome/gnome:/home/chrome/.gnome
+				-v ${HOME}/Downloads:/home/chrome/Downloads
+				-v ${HOME}/Pictures:/home/chrome/Pictures
+				-v ${HOME}/Torrents:/home/chrome/Torrents
+			)
+			;;
+	esac
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	container_name="${container_name}-${args_hash}"
+	unset args
+	application_args+=(
+		"$@"
+	)
 
 	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
 		mkdir -p ${HOME}/seccomp
 		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
 	fi
 
-	SESSIONXAUTH=${XAUTHORITY:-${HOME}/.Xauthority}
-	DOCKER_XAUTH=${SESSIONXAUTH}.docker
-	cp --preserve=all ${SESSIONXAUTH} ${DOCKER_XAUTH}
-	echo "ffff 0000  $(xauth nlist ${DISPLAY} | cut -d\  -f4-)" | xauth -f ${DOCKER_XAUTH} nmerge -
+	docker_run_gui
 
-	xhost +"local:docker@"
+	# del_stopped chrome
 
-	# one day remove /etc/hosts bind mount when effing
-	# overlay support inotify, such bullshit
-	docker run -d \
-		--cpuset-cpus 0 \
-		--memory 3gb \
-		--shm-size=2g \
-		-v "/etc/localtime:/etc/localtime:ro" \
-		-v "/tmp/.X11-unix:/tmp/.X11-unix" \
-		-e DISPLAY="unix${DISPLAY}" \
-		-v "${DOCKER_XAUTH}:${DOCKER_XAUTH}:ro" \
-		-e XAUTHORITY="${DOCKER_XAUTH}" \
-		--device /dev/dri \
-		--group-add video \
-		--group-add audio \
-		--network trusted \
-		-e PULSE_SERVER="pulseaudio" \
-		--device /dev/usb \
-		--device /dev/bus/usb \
-		-v "${HOME}/Downloads:/root/Downloads" \
-		-v "${HOME}/Pictures:/root/Pictures" \
-		-v "${HOME}/Torrents:/root/Torrents" \
-		-v "${HOME}/.chrome:/data" \
-		-v "/etc/hosts:/etc/hosts:ro" \
-		--security-opt seccomp:${HOME}/seccomp/chrome.json \
-		--name chrome \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome \
-			--user-data-dir=/data \
-			--proxy-server="${proxy}" \
-			--host-resolver-rules="${map}" "${args}"
+	# SESSIONXAUTH=${XAUTHORITY:-${HOME}/.Xauthority}
+	# DOCKER_XAUTH=${SESSIONXAUTH}.docker
+	# cp --preserve=all ${SESSIONXAUTH} ${DOCKER_XAUTH}
+	# echo "ffff 0000  $(xauth nlist ${DISPLAY} | cut -d\  -f4-)" | xauth -f ${DOCKER_XAUTH} nmerge -
 
-	xhost -"local:docker@"
+	# xhost +"local:docker@"
+
+	# # one day remove /etc/hosts bind mount when effing
+	# # overlay support inotify, such bullshit
+	# docker run -d \
+	# 	--cpuset-cpus 0 \
+	# 	--memory 3gb \
+	# 	--shm-size=2g \
+	# 	-v "/etc/localtime:/etc/localtime:ro" \
+	# 	-v "/tmp/.X11-unix:/tmp/.X11-unix" \
+	# 	-e DISPLAY="unix${DISPLAY}" \
+	# 	-v "${DOCKER_XAUTH}:${DOCKER_XAUTH}:ro" \
+	# 	-e XAUTHORITY="${DOCKER_XAUTH}" \
+	# 	--device /dev/dri \
+	# 	--group-add video \
+	# 	--group-add audio \
+	# 	--network trusted \
+	# 	-e PULSE_SERVER="pulseaudio" \
+	# 	--device /dev/usb \
+	# 	--device /dev/bus/usb \
+	# 	-v "${HOME}/Downloads:/root/Downloads" \
+	# 	-v "${HOME}/Pictures:/root/Pictures" \
+	# 	-v "${HOME}/Torrents:/root/Torrents" \
+	# 	-v "${HOME}/.chrome:/data" \
+	# 	-v "/etc/hosts:/etc/hosts:ro" \
+	# 	--security-opt seccomp:${HOME}/seccomp/chrome.json \
+	# 	--name chrome \
+	# 	${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome \
+	# 		--user-data-dir=/data \
+	# 		--proxy-server="${proxy}" \
+	# 		--host-resolver-rules="${map}" "${args}"
+
+	# xhost -"local:docker@"
 }
 consul(){
 	local container_name="consul"
