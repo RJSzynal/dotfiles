@@ -651,8 +651,8 @@ gitsome(){
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.gitsomeconfig:/home/anon/.gitsomeconfig" \
-		-v "${HOME}/.gitsomeconfigurl:/home/anon/.gitsomeconfigurl" \
+		-v "${HOME}/.gitsomeconfig:/home/anon/.gitsomeconfig"
+		-v "${HOME}/.gitsomeconfigurl:/home/anon/.gitsomeconfigurl"
 	)
 	local application_args=(
 		"$@"
@@ -661,9 +661,17 @@ gitsome(){
 	docker_run_tty
 }
 hollywood(){
-	docker run --rm -it \
-		--name hollywood \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/hollywood
+	local container_name="hollywood"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/hollywood"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=()
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 htop(){
 	docker run --rm -it \
