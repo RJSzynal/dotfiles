@@ -711,7 +711,7 @@ httpie(){
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /var/run/docker.sock:/var/run/docker.sock
 		--log-driver none
 	)
 	local application_args=(
