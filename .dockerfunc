@@ -76,7 +76,7 @@ docker_run_gui(){
 	docker_args
 	del_stopped ${container_name} true
 
-	docker create -it \
+	docker create --rm \
 		${common_docker_args[@]} \
 		${video_docker_args[@]} \
 		${audio_docker_args[@]} \
@@ -89,7 +89,7 @@ docker_run_gui(){
 		docker network connect ${net} ${container_name}
 	done
 
-	docker start -i ${container_name}
+	docker start ${container_name}
 }
 docker_run_tty(){
 	docker_args
