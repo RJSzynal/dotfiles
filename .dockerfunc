@@ -577,6 +577,20 @@ firefox(){
 			${extra_firefox_args[@]}
 }
 fleetctl(){
+	local container_name="fleet"
+	local image_name="r.j3ss.co/fleet"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--entrypoint fleetctl \
+		-v "${HOME}/.fleet://.fleet" \
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 	docker run --rm -it \
 		--entrypoint fleetctl \
 		-v "${HOME}/.fleet://.fleet" \
