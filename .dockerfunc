@@ -674,11 +674,19 @@ hollywood(){
 	docker_run_tty
 }
 htop(){
-	docker run --rm -it \
-		--pid host \
-		--network none \
-		--name htop \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/htop
+	local container_name="htop"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htop"
+	local network="none"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--pid host
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 htpasswd(){
 	docker run --rm -it \
