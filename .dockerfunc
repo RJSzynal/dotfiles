@@ -39,6 +39,7 @@ docker_args(){
 	common_docker_args=(
 		--network ${network}
 		-v /etc/localtime:/etc/localtime:ro
+		--hostname ${container_name} \
 	)
 	video_docker_args=(
 		-e DISPLAY="${display_ip}${DISPLAY}"
@@ -644,13 +645,20 @@ gimp(){
 	docker_run_gui
 }
 gitsome(){
-	docker run --rm -it \
-		-v /etc/localtime:/etc/localtime:ro \
-		--name gitsome \
-		--hostname gitsome \
+	local container_name="gitsome"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gitsome"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
 		-v "${HOME}/.gitsomeconfig:/home/anon/.gitsomeconfig" \
 		-v "${HOME}/.gitsomeconfigurl:/home/anon/.gitsomeconfigurl" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/gitsome
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 hollywood(){
 	docker run --rm -it \
