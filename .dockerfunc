@@ -45,6 +45,7 @@ docker_args(){
 		-e GDK_SCALE
 		-e GDK_DPI_SCALE
 		-e QT_DEVICE_PIXEL_RATIO
+		-v "${HOME}/.gtkrc:/root/.gtkrc:ro"
 		--group-add video
 	)
 	audio_docker_args=(
@@ -626,26 +627,21 @@ dgcloud(){
 	)
 
 	docker_run_tty
-	docker run --rm -it \
-		-v "${HOME}/.gcloud:/root/.config/gcloud" \
-		-v "${HOME}/.ssh:/root/.ssh:ro" \
-		-v "$(command -v docker):/usr/bin/docker" \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		--name gcloud \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/gcloud "$@"
 }
 gimp(){
-	del_stopped gimp
+	local container_name="gimp"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gimp"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/Pictures:/root/Pictures"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-v "${HOME}/Pictures:/root/Pictures" \
-		-v "${HOME}/.gtkrc:/root/.gtkrc" \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--name gimp \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/gimp
+	docker_run_gui
 }
 gitsome(){
 	docker run --rm -it \
