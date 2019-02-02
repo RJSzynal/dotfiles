@@ -792,27 +792,25 @@ kernel_builder(){
 	docker_run_tty
 }
 keepassxc(){
-	del_stopped keepassxc
-	relies_on_networks trusted
+	local container_name="keepassxc"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v '/usr/share/X11/xkb:/usr/share/X11/xkb:ro'
+		-v '/etc/machine-id:/etc/machine-id:ro'
+		-v "${HOME}/.keepassxc/config:/home/keepassxc/.config"
+		-v "${HOME}/.keepassxc/cache:/home/keepassxc/.cache"
+		-v "${HOME}/.keepassxc/fontconfig:/home/keepassxc/.fontconfig"
+		-v "${HOME}/googledrive-home/backup/keepass:/home/keepassxc/databases"
+		-v "${HOME}/.ssh:/home/keepassxc/.ssh:ro"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' trusted)
-
-	docker run --rm -d \
-		--network trusted \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /usr/share/X11/xkb:/usr/share/X11/xkb:ro \
-		-v /etc/machine-id:/etc/machine-id:ro \
-		-e DISPLAY="${display_ip}${DISPLAY}" \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-e QT_DEVICE_PIXEL_RATIO \
-		-v ${HOME}/.keepassxc/config:/home/keepassxc/.config \
-		-v ${HOME}/.keepassxc/cache:/home/keepassxc/.cache \
-		-v ${HOME}/.keepassxc/fontconfig:/home/keepassxc/.fontconfig \
-		-v ${HOME}/googledrive-home/backup/keepass:/home/keepassxc/databases \
-		-v ${HOME}/.ssh:/home/keepassxc/.ssh:ro \
-		--name keepassxc \
-		${MY_DOCKER_REPO_PREFIX}/keepassxc
+	docker_run_gui
 }
 kvm(){
 	del_stopped kvm
