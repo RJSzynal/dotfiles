@@ -813,22 +813,23 @@ keepassxc(){
 	docker_run_gui
 }
 kvm(){
-	del_stopped kvm
-	relies_on pulseaudio
+	local container_name="kvm"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v '/run/libvirt:/var/run/libvirt'
+		--privileged
+	)
+	local application_args=(
+		"$@"
+	)
 
 	# modprobe the module
 	modprobe kvm
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v /run/libvirt:/var/run/libvirt \
-		-e DISPLAY \
-		--network trusted \
-		-e PULSE_SERVER=pulseaudio \
-		--group-add audio \
-		--name kvm \
-		--privileged \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm
+	docker_run_gui
 }
 libreoffice(){
 	del_stopped libreoffice
