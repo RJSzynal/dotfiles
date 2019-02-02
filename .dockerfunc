@@ -772,13 +772,24 @@ john(){
 
 	docker_run_tty
 }
+alias build_kernel=kernel_builder
 kernel_builder(){
-	docker run --rm -it \
-		-v /usr/src:/usr/src \
-		-v /lib/modules:/lib/modules \
-		-v /boot:/boot \
-		--name kernel-builder \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder
+	local container_name="kernel-builder"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v '/usr/src:/usr/src'
+		-v '/lib/modules:/lib/modules'
+		-v '/boot:/boot'
+		--entrypoint 'build_kernel'
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 keepassxc(){
 	del_stopped keepassxc
