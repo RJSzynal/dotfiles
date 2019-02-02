@@ -757,12 +757,20 @@ irssi() {
 	docker_run_tty
 }
 john(){
-	local file
-	file=$(realpath "$1")
+	local file=$(realpath "$1")
+	local container_name="john"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${file}:/root/$(basename "${file}")"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -it \
-		-v "${file}:/root/$(basename "${file}")" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/john "$@"
+	docker_run_tty
 }
 kernel_builder(){
 	docker run --rm -it \
