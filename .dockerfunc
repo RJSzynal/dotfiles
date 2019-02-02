@@ -741,21 +741,20 @@ imagemin(){
 	docker_run_tty
 }
 irssi() {
-	del_stopped irssi
-	# relies_on notify_osd
+	local container_name="irssi"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.irssi:/home/user/.irssi"
+		--read-only
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -it \
-		--user root \
-		-v "${HOME}/.irssi:/home/user/.irssi" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi \
-		chown -R user /home/user/.irssi
-
-	docker run --rm -it \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v "${HOME}/.irssi:/home/user/.irssi" \
-		--read-only \
-		--name irssi \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi
+	docker_run_tty
 }
 john(){
 	local file
