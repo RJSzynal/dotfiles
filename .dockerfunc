@@ -1757,6 +1757,21 @@ chromium(){
 			--user-data-dir=/home/chromium/.config \
 			${extra_chromium_args[@]}
 }
+dive(){
+	local container_name="dive"
+	local image_name="wagoodman/dive"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v /var/run/docker.sock:/var/run/docker.sock
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
+}
 hostess(){
 	local container_name="hostess"
 	local image_name="ondrejmo/hostess"
@@ -1821,6 +1836,40 @@ pia-vpn(){
 		-e PASSWORD="$(tail -n 1 ${HOME}/pia/login)" \
 		--name ${name_prefix}pia-vpn \
 		colinhebert/pia-openvpn
+}
+alias signal=signal-messenger
+signal-messenger(){
+	local container_name="signal-messenger"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v ${HOME}/.signal/config:/home/signal/.config
+		-v ${HOME}/.signal/cache:/home/signal/.cache
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_gui
+}
+alias signal-beta=signal-messenger-beta
+signal-messenger-beta(){
+	local container_name="signal-messenger-beta"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v ${HOME}/.signal/config:/home/signal/.config
+		-v ${HOME}/.signal/cache:/home/signal/.cache
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_gui
 }
 vivaldi(){
 	relies_on pulseaudio
