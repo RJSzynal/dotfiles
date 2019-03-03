@@ -864,9 +864,18 @@ lastpass(){
 	docker_run_tty
 }
 lynx(){
-	docker run --rm -it \
-		--name lynx \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx "$@"
+	local container_name="lynx"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 masscan(){
 	docker run --rm -it \
