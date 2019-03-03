@@ -930,34 +930,45 @@ mpd(){
 	docker_run_daemon
 }
 mutt(){
-	# subshell so we dont overwrite variables
-	(
-	local account=$1
-	export IMAP_SERVER
-	export SMTP_SERVER
-
-	if [[ "$account" == "riseup" ]]; then
-		export GMAIL=$MAIL_RISEUP
-		export GMAIL_NAME=$MAIL_RISEUP_NAME
-		export GMAIL_PASS=$MAIL_RISEUP_PASS
-		export GMAIL_FROM=$MAIL_RISEUP_FROM
-		IMAP_SERVER=mail.riseup.net
-		SMTP_SERVER=$IMAP_SERVER
-	fi
-
-	docker run --rm -it \
-		-e GMAIL \
-		-e GMAIL_NAME \
-		-e GMAIL_PASS \
-		-e GMAIL_FROM \
-		-e GPG_ID \
-		-e IMAP_SERVER \
-		-e SMTP_SERVER \
-		-v "${HOME}/.gnupg:/home/user/.gnupg:ro" \
-		-v /etc/localtime:/etc/localtime:ro \
-		--name "mutt-${account}" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt
+	local container_name="mutt"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=()
+	case "${1}" in
+		riseup)
+			container_name="mutt-${1}"
+			extra_docker_args+=(
+				-e GMAIL=${MAIL_RISEUP}
+				-e GMAIL_NAME=${MAIL_RISEUP_NAME}
+				-e GMAIL_PASS=${MAIL_RISEUP_PASS}
+				-e GMAIL_FROM=${MAIL_RISEUP_FROM}
+				-e GPG_ID
+				-e IMAP_SERVER=mail.riseup.net
+				-e SMTP_SERVER=mail.riseup.net
+				-v "${HOME}/.gnupg:/home/user/.gnupg:ro"
+			)
+			shift
+			;;
+		*)
+			extra_docker_args+=(
+				-e GMAIL
+				-e GMAIL_NAME
+				-e GMAIL_PASS
+				-e GMAIL_FROM
+				-e GPG_ID
+				-e IMAP_SERVER
+				-e SMTP_SERVER
+				-v "${HOME}/.gnupg:/home/user/.gnupg:ro"
+			)
+			;;
+	esac
+	local application_args=(
+		"$@"
 	)
+
+	docker_run_tty
 }
 ncmpc(){
 	del_stopped ncmpc
