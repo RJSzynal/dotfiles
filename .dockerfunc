@@ -971,13 +971,21 @@ mutt(){
 	docker_run_tty
 }
 ncmpc(){
-	del_stopped ncmpc
-
-	docker run --rm -it \
+	relies_on mpd
+	local container_name="ncmpc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
 		-v "${HOME}/.mpd/socket:/var/run/mpd/socket" \
 		-e MPD_HOST=/var/run/mpd/socket \
-		--name ncmpc \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc "$@"
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 neoman(){
 	del_stopped neoman
