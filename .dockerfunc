@@ -1004,21 +1004,20 @@ neoman(){
 	docker_run_gui
 }
 nes(){
-	del_stopped nes
 	local game=$1
+	shift
+	local container_name="nes"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nes"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+		"/games/${game}.rom" "$@"
+	)
 
-	docker run --rm -d \
-		-e DISPLAY \
-		-v ${DOCKER_XAUTH}:${DOCKER_XAUTH}:ro \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--device /dev/dri \
-		--device /dev/snd \
-		-e PULSE_SERVER=pulseaudio \
-		--group-add video \
-		--group-add audio \
-		--name nes \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/nes "/games/${game}.rom"
+	docker_run_gui
 }
 netcat(){
 	docker run --rm -it \
