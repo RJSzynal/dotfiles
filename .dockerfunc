@@ -978,8 +978,8 @@ ncmpc(){
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.mpd/socket:/var/run/mpd/socket" \
-		-e MPD_HOST=/var/run/mpd/socket \
+		-v "${HOME}/.mpd/socket:/var/run/mpd/socket"
+		-e MPD_HOST=/var/run/mpd/socket
 	)
 	local application_args=(
 		"$@"
@@ -988,15 +988,20 @@ ncmpc(){
 	docker_run_tty
 }
 neoman(){
-	del_stopped neoman
+	local container_name="neoman"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--device /dev/bus/usb
+		--device /dev/usb
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		--device /dev/bus/usb \
-		--device /dev/usb \
-		--name neoman \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman
+	docker_run_gui
 }
 nes(){
 	del_stopped nes
