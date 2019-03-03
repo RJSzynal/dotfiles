@@ -891,15 +891,22 @@ masscan(){
 
 	docker_run_tty
 }
-mc(){
-	cwd="$(pwd)"
-	name="$(basename "$cwd")"
+alias mc=midnight_commander
+midnight_commander(){
+	local container_name="mc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${PWD}:${PWD}"
+		--workdir "${PWD}"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -it \
-		--log-driver none \
-		-v "${cwd}:/home/mc/${name}" \
-		--workdir "/home/mc/${name}" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/mc "$@"
+	docker_run_tty
 }
 mpd(){
 	del_stopped mpd
