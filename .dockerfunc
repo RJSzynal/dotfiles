@@ -1019,23 +1019,36 @@ nes(){
 
 	docker_run_gui
 }
+alias nc=netcat
 netcat(){
-	docker run --rm -it \
-		--network host \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat "$@"
+	local container_name="netcat"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat"
+	local network="host"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 nginx(){
-	del_stopped nginx
+	local container_name="nginx-${1}"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.nginx:/etc/nginx:ro"
+		-v "${2}:/usr/share/nginx/html:ro"
+	)
+	local application_args=(
+	)
 
-	docker run -d \
-		--restart always \
-		-v "${HOME}/.nginx:/etc/nginx" \
-		--network host \
-		--name nginx \
-		nginx
-
-	# add domain to hosts & open nginx
-	sudo hostess add robert 127.0.0.1
+	docker_run_daemon
+	hostess add ${1} ${container_ip}
 }
 nmap(){
 	docker run --rm -it \
