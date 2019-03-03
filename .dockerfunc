@@ -847,11 +847,21 @@ libreoffice(){
 
 	docker_run_gui
 }
-lpass(){
-	docker run --rm -it \
-		-v "${HOME}/.lpass:/root/.lpass" \
-		--name lpass \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass "$@"
+alias lpass=lastpass
+lastpass(){
+	local container_name="lpass"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.lpass:/root/.lpass"
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 lynx(){
 	docker run --rm -it \
