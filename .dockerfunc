@@ -1084,12 +1084,22 @@ notify_send(){
 	docker exec -i notify_osd notify-send "$1" "${args}"
 }
 now(){
-	docker run --rm -it \
-		-v "${HOME}/.now:/root/.now" \
-		-v "$(pwd):/usr/src/repo:ro" \
-		--workdir /usr/src/repo \
-		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/now "$@"
+	local container_name="now"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.now:/root/.now"
+		-v "${PWD}:/usr/src/repo:ro"
+		--workdir /usr/src/repo
+		--log-driver none
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 opensnitch(){
 	del_stopped opensnitchd
