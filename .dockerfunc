@@ -1184,14 +1184,24 @@ pandoc(){
 	local lfile
 	lfile=$(readlink -m "$(pwd)/${file}")
 	local rfile
-	rfile=$(readlink -m "/$(basename "$file")")
+	rfile=$(readlink -m "/$(basename "${file}")")
 	local args=${*:1:${#@}-1}
 
-	docker run --rm \
-		-v "${lfile}:${rfile}" \
-		-v /tmp:/tmp \
-		--name pandoc \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc "${args}" "${rfile}"
+	local container_name="pandoc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${lfile}:${rfile}"
+		--tmpfs /tmp
+	)
+	local application_args=(
+		"${args}"
+		"${rfile}"
+	)
+
+	docker_run_tty
 }
 pivman(){
 	del_stopped pivman
