@@ -1065,17 +1065,17 @@ nmap(){
 	docker_run_tty
 }
 notify_osd(){
-	del_stopped notify_osd
+	local container_name="notify_osd"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+	)
 
-	docker run --rm -d \
-		--network none \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-v /etc \
-		-v /home/user/.dbus \
-		-v /home/user/.cache/dconf \
-		--name notify_osd \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd
+	docker_run_daemon
 }
 alias notify-send=notify_send
 notify_send(){
