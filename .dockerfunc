@@ -10,6 +10,9 @@ export MY_DOCKER_REPO_PREFIX=rjszynal
 docker_args(){
 	local display_ip=
 	local audio_ip=
+	common_docker_args=(
+		-v /etc/localtime:/etc/localtime:ro
+	)
 	case ${network} in
 		none) ;;
 		host)
@@ -22,6 +25,9 @@ docker_args(){
 			fi
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			common_docker_args+=(
+				--hostname ${container_name}
+			)
 			;;
 		secure)
 			relies_on pia-vpn
@@ -29,17 +35,24 @@ docker_args(){
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			;;
+		torproxy)
+			relies_on torproxy
+			network="container:torproxy"
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			;;
 		*)
 			relies_on_networks ${network} ${extra_networks[@]}
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			common_docker_args+=(
+				--hostname ${container_name}
+			)
 			;;
 	esac
 
-	common_docker_args=(
+	common_docker_args+=(
 		--network ${network}
-		-v /etc/localtime:/etc/localtime:ro
-		--hostname ${container_name} \
 	)
 	video_docker_args=(
 		-e DISPLAY="${display_ip}${DISPLAY}"
@@ -1239,13 +1252,18 @@ pms(){
 	docker_run_tty
 }
 pond(){
-	del_stopped pond
-	relies_on torproxy
+	local container_name="pond"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond"
+	local network="torproxy"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -it \
-		--network container:torproxy \
-		--name pond \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/pond
+	docker_run_tty
 }
 privoxy(){
 	del_stopped privoxy
