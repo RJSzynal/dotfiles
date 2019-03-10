@@ -69,14 +69,14 @@ docker_args(){
 }
 docker_run_daemon(){
 	docker_args
-	del_stopped ${container_name} true
+	del_stopped ${container_name}
 
 	docker create \
 		${common_docker_args[@]} \
 		${extra_docker_args[@]} \
 		--name ${container_name} \
 		${image_name} \
-		${application_args[@]}
+		${application_args[@]} 2>/dev/null
 
 	for net in "${extra_networks[@]}"; do
 		docker network connect ${net} ${container_name}
@@ -85,7 +85,7 @@ docker_run_daemon(){
 	docker start ${container_name}
 
 	local format="{{.NetworkSettings.Networks.${network}.IPAddress}}"
-	container_ip=$(docker inspect --format ${format} ${container_name})
+	container_ip=$(docker inspect --format ${format} ${container_name} 2>/dev/null)
 }
 docker_run_gui(){
 	docker_args
@@ -98,7 +98,7 @@ docker_run_gui(){
 		${extra_docker_args[@]} \
 		--name ${container_name} \
 		${image_name} \
-		${application_args[@]}
+		${application_args[@]} 2>/dev/null
 
 	for net in "${extra_networks[@]}"; do
 		docker network connect ${net} ${container_name}
@@ -115,7 +115,7 @@ docker_run_tty(){
 		${extra_docker_args[@]} \
 		--name ${container_name} \
 		${image_name} \
-		${application_args[@]}
+		${application_args[@]} 2>/dev/null
 
 	for net in "${extra_networks[@]}"; do
 		docker network connect ${net} ${container_name}
@@ -141,9 +141,9 @@ del_stopped(){
 	state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
 
 	if [[ "${state}" == "false" ]]; then
-		docker rm "${name}"
+		docker rm "${name}" 2>/dev/null
 	elif [[ "${force}" == "true" ]]; then
-		docker rm -f "${name}"
+		docker rm -f "${name}" 2>/dev/null
 	fi
 }
 rmctr(){
@@ -352,7 +352,9 @@ cadvisor(){
 	)
 
 	docker_run_daemon
-	hostess add ${container_name} ${container_ip}
+	if [[ "${container_ip}" != "<no value>" ]]; then
+		hostess add ${container_name} ${container_ip}
+	fi
 	browser-exec "http://${container_name}:8080"
 }
 cheese(){
@@ -506,7 +508,9 @@ consul(){
 	fi
 
 	docker_run_daemon
-	hostess add ${container_name} ${container_ip}
+	if [[ "${container_ip}" != "<no value>" ]]; then
+		hostess add ${container_name} ${container_ip}
+	fi
 	browser-exec "http://${container_name}:8500"
 }
 dcos(){
@@ -1061,7 +1065,9 @@ nginx(){
 	)
 
 	docker_run_daemon
-	hostess add ${1} ${container_ip}
+	if [[ "${container_ip}" != "<no value>" ]]; then
+		hostess add ${1} ${container_ip}
+	fi
 }
 nmap(){
 	local container_name="nmap"
@@ -1266,18 +1272,23 @@ pond(){
 	docker_run_tty
 }
 privoxy(){
-	del_stopped privoxy
 	relies_on torproxy
+	local container_name="privoxy"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy"
+	local network="untrusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run -d \
-		--restart always \
-		--link torproxy:torproxy \
-		-v /etc/localtime:/etc/localtime:ro \
-		-p 8118:8118 \
-		--name privoxy \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy
+	docker_run_daemon
 
-	hostess add privoxy "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' privoxy)"
+	if [[ "${container_ip}" != "<no value>" ]]; then
+		hostess add ${container_name} ${container_ip}
+	fi
 }
 pulseaudio(){
 	local container_name="pulseaudio"
@@ -1296,7 +1307,9 @@ pulseaudio(){
 
 	docker_run_daemon
 
-	hostess add ${container_name} "$(docker inspect --format \"{{.NetworkSettings.Networks.${network}.IPAddress}}\" ${container_name})"
+	if [[ "${container_ip}" != "<no value>" ]]; then
+		hostess add ${container_name} ${container_ip}
+	fi
 	export PULSE_SERVER=${container_name}
 }
 rainbowstream(){
