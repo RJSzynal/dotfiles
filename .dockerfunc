@@ -1073,6 +1073,7 @@ notify_osd(){
 	local extra_docker_args=(
 	)
 	local application_args=(
+		"$@"
 	)
 
 	docker_run_daemon
@@ -1175,6 +1176,7 @@ osquery(){
 		--logger_plugin=tls
 		--logger_tls_endpoint=/api/v1/osquery/log
 		--logger_tls_period=10
+		"$@"
 	)
 
 	docker_run_daemon
@@ -1204,15 +1206,20 @@ pandoc(){
 	docker_run_tty
 }
 pivman(){
-	del_stopped pivman
+	local container_name="pivman"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--device /dev/bus/usb
+		--device /dev/usb
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		--device /dev/bus/usb \
-		--device /dev/usb \
-		--name pivman \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman
+	docker_run_gui
 }
 pms(){
 	del_stopped pms
