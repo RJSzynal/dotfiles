@@ -1222,13 +1222,21 @@ pivman(){
 	docker_run_gui
 }
 pms(){
-	del_stopped pms
-
-	docker run --rm -it \
+	relies_on mpd
+	local container_name="pms"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pms"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
 		-v "${HOME}/.mpd/socket:/var/run/mpd/socket" \
 		-e MPD_HOST=/var/run/mpd/socket \
-		--name pms \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/pms "$@"
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 pond(){
 	del_stopped pond
