@@ -1590,16 +1590,22 @@ tormessenger(){
 	# exit 0
 }
 torproxy(){
-	del_stopped torproxy
+	local container_name="torproxy"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy"
+	local network="untrusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run -d \
-		--restart always \
-		-v /etc/localtime:/etc/localtime:ro \
-		-p 9050:9050 \
-		--name torproxy \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy
+	docker_run_daemon
 
-	hostess add torproxy "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' torproxy)"
+	if [[ "${container_ip}" != "<no value>" ]]; then
+		hostess add ${container_name} ${container_ip}
+	fi
 }
 traceroute(){
 	docker run --rm -it \
