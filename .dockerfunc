@@ -1313,12 +1313,19 @@ pulseaudio(){
 	export PULSE_SERVER=${container_name}
 }
 rainbowstream(){
-	docker run --rm -it \
-		-v /etc/localtime:/etc/localtime:ro \
-		-v "${HOME}/.rainbow_oauth:/root/.rainbow_oauth" \
-		-v "${HOME}/.rainbow_config.json:/root/.rainbow_config.json" \
-		--name rainbowstream \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream
+	local container_name="rainbowstream"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v "${HOME}/.rainbowstream:/root"
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_tty
 }
 registrator(){
 	del_stopped registrator
