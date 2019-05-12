@@ -1682,6 +1682,29 @@ visualstudio(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/vscode
 }
 #alias vscode="visualstudio"
+vscodium(){
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local container_name="vscodium-${args_hash}"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium"
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		-v /etc/passwd:/etc/passwd:ro
+		-u $(id -u):$(id -g)
+		-v ${HOME}/.ssh:${HOME}/.ssh:ro
+		-v ${HOME}/.gitconfig:${HOME}/.gitconfig
+		-v ${HOME}/.vscodium/config:${HOME}/.config
+		-v ${HOME}/.vscodium/vscode-oss:${HOME}/.vscode-oss
+		-v ${HOME}/development:${HOME}/development
+		-w "${PWD}"
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run_gui
+}
 vlc(){
 	del_stopped vlc
 	relies_on pulseaudio
