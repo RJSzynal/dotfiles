@@ -390,13 +390,10 @@ chrome(){
 		--device /dev/dri
 		--device /dev/usb
 		--device /dev/bus/usb
-		-e HOME=/home/chrome
 		-v "/etc/hosts:/etc/hosts:ro"
 		--security-opt seccomp:${HOME}/seccomp/chrome.json
 	)
-	local application_args=(
-		--user-data-dir="/home/chrome/.config/google-chrome"
-	)
+	local application_args=()
 
 	case "${run_type}" in
 		secure)
@@ -411,6 +408,7 @@ chrome(){
 				--tmpfs "/home/chrome/.gnome"
 			)
 			application_args+=(
+				--user-data-dir="/home/chrome/.config/google-chrome"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
@@ -435,6 +433,7 @@ chrome(){
 				--tmpfs "/home/chrome/.gnome"
 			)
 			application_args+=(
+				--user-data-dir="/home/chrome/.config/google-chrome"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
@@ -450,15 +449,19 @@ chrome(){
 			;;
 		*)
 			extra_docker_args+=(
-				-u $(id -u):$(id -g) \
-				-v ${HOME}/.chrome/cache:/home/chrome/.cache
-				-v ${HOME}/.chrome/config:/home/chrome/.config
-				-v ${HOME}/.chrome/pki:/home/chrome/.pki
-				-v ${HOME}/.chrome/local:/home/chrome/.local
-				-v ${HOME}/.chrome/gnome:/home/chrome/.gnome
-				-v ${HOME}/Downloads:/home/chrome/Downloads
-				-v ${HOME}/Pictures:/home/chrome/Pictures
-				-v ${HOME}/Torrents:/home/chrome/Torrents
+				-v /etc/passwd:/etc/passwd:ro
+				-u $(id -u):$(id -g)
+				-v ${HOME}/.chrome/cache:${HOME}/.cache
+				-v ${HOME}/.chrome/config:${HOME}/.config
+				-v ${HOME}/.chrome/pki:${HOME}/.pki
+				-v ${HOME}/.chrome/local:${HOME}/.local
+				-v ${HOME}/.chrome/gnome:${HOME}/.gnome
+				-v ${HOME}/Downloads:${HOME}/Downloads
+				-v ${HOME}/Pictures:${HOME}/Pictures
+				-v ${HOME}/Torrents:${HOME}/Torrents
+			)
+			application_args+=(
+				--user-data-dir="${HOME}/.config/google-chrome"
 			)
 			;;
 	esac
@@ -1827,103 +1830,111 @@ chrome-secure(){
 	docker rm -fv chrome-vpn
 }
 chromium(){
-	# relies_on pulseaudio
 	local run_type=
 	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
 		run_type="$1"
 		shift
 	fi
-
-	# add flags for proxy if passed
-	local proxy=
-	local map
-	local extra_chromium_args=( $@ )
-	local extra_docker_args=()
-	local name_suffix=
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local container_name="chromium"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chromium"
 	local network="trusted"
-	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-	local audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--cpuset-cpus 0
+		--memory 3gb
+		--shm-size=2g
+		--device /dev/dri
+		--device /dev/usb
+		--device /dev/bus/usb
+		-v "/etc/hosts:/etc/hosts:ro"
+		--security-opt seccomp:${HOME}/seccomp/chrome.json
+	)
+	local application_args=()
 
 	case "${run_type}" in
 		secure)
-			relies_on pia-vpn
-			name_suffix="-secure"
-			network="container:pia-vpn"
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			container_name="${container_name}-secure"
+			network="secure"
 
 			extra_docker_args+=(
 				--tmpfs "/home/chromium/.cache"
 				--tmpfs "/home/chromium/.config"
 				--tmpfs "/home/chromium/.pki"
+				--tmpfs "/home/chromium/.local"
+				--tmpfs "/home/chromium/.gnome"
 			)
-			extra_chromium_args+=(
+			application_args+=(
+				--user-data-dir="/home/chromium/.config/chromium"
 				--incognito
-				https://www.privateinternetaccess.com/
+				--no-first-run
+				--no-default-browser-check
 			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://www.privateinternetaccess.com/
+				)
+			fi
 			;;
 		tor)
 			relies_on torproxy
-			name_suffix="-tor"
+			container_name="${container_name}-tor"
 			network="untrusted"
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
 			extra_docker_args+=(
 				--tmpfs "/home/chromium/.cache"
 				--tmpfs "/home/chromium/.config"
 				--tmpfs "/home/chromium/.pki"
+				--tmpfs "/home/chromium/.local"
+				--tmpfs "/home/chromium/.gnome"
 			)
-			extra_chromium_args+=(
+			application_args+=(
+				--user-data-dir="/home/chromium/.config/chromium"
 				--incognito
+				--no-first-run
+				--no-default-browser-check
 				--proxy-server="socks5://torproxy:9050"
 				--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE torproxy"
-				https://check.torproject.org/api/ip
 			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://check.torproject.org/api/ip
+				)
+			fi
 			;;
 		*)
-			relies_on_networks ${network}
 			extra_docker_args+=(
-				-u $(id -u):$(id -g) \
-				-v ${HOME}/.chromium/cache:/home/chromium/.cache/chromium
-				-v ${HOME}/.chromium/config:/home/chromium/.config/chromium
-				-v ${HOME}/.chromium/pki:/home/chromium/.pki
-				-v ${HOME}/Downloads:/home/chromium/Downloads
-				-v ${HOME}/Pictures:/home/chromium/Pictures
-				-v ${HOME}/Torrents:/home/chromium/Torrents
+				-v /etc/passwd:/etc/passwd:ro
+				-u $(id -u):$(id -g)
+				-v ${HOME}/.chromium/cache:${HOME}/.cache
+				-v ${HOME}/.chromium/config:${HOME}/.config
+				-v ${HOME}/.chromium/pki:${HOME}/.pki
+				-v ${HOME}/.chromium/local:${HOME}/.local
+				-v ${HOME}/.chromium/gnome:${HOME}/.gnome
+				-v ${HOME}/Downloads:${HOME}/Downloads
+				-v ${HOME}/Pictures:${HOME}/Pictures
+				-v ${HOME}/Torrents:${HOME}/Torrents
 			)
-			extra_chromium_args+=(
+			application_args+=(
+				--user-data-dir="${HOME}/.config/chromium"
 			)
 			;;
 	esac
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	container_name="${container_name}-${args_hash}"
+	unset args
+	application_args+=(
+		"$@"
+	)
 
 	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
 		mkdir -p ${HOME}/seccomp
 		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
 	fi
 
-	del_stopped chromium${name_suffix}-${args_hash}
-
-	docker run --rm -d \
-		--network ${network} \
-		--memory 2gb \
-		--shm-size=2g \
-		-v "/etc/localtime:/etc/localtime:ro" \
-		-e DISPLAY="${display_ip}${DISPLAY}" \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		--device /dev/dri \
-		-e PULSE_SERVER="${audio_ip}" \
-		-v "${HOME}/Downloads:/home/chromium/Downloads" \
-		--security-opt seccomp:${HOME}/seccomp/chrome.json \
-		${extra_docker_args[@]} \
-		--name chromium${name_suffix}-${args_hash} \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/chromium \
-			-new-instance \
-			--user-data-dir=/home/chromium/.config \
-			${extra_chromium_args[@]}
+	docker_run_gui
 }
 dive(){
 	local container_name="dive"
