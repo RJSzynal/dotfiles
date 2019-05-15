@@ -34,12 +34,14 @@ docker_args(){
 			network="container:pia-vpn"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			get_container_ip untrusted pia-vpn
 			;;
 		torproxy)
 			relies_on torproxy
 			network="container:torproxy"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			get_container_ip untrusted torproxy
 			;;
 		*)
 			relies_on_networks ${network} ${extra_networks[@]}
@@ -59,7 +61,7 @@ docker_args(){
 		-e GDK_SCALE
 		-e GDK_DPI_SCALE
 		-e QT_DEVICE_PIXEL_RATIO
-		-v "${HOME}/.gtkrc:/root/.gtkrc:ro"
+		-v "${HOME}/.gtkrc:${container_home}/.gtkrc:ro"
 		--group-add video
 	)
 	audio_docker_args=(
@@ -84,8 +86,7 @@ docker_run_daemon(){
 
 	docker start ${container_name}
 
-	local format="{{.NetworkSettings.Networks.${network}.IPAddress}}"
-	container_ip=$(docker inspect --format ${format} ${container_name} 2>/dev/null)
+	get_container_ip ${network} ${container_name}
 }
 docker_run_gui(){
 	docker_args
@@ -105,6 +106,19 @@ docker_run_gui(){
 	done
 
 	docker start ${container_name}
+
+# I'm just banking on this happening fast enough to beat the containers first attempt to connect to the x server
+	echo "Container IP: ${container_ip}"
+	if [ -z "${container_ip}" ]; then
+		get_container_ip ${network} ${container_name}
+	fi
+	if [ ! -z "${container_ip}" ]; then
+		xhost +${container_ip}
+		sleep 5
+		xhost -${container_ip}
+	else
+		echo "Error: Container IP not set"
+	fi
 }
 docker_run_tty(){
 	docker_args
@@ -150,6 +164,10 @@ rmctr(){
 	# shellcheck disable=SC2068
 	docker rm -f $@ 2>/dev/null || true
 }
+get_container_ip(){
+	local container_network_format="{{.NetworkSettings.Networks.${1}.IPAddress}}"
+	container_ip=$(docker inspect --format ${container_network_format} ${2} 2>/dev/null)
+}
 relies_on(){
 	for container in "$@"; do
 		local state
@@ -164,52 +182,6 @@ relies_on(){
 relies_on_networks(){
 	for network in "$@"; do
 		docker network create "${network}" 2>/dev/null || true
-		# If the network has already been added to xhost this boot then skip adding
-		if [[ -f "/tmp/${network}.network.relies_on" ]]; then return 0; fi
-		local subnet=$(docker network inspect --format='{{range .IPAM.Config}}{{.Subnet}}{{end}}' ${network})
-		local ips=()
-		case ${subnet#*/} in
-			24|16)
-				for (( i=0; i<=255; i++ )); do
-					local ip=${subnet%.*/*}.${i}
-					if [[ "${ip}" != "${subnet%.*/*}.0" && "${ip}" != "${subnet%.*/*}.1" ]]; then
-						ips+=("+${ip}")
-					fi
-					unset ip
-				done
-				;;
-			16)
-				for (( i=0; i<=255; i++ )); do
-					for (( j=0; j<=255; j++ )); do
-						local ip=${subnet%.*.*/*}.${i}.${j}
-						if [[ "${ip}" != "${subnet%.*/*}.0" && "${ip}" != "${subnet%.*/*}.1" ]]; then
-							ips+=("+${ip}")
-						fi
-						unset ip
-					done
-				done
-				;;
-			8)
-				for (( i=0; i<=255; i++ )); do
-					for (( j=0; j<=255; j++ )); do
-						for (( k=0; k<=255; k++ )); do
-							local ip=${subnet%.*.*.*/*}.${i}.${j}.${k}
-							if [[ "${ip}" != "${subnet%.*/*}.0" && "${ip}" != "${subnet%.*/*}.1" ]]; then
-								ips+=("+${ip}")
-							fi
-							unset ip
-						done
-					done
-				done
-				;;
-			*)
-				echo "Unsupported netmask ${subnet#*/}. Only 8, 16, and 24 are supported."
-				;;
-		esac
-		unset subnet
-		echo ${ips[@]} | xargs -n 1 -P 65534 xhost
-		unset ips
-		touch /tmp/${network}.network.relies_on
 	done
 }
 # creates an nginx config for a local route
@@ -252,6 +224,7 @@ nginx_config(){
 alias apt-file="apt_file"
 apt_file(){
 	local container_name="apt-file"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/apt-file"
 	local network="trusted"
 	local extra_networks=()
@@ -266,6 +239,7 @@ apt_file(){
 }
 audacity(){
 	local container_name="audacity"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/audacity"
 	local network="trusted"
 	local extra_networks=()
@@ -279,12 +253,13 @@ audacity(){
 }
 aws(){
 	local container_name="aws"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/awscli"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.aws:/root/.aws"
+		-v "${HOME}/.aws:${container_home}/.aws"
 		-e AWS_DEFAULT_REGION
 		-e AMAZON_ACCESS_KEY_ID
 		-e AMAZON_SECRET_ACCESS_KEY
@@ -297,12 +272,13 @@ aws(){
 }
 az(){
 	local container_name="az"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/azure-cli"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.azure:/root/.azure"
+		-v "${HOME}/.azure:${container_home}/.azure"
 		--log-driver none
 	)
 	local application_args=(
@@ -313,15 +289,16 @@ az(){
 }
 bees(){
 	local container_name="bees"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/beeswithmachineguns"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
 		-e NOTARY_TOKEN
-		-v "${HOME}/.bees:/root/.bees"
-		-v "${HOME}/.boto:/root/.boto"
-		-v "${HOME}/.dev:/root/.ssh:ro"
+		-v "${HOME}/.bees:${container_home}/.bees"
+		-v "${HOME}/.boto:${container_home}/.boto"
+		-v "${HOME}/.dev:${container_home}/.ssh:ro"
 		--log-driver none
 	)
 	local application_args=(
@@ -336,6 +313,7 @@ browser_exec(){
 }
 cadvisor(){
 	local container_name="cadvisor"
+	local container_home="/root"
 	local image_name="google/cadvisor"
 	local network="trusted"
 	local extra_networks=()
@@ -359,12 +337,13 @@ cadvisor(){
 }
 cheese(){
 	local container_name="cheese"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/cheese"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/Pictures:/root/Pictures"
+		-v "${HOME}/Pictures:${container_home}/Pictures"
 	)
 	local application_args=(
 		"$@"
@@ -379,6 +358,7 @@ chrome(){
 		shift
 	fi
 	local container_name="chrome"
+	local container_home="/home/chrome"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome"
 	local network="trusted"
 	local extra_networks=()
@@ -401,14 +381,14 @@ chrome(){
 			network="secure"
 
 			extra_docker_args+=(
-				--tmpfs "/home/chrome/.cache"
-				--tmpfs "/home/chrome/.config"
-				--tmpfs "/home/chrome/.pki"
-				--tmpfs "/home/chrome/.local"
-				--tmpfs "/home/chrome/.gnome"
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.config"
+				--tmpfs "${container_home}/.pki"
+				--tmpfs "${container_home}/.local"
+				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="/home/chrome/.config/google-chrome"
+				--user-data-dir="${container_home}/.config/google-chrome"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
@@ -426,14 +406,14 @@ chrome(){
 			network="untrusted"
 
 			extra_docker_args+=(
-				--tmpfs "/home/chrome/.cache"
-				--tmpfs "/home/chrome/.config"
-				--tmpfs "/home/chrome/.pki"
-				--tmpfs "/home/chrome/.local"
-				--tmpfs "/home/chrome/.gnome"
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.config"
+				--tmpfs "${container_home}/.pki"
+				--tmpfs "${container_home}/.local"
+				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="/home/chrome/.config/google-chrome"
+				--user-data-dir="${container_home}/.config/google-chrome"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
@@ -448,17 +428,18 @@ chrome(){
 			fi
 			;;
 		*)
+			container_home="${HOME}"
 			extra_docker_args+=(
 				-v /etc/passwd:/etc/passwd:ro
 				-u $(id -u):$(id -g)
-				-v ${HOME}/.chrome/cache:${HOME}/.cache
-				-v ${HOME}/.chrome/config:${HOME}/.config
-				-v ${HOME}/.chrome/pki:${HOME}/.pki
-				-v ${HOME}/.chrome/local:${HOME}/.local
-				-v ${HOME}/.chrome/gnome:${HOME}/.gnome
-				-v ${HOME}/Downloads:${HOME}/Downloads
-				-v ${HOME}/Pictures:${HOME}/Pictures
-				-v ${HOME}/Torrents:${HOME}/Torrents
+				-v ${HOME}/.chrome/cache:${container_home}/.cache
+				-v ${HOME}/.chrome/config:${container_home}/.config
+				-v ${HOME}/.chrome/pki:${container_home}/.pki
+				-v ${HOME}/.chrome/local:${container_home}/.local
+				-v ${HOME}/.chrome/gnome:${container_home}/.gnome
+				-v ${HOME}/Downloads:${container_home}/Downloads
+				-v ${HOME}/Pictures:${container_home}/Pictures
+				-v ${HOME}/Torrents:${container_home}/Torrents
 			)
 			application_args+=(
 				--user-data-dir="${HOME}/.config/google-chrome"
@@ -481,6 +462,7 @@ chrome(){
 }
 consul(){
 	local container_name="consul"
+	local container_home="/root"
 	local image_name="consul"
 	local network="trusted"
 	local extra_networks=()
@@ -518,14 +500,15 @@ consul(){
 }
 dcos(){
 	local container_name="dcos"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/dcos-cli"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.dcos:/root/.dcos"
-		-v "$(pwd):/root/apps"
-		-w /root/apps
+		-v "${HOME}/.dcos:${container_home}/.dcos"
+		-v "$(pwd):${container_home}/apps"
+		-w ${container_home}/apps
 	)
 	local application_args=(
 		"$@"
@@ -600,6 +583,7 @@ firefox(){
 }
 fleetctl(){
 	local container_name="fleet"
+	local container_home="/root"
 	local image_name="r.j3ss.co/fleet"
 	local network="trusted"
 	local extra_networks=()
@@ -616,14 +600,15 @@ fleetctl(){
 }
 gcalcli(){
 	local container_name="gcalcli"
+	local container_home="/home/gcalcli"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcalcli"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.gcalcli/home:/home/gcalcli/home"
-		-v "${HOME}/.gcalcli/work/oauth:/home/gcalcli/.gcalcli_oauth"
-		-v "${HOME}/.gcalcli/work/gcalclirc:/home/gcalcli/.gcalclirc"
+		-v "${HOME}/.gcalcli/home:${container_home}/home"
+		-v "${HOME}/.gcalcli/work/oauth:${container_home}/.gcalcli_oauth"
+		-v "${HOME}/.gcalcli/work/gcalclirc:${container_home}/.gcalclirc"
 	)
 	local application_args=(
 		"$@"
@@ -633,13 +618,14 @@ gcalcli(){
 }
 dgcloud(){
 	local container_name="gcloud"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcloud"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.gcloud:/root/.config/gcloud"
-		-v "${HOME}/.ssh:/root/.ssh:ro"
+		-v "${HOME}/.gcloud:${container_home}/.config/gcloud"
+		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
 		-v "$(command -v docker):/usr/bin/docker"
 		-v /var/run/docker.sock:/var/run/docker.sock
 	)
@@ -651,12 +637,13 @@ dgcloud(){
 }
 gimp(){
 	local container_name="gimp"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gimp"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/Pictures:/root/Pictures"
+		-v "${HOME}/Pictures:${container_home}/Pictures"
 	)
 	local application_args=(
 		"$@"
@@ -666,13 +653,14 @@ gimp(){
 }
 gitsome(){
 	local container_name="gitsome"
+	local container_home="/home/anon"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gitsome"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.gitsomeconfig:/home/anon/.gitsomeconfig"
-		-v "${HOME}/.gitsomeconfigurl:/home/anon/.gitsomeconfigurl"
+		-v "${HOME}/.gitsomeconfig:${container_home}/.gitsomeconfig"
+		-v "${HOME}/.gitsomeconfigurl:${container_home}/.gitsomeconfigurl"
 	)
 	local application_args=(
 		"$@"
@@ -682,6 +670,7 @@ gitsome(){
 }
 hollywood(){
 	local container_name="hollywood"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/hollywood"
 	local network="trusted"
 	local extra_networks=()
@@ -695,6 +684,7 @@ hollywood(){
 }
 htop(){
 	local container_name="htop"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htop"
 	local network="none"
 	local extra_networks=()
@@ -710,6 +700,7 @@ htop(){
 }
 htpasswd(){
 	local container_name="htpasswd"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htpasswd"
 	local network="none"
 	local extra_networks=()
@@ -726,6 +717,7 @@ htpasswd(){
 alias http=httpie
 httpie(){
 	local container_name="httpie"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie"
 	local network="trusted"
 	local extra_networks=()
@@ -743,31 +735,34 @@ httpie(){
 imagemin(){
 	local image_path=$(realpath "$1")
 	local directory=$(dirname "${image_path}")
+	local container_home="/root"
 	local image_name=$(basename "${image_path}")
 	local extension="${image_name##*.}"
 	local filename="${image_name%.*}"
 	local container_name="imagemin"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${directory}:/root/Pictures"
+		-v "${directory}:${container_home}/Pictures"
 	)
 	local application_args=(
-		sh -c "imagemin /root/Pictures/${image_name} > /root/Pictures/${filename}_min.${extension}"
+		sh -c "imagemin ${container_home}/Pictures/${image_name} > ${container_home}/Pictures/${filename}_min.${extension}"
 	)
 
 	docker_run_tty
 }
 irssi() {
 	local container_name="irssi"
+	local container_home="/home/user"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.irssi:/home/user/.irssi"
+		-v "${HOME}/.irssi:${container_home}/.irssi"
 		--read-only
 	)
 	local application_args=(
@@ -779,12 +774,13 @@ irssi() {
 john(){
 	local file=$(realpath "$1")
 	local container_name="john"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${file}:/root/$(basename "${file}")"
+		-v "${file}:${container_home}/$(basename "${file}")"
 	)
 	local application_args=(
 		"$@"
@@ -795,6 +791,7 @@ john(){
 alias build_kernel=kernel_builder
 kernel_builder(){
 	local container_name="kernel-builder"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder"
 	local network="trusted"
 	local extra_networks=()
@@ -813,6 +810,7 @@ kernel_builder(){
 }
 keepassxc(){
 	local container_name="keepassxc"
+	local container_home="/home/keepassxc"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc"
 	local network="trusted"
 	local extra_networks=()
@@ -820,11 +818,11 @@ keepassxc(){
 	local extra_docker_args=(
 		-v '/usr/share/X11/xkb:/usr/share/X11/xkb:ro'
 		-v '/etc/machine-id:/etc/machine-id:ro'
-		-v "${HOME}/.keepassxc/config:/home/keepassxc/.config"
-		-v "${HOME}/.keepassxc/cache:/home/keepassxc/.cache"
-		-v "${HOME}/.keepassxc/fontconfig:/home/keepassxc/.fontconfig"
-		-v "${HOME}/googledrive-home/backup/keepass:/home/keepassxc/databases"
-		-v "${HOME}/.ssh:/home/keepassxc/.ssh:ro"
+		-v "${HOME}/.keepassxc/config:${container_home}/.config"
+		-v "${HOME}/.keepassxc/cache:${container_home}/.cache"
+		-v "${HOME}/.keepassxc/fontconfig:${container_home}/.fontconfig"
+		-v "${HOME}/googledrive-home/backup/keepass:${container_home}/databases"
+		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
 	)
 	local application_args=(
 		"$@"
@@ -834,6 +832,7 @@ keepassxc(){
 }
 kvm(){
 	local container_name="kvm"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm"
 	local network="trusted"
 	local extra_networks=()
@@ -853,13 +852,14 @@ kvm(){
 }
 libreoffice(){
 	local container_name="libreoffice"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/libreoffice"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/googledrive-home:/root/googledrive-home"
-		-v "${HOME}/Documents:/root/Documents"
+		-v "${HOME}/googledrive-home:${container_home}/googledrive-home"
+		-v "${HOME}/Documents:${container_home}/Documents"
 	)
 	local application_args=(
 		"$@"
@@ -870,12 +870,13 @@ libreoffice(){
 alias lpass=lastpass
 lastpass(){
 	local container_name="lpass"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.lpass:/root/.lpass"
+		-v "${HOME}/.lpass:${container_home}/.lpass"
 	)
 	local application_args=(
 		"$@"
@@ -885,6 +886,7 @@ lastpass(){
 }
 lynx(){
 	local container_name="lynx"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx"
 	local network="trusted"
 	local extra_networks=()
@@ -899,6 +901,7 @@ lynx(){
 }
 masscan(){
 	local container_name="masscan"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/masscan"
 	local network="trusted"
 	local extra_networks=()
@@ -914,6 +917,7 @@ masscan(){
 alias mc=midnight_commander
 midnight_commander(){
 	local container_name="mc"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc"
 	local network="trusted"
 	local extra_networks=()
@@ -930,6 +934,7 @@ midnight_commander(){
 }
 mpd(){
 	local container_name="mpd"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mpd"
 	local network="trusted"
 	local extra_networks=()
@@ -951,6 +956,7 @@ mpd(){
 }
 mutt(){
 	local container_name="mutt"
+	local container_home="/home/user"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt"
 	local network="trusted"
 	local extra_networks=()
@@ -967,7 +973,7 @@ mutt(){
 				-e GPG_ID
 				-e IMAP_SERVER=mail.riseup.net
 				-e SMTP_SERVER=mail.riseup.net
-				-v "${HOME}/.gnupg:/home/user/.gnupg:ro"
+				-v "${HOME}/.gnupg:${container_home}/.gnupg:ro"
 			)
 			shift
 			;;
@@ -980,7 +986,7 @@ mutt(){
 				-e GPG_ID
 				-e IMAP_SERVER
 				-e SMTP_SERVER
-				-v "${HOME}/.gnupg:/home/user/.gnupg:ro"
+				-v "${HOME}/.gnupg:${container_home}/.gnupg:ro"
 			)
 			;;
 	esac
@@ -993,6 +999,7 @@ mutt(){
 ncmpc(){
 	relies_on mpd
 	local container_name="ncmpc"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc"
 	local network="trusted"
 	local extra_networks=()
@@ -1009,6 +1016,7 @@ ncmpc(){
 }
 neoman(){
 	local container_name="neoman"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman"
 	local network="trusted"
 	local extra_networks=()
@@ -1027,6 +1035,7 @@ nes(){
 	local game=$1
 	shift
 	local container_name="nes"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nes"
 	local network="trusted"
 	local extra_networks=()
@@ -1042,6 +1051,7 @@ nes(){
 alias nc=netcat
 netcat(){
 	local container_name="netcat"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat"
 	local network="host"
 	local extra_networks=()
@@ -1056,6 +1066,7 @@ netcat(){
 }
 nginx(){
 	local container_name="nginx-${1}"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx"
 	local network="trusted"
 	local extra_networks=()
@@ -1074,6 +1085,7 @@ nginx(){
 }
 nmap(){
 	local container_name="nmap"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nmap"
 	local network="host"
 	local extra_networks=()
@@ -1088,6 +1100,7 @@ nmap(){
 }
 notify_osd(){
 	local container_name="notify_osd"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd"
 	local network="trusted"
 	local extra_networks=()
@@ -1108,12 +1121,13 @@ notify_send(){
 }
 now(){
 	local container_name="now"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v "${HOME}/.now:/root/.now"
+		-v "${HOME}/.now:${container_home}/.now"
 		-v "${PWD}:/usr/src/repo:ro"
 		--workdir /usr/src/repo
 		--log-driver none
@@ -1167,6 +1181,7 @@ opensnitch(){
 }
 osquery(){
 	local container_name="osquery"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/osquery"
 	local network="host"
 	local extra_networks=()
@@ -1212,6 +1227,7 @@ pandoc(){
 	local args=${*:1:${#@}-1}
 
 	local container_name="pandoc"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc"
 	local network="trusted"
 	local extra_networks=()
@@ -1229,6 +1245,7 @@ pandoc(){
 }
 pivman(){
 	local container_name="pivman"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman"
 	local network="trusted"
 	local extra_networks=()
@@ -1246,6 +1263,7 @@ pivman(){
 pms(){
 	relies_on mpd
 	local container_name="pms"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pms"
 	local network="trusted"
 	local extra_networks=()
@@ -1262,6 +1280,7 @@ pms(){
 }
 pond(){
 	local container_name="pond"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond"
 	local network="torproxy"
 	local extra_networks=()
@@ -1277,6 +1296,7 @@ pond(){
 privoxy(){
 	relies_on torproxy
 	local container_name="privoxy"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy"
 	local network="untrusted"
 	local extra_networks=()
@@ -1295,6 +1315,7 @@ privoxy(){
 }
 pulseaudio(){
 	local container_name="pulseaudio"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio"
 	local network="trusted"
 	local extra_networks=(
@@ -1317,6 +1338,7 @@ pulseaudio(){
 }
 rainbowstream(){
 	local container_name="rainbowstream"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream"
 	local network="trusted"
 	local extra_networks=()
@@ -1601,6 +1623,7 @@ tormessenger(){
 }
 torproxy(){
 	local container_name="torproxy"
+	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy"
 	local network="untrusted"
 	local extra_networks=()
@@ -1685,6 +1708,7 @@ visualstudio(){
 vscodium(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscodium-${args_hash}"
+	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium"
 	local network="trusted"
 	local extra_networks=()
@@ -1859,6 +1883,7 @@ chromium(){
 		shift
 	fi
 	local container_name="chromium"
+	local container_home="/home/chromium"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chromium"
 	local network="trusted"
 	local extra_networks=()
@@ -1881,14 +1906,14 @@ chromium(){
 			network="secure"
 
 			extra_docker_args+=(
-				--tmpfs "/home/chromium/.cache"
-				--tmpfs "/home/chromium/.config"
-				--tmpfs "/home/chromium/.pki"
-				--tmpfs "/home/chromium/.local"
-				--tmpfs "/home/chromium/.gnome"
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.config"
+				--tmpfs "${container_home}/.pki"
+				--tmpfs "${container_home}/.local"
+				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="/home/chromium/.config/chromium"
+				--user-data-dir="${container_home}/.config/chromium"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
@@ -1906,14 +1931,14 @@ chromium(){
 			network="untrusted"
 
 			extra_docker_args+=(
-				--tmpfs "/home/chromium/.cache"
-				--tmpfs "/home/chromium/.config"
-				--tmpfs "/home/chromium/.pki"
-				--tmpfs "/home/chromium/.local"
-				--tmpfs "/home/chromium/.gnome"
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.config"
+				--tmpfs "${container_home}/.pki"
+				--tmpfs "${container_home}/.local"
+				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="/home/chromium/.config/chromium"
+				--user-data-dir="${container_home}/.config/chromium"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
@@ -1928,17 +1953,18 @@ chromium(){
 			fi
 			;;
 		*)
+			container_home="${HOME}"
 			extra_docker_args+=(
 				-v /etc/passwd:/etc/passwd:ro
 				-u $(id -u):$(id -g)
-				-v ${HOME}/.chromium/cache:${HOME}/.cache
-				-v ${HOME}/.chromium/config:${HOME}/.config
-				-v ${HOME}/.chromium/pki:${HOME}/.pki
-				-v ${HOME}/.chromium/local:${HOME}/.local
-				-v ${HOME}/.chromium/gnome:${HOME}/.gnome
-				-v ${HOME}/Downloads:${HOME}/Downloads
-				-v ${HOME}/Pictures:${HOME}/Pictures
-				-v ${HOME}/Torrents:${HOME}/Torrents
+				-v ${HOME}/.chromium/cache:${container_home}/.cache
+				-v ${HOME}/.chromium/config:${container_home}/.config
+				-v ${HOME}/.chromium/pki:${container_home}/.pki
+				-v ${HOME}/.chromium/local:${container_home}/.local
+				-v ${HOME}/.chromium/gnome:${container_home}/.gnome
+				-v ${HOME}/Downloads:${container_home}/Downloads
+				-v ${HOME}/Pictures:${container_home}/Pictures
+				-v ${HOME}/Torrents:${container_home}/Torrents
 			)
 			application_args+=(
 				--user-data-dir="${HOME}/.config/chromium"
@@ -1961,6 +1987,7 @@ chromium(){
 }
 dive(){
 	local container_name="dive"
+	local container_home="/root"
 	local image_name="wagoodman/dive"
 	local network="trusted"
 	local extra_networks=()
@@ -1976,6 +2003,7 @@ dive(){
 }
 hostess(){
 	local container_name="hostess"
+	local container_home="/root"
 	local image_name="ondrejmo/hostess"
 	local network="trusted"
 	local extra_networks=()
@@ -2042,13 +2070,14 @@ pia-vpn(){
 alias signal=signal-messenger
 signal-messenger(){
 	local container_name="signal-messenger"
+	local container_home="/home/signal"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v ${HOME}/.signal/config:/home/signal/.config
-		-v ${HOME}/.signal/cache:/home/signal/.cache
+		-v ${HOME}/.signal/config:${container_home}/.config
+		-v ${HOME}/.signal/cache:${container_home}/.cache
 	)
 	local application_args=(
 		"$@"
@@ -2059,13 +2088,14 @@ signal-messenger(){
 alias signal-beta=signal-messenger-beta
 signal-messenger-beta(){
 	local container_name="signal-messenger-beta"
+	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local extra_docker_args=(
-		-v ${HOME}/.signal/config:/home/signal/.config
-		-v ${HOME}/.signal/cache:/home/signal/.cache
+		-v ${HOME}/.signal/config:${container_home}/.config
+		-v ${HOME}/.signal/cache:${container_home}/.cache
 	)
 	local application_args=(
 		"$@"
