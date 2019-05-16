@@ -114,8 +114,7 @@ docker_run_gui(){
 	fi
 	if [ ! -z "${container_ip}" ]; then
 		xhost +${container_ip}
-		sleep 5
-		xhost -${container_ip}
+		(sleep 5; xhost -${container_ip}) &
 	else
 		echo "Error: Container IP not set"
 	fi
