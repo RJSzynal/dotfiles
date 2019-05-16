@@ -504,70 +504,71 @@ dcos(){
 
 	docker_run_tty
 }
-firefox(){
-	relies_on pulseaudio
+firefox-browser(){
 	local run_type=
 	if [[ "$1" == "secure" ]]; then
 		run_type="$1"
 		shift
 	fi
-
-	local extra_firefox_args=( ${@} )
-	local extra_docker_args=()
-	local name_suffix=
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-
+	local container_name="firefox"
+	local container_home="/home/firefox"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/firefox"
 	local network="trusted"
 	local extra_networks=()
+	local container_ip
+	local extra_docker_args=(
+		--cpuset-cpus 0
+		--memory 3gb
+		--shm-size=2g
+		--device /dev/dri
+		--device /dev/usb
+		--device /dev/bus/usb
+		-v "/etc/hosts:/etc/hosts:ro"
+	)
+	local application_args=()
+
 	case "${run_type}" in
 		secure)
-			relies_on pia-vpn
-			name_suffix="-secure"
-			network="container:pia-vpn"
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			container_name="${container_name}-secure"
+			network="secure"
 
 			extra_docker_args+=(
-				--tmpfs "/home/firefox/.cache"
-				--tmpfs "/home/firefox/.mozilla"
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.mozilla"
 			)
-			extra_firefox_args+=(
-				-silent
-				-private
-				-private-window https://www.privateinternetaccess.com/
+			application_args+=(
+				-private-window
 			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://www.privateinternetaccess.com/
+			)
+			fi
 			;;
 		*)
-			relies_on_networks ${network}
+			container_home="${HOME}"
 			extra_docker_args+=(
-				-v ${HOME}/.firefox/cache:/home/firefox/.cache/mozilla
-				-v ${HOME}/.firefox/mozilla:/home/firefox/.mozilla
-				-v ${HOME}/Downloads:/home/firefox/Downloads
-				-v ${HOME}/Pictures:/home/firefox/Pictures
-				-v ${HOME}/Torrents:/home/firefox/Torrents
+				-v /etc/passwd:/etc/passwd:ro
+				-u $(id -u):$(id -g)
+				-v ${HOME}/.firefox/cache:${container_home}/.cache
+				-v ${HOME}/.firefox/mozilla:${container_home}/.mozilla
+				-v ${HOME}/Downloads:${container_home}/Downloads
+				-v ${HOME}/Pictures:${container_home}/Pictures
+				-v ${HOME}/Torrents:${container_home}/Torrents
 			)
-			extra_firefox_args+=(
-				-new-window
+			application_args+=(
 			)
 			;;
 	esac
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	container_name="${container_name}-${args_hash}"
+	unset args
+	application_args+=(
+		"$@"
+	)
 
-	del_stopped firefox${name_suffix}-${args_hash}
-
-	docker run --rm -d \
-		--network ${network} \
-		--memory 4gb \
-		--shm-size=2g \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY="${display_ip}${DISPLAY}" \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-e PULSE_SERVER="pulseaudio" \
-		${extra_docker_args[@]} \
-		--name firefox${name_suffix}-${args_hash} \
-		${MY_DOCKER_REPO_PREFIX}/firefox \
-			-new-instance \
-			${extra_firefox_args[@]}
+	docker_run_gui
 }
 fleetctl(){
 	local container_name="fleet"
