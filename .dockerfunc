@@ -7,10 +7,10 @@ export MY_DOCKER_REPO_PREFIX=rjszynal
 #
 # Helper Functions
 #
-docker_args(){
+generate_docker_args(){
 	local display_ip=
 	local audio_ip=
-	common_docker_args=(
+	docker_args=(
 		-v /etc/localtime:/etc/localtime:ro
 	)
 	case ${network} in
@@ -18,6 +18,8 @@ docker_args(){
 		host)
 			display_ip="127.0.0.1"
 			audio_ip="127.0.0.1"
+			container_ip="127.0.0.1"
+			container_hostname="$(hostname)"
 			;;
 		bridge)
 			if [[ "${extra_networks[@]}" != "" ]]; then
@@ -34,6 +36,7 @@ docker_args(){
 			network="container:pia-vpn"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			get_container_hostname pia-vpn
 			get_container_ip untrusted pia-vpn
 			;;
 		torproxy)
@@ -41,6 +44,7 @@ docker_args(){
 			network="container:torproxy"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			get_container_hostname torproxy
 			get_container_ip untrusted torproxy
 			;;
 		*)
@@ -53,79 +57,81 @@ docker_args(){
 			;;
 	esac
 
-	common_docker_args+=(
+	docker_args+=(
 		--network ${network}
 	)
-	video_docker_args=(
-		-e DISPLAY="${display_ip}${DISPLAY}"
-		-e GDK_SCALE
-		-e GDK_DPI_SCALE
-		-e QT_DEVICE_PIXEL_RATIO
-		-v "${HOME}/.gtkrc:${container_home}/.gtkrc:ro"
-		--group-add video
-	)
-	audio_docker_args=(
-		-e PULSE_SERVER=${audio_ip}
-		--group-add audio
-	)
+	if ${use_host_video}; then
+		echo "use_host_video: ${use_host_video}"
+		docker_args+=(
+			# -e DISPLAY="${display_ip}${DISPLAY}"
+			-e GDK_SCALE
+			-e GDK_DPI_SCALE
+			-e QT_DEVICE_PIXEL_RATIO
+			-v "${HOME}/.gtkrc:${container_home}/.gtkrc:ro"
+			--group-add video
+			-e DISPLAY
+			-v /tmp/.X11-unix:/tmp/.X11-unix
+			# -e XAUTHORITY=${container_home}/.Xauthority
+			# -v "${HOME}/.Xauthority:${container_home}/.Xauthority"
+			# -v /usr/share/X11:/usr/share/X11:ro
+		)
+
+		# Add container to xhost allowed list for 5 seconds
+		if [ -z "${container_hostname}" ]; then
+			get_container_hostname ${container_name}
+		fi
+		if [ ! -z "${container_hostname}" ]; then
+			xhost +local:${container_hostname}
+			(sleep 5; xhost -local:${container_hostname}) &
+		else
+			echo "Error: Container hostname not set"
+		fi
+	fi
+	if ${use_host_audio}; then
+		echo "use_host_audio: ${use_host_audio}"
+		docker_args+=(
+			-e PULSE_SERVER=${audio_ip}
+			--group-add audio
+		)
+	fi
+	if ${use_host_dbus}; then
+		echo "use_host_dbus: ${use_host_dbus}"
+		use_host_user=true
+		docker_args+=(
+			-e DBUS_SESSION_BUS_ADDRESS
+			-v "/run/user/$(id -u):/run/user/$(id -u)"
+		)
+	fi
+	if ${use_host_user}; then
+		echo "use_host_user: ${use_host_user}"
+		docker_args+=(
+			-u $(id -u):$(id -g)
+			-v /etc/passwd:/etc/passwd:ro
+			-v /etc/group:/etc/group:ro
+			-e HOME=${HOME}
+			-w "${HOME}"
+		)
+	fi
+	docker_args+=( ${extra_docker_args[@]} )
 }
-docker_run_daemon(){
-	docker_args
+docker_run(){
+	use_host_video=${use_host_video:-false}
+	use_host_audio=${use_host_audio:-false}
+	use_host_dbus=${use_host_dbus:-false}
+	use_host_user=${use_host_user:-false}
+	attach_tty=${attach_tty:-false}
+	generate_docker_args
 	del_stopped ${container_name}
 
-	docker create \
-		${common_docker_args[@]} \
-		${extra_docker_args[@]} \
-		--name ${container_name} \
-		${image_name} \
-		${application_args[@]} 2>/dev/null
-
-	for net in "${extra_networks[@]}"; do
-		docker network connect ${net} ${container_name}
-	done
-
-	docker start ${container_name}
-
-	get_container_ip ${network} ${container_name}
-}
-docker_run_gui(){
-	docker_args
-	del_stopped ${container_name} true
-
-	docker create --rm \
-		${common_docker_args[@]} \
-		${video_docker_args[@]} \
-		${audio_docker_args[@]} \
-		${extra_docker_args[@]} \
-		--name ${container_name} \
-		${image_name} \
-		${application_args[@]} 2>/dev/null
-
-	for net in "${extra_networks[@]}"; do
-		docker network connect ${net} ${container_name}
-	done
-
-	docker start ${container_name}
-
-# I'm just banking on this happening fast enough to beat the containers first attempt to connect to the x server
-	echo "Container IP: ${container_ip}"
-	if [ -z "${container_ip}" ]; then
-		get_container_ip ${network} ${container_name}
+	local docker_create_tty=
+	local docker_start_tty=
+	if ${attach_tty}; then
+		docker_create_tty=" -it"
+		docker_start_tty=" -i"
 	fi
-	if [ ! -z "${container_ip}" ]; then
-		xhost +${container_ip}
-		(sleep 5; xhost -${container_ip}) &
-	else
-		echo "Error: Container IP not set"
-	fi
-}
-docker_run_tty(){
-	docker_args
-	del_stopped ${container_name} true
 
-	docker create --rm -it \
-		${common_docker_args[@]} \
-		${extra_docker_args[@]} \
+	docker create --rm${docker_tty} \
+		${docker_args[@]} \
 		--name ${container_name} \
 		${image_name} \
 		${application_args[@]} 2>/dev/null
@@ -134,7 +140,27 @@ docker_run_tty(){
 		docker network connect ${net} ${container_name}
 	done
 
-	docker start -i ${container_name}
+	docker start${docker_start_tty} ${container_name}
+
+# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
+	if ${use_host_video}; then
+		if [ -z "${container_ip}" ]; then
+			get_container_ip ${network} ${container_name}
+		fi
+		if [ ! -z "${container_ip}" ]; then
+			xhost +${container_ip}
+			(sleep 5; xhost -${container_ip}) &
+		else
+			echo "Error: Container IP not set"
+		fi
+
+		if [ -z "${container_hostname}" ]; then
+			get_container_hostname ${container_name}
+		fi
+		if [ -z "${container_ip}" ]; then
+			get_container_ip ${network} ${container_name}
+		fi
+	fi
 }
 del_stopped(){
 	local name=$1
@@ -146,20 +172,25 @@ del_stopped(){
 		docker rm "${name}" 2>/dev/null
 	elif [[ "${force}" == "true" ]]; then
 		docker rm -f "${name}" 2>/dev/null
+	else
+		echo "${name} is already running"
 	fi
-}
-rmctr(){
-	# shellcheck disable=SC2068
-	docker rm -f $@ 2>/dev/null || true
 }
 get_container_ip(){
 	local container_network_format="{{.NetworkSettings.Networks.${1}.IPAddress}}"
 	container_ip=$(docker inspect --format ${container_network_format} ${2} 2>/dev/null)
 }
+get_container_hostname(){
+	local container_hostname_format="{{.Config.Hostname}}"
+	container_hostname=$(docker inspect --format ${container_hostname_format} ${1} 2>/dev/null)
+}
+rmctr(){
+	# shellcheck disable=SC2068
+	docker rm -f $@ 2>/dev/null || true
+}
 relies_on(){
 	for container in "$@"; do
-		local state
-		state=$(docker inspect --format "{{.State.Running}}" "${container}" 2>/dev/null)
+		local state=$(docker inspect --format "{{.State.Running}}" "${container}" 2>/dev/null)
 
 		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			echo "${container} is not running, starting it for you."
@@ -209,6 +240,22 @@ alias browser-exec=browser_exec
 browser_exec(){
 	xdg-open ${@}
 }
+function is_valid_ip(){
+	# Thanks Mitch Frazier https://www.linuxjournal.com/content/validating-ip-address-bash-script
+    local  ip=$1
+    local  stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
 
 #
 # Container Aliases
@@ -218,38 +265,56 @@ apt_file(){
 	local container_name="apt-file"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/apt-file"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=()
 	local application_args=(
 		apt-file
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 audacity(){
 	local container_name="audacity"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/audacity"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=()
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 aws(){
 	local container_name="aws"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/awscli"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.aws:${container_home}/.aws"
 		-e AWS_DEFAULT_REGION
@@ -260,15 +325,21 @@ aws(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 az(){
 	local container_name="az"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/azure-cli"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.azure:${container_home}/.azure"
 		--log-driver none
@@ -277,15 +348,21 @@ az(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 bees(){
 	local container_name="bees"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/beeswithmachineguns"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-e NOTARY_TOKEN
 		-v "${HOME}/.bees:${container_home}/.bees"
@@ -297,15 +374,21 @@ bees(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 cadvisor(){
 	local container_name="cadvisor"
 	local container_home="/root"
 	local image_name="google/cadvisor"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--restart always
 		-v /:/rootfs:ro
@@ -317,8 +400,8 @@ cadvisor(){
 		"$@"
 	)
 
-	docker_run_daemon
-	if [[ "${container_ip}" != "<no value>" ]]; then
+	docker_run
+	if is_valid_ip "${container_ip}"; then
 		hostess add ${container_name} ${container_ip}
 	fi
 	browser-exec "http://${container_name}:8080"
@@ -327,9 +410,15 @@ cheese(){
 	local container_name="cheese"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/cheese"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/Pictures:${container_home}/Pictures"
 	)
@@ -337,7 +426,7 @@ cheese(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 chrome(){
 	local run_type=
@@ -348,9 +437,15 @@ chrome(){
 	local container_name="chrome"
 	local container_home="/home/chrome"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--cpuset-cpus 0
 		--memory 3gb
@@ -446,15 +541,21 @@ chrome(){
 		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
 	fi
 
-	docker_run_gui
+	docker_run
 }
 consul(){
 	local container_name="consul"
 	local container_home="/root"
 	local image_name="consul"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local encrypt_key="$(docker run --rm ${image_name} keygen)"
 	local extra_docker_args=(
 		-v "${HOME}/.consul:/consul/config"
@@ -480,8 +581,8 @@ consul(){
 		return 0
 	fi
 
-	docker_run_daemon
-	if [[ "${container_ip}" != "<no value>" ]]; then
+	docker_run
+	if is_valid_ip "${container_ip}"; then
 		hostess add ${container_name} ${container_ip}
 	fi
 	browser-exec "http://${container_name}:8500"
@@ -490,9 +591,15 @@ dcos(){
 	local container_name="dcos"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/dcos-cli"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.dcos:${container_home}/.dcos"
 		-v "$(pwd):${container_home}/apps"
@@ -502,7 +609,7 @@ dcos(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 firefox-browser(){
 	local run_type=
@@ -513,9 +620,15 @@ firefox-browser(){
 	local container_name="firefox"
 	local container_home="/home/firefox"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/firefox"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--cpuset-cpus 0
 		--memory 3gb
@@ -568,15 +681,21 @@ firefox-browser(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 fleetctl(){
 	local container_name="fleet"
 	local container_home="/root"
 	local image_name="r.j3ss.co/fleet"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--entrypoint fleetctl
 		-v "${HOME}/.fleet://.fleet"
@@ -585,15 +704,21 @@ fleetctl(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 gcalcli(){
 	local container_name="gcalcli"
 	local container_home="/home/gcalcli"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcalcli"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.gcalcli/home:${container_home}/home"
 		-v "${HOME}/.gcalcli/work/oauth:${container_home}/.gcalcli_oauth"
@@ -603,15 +728,21 @@ gcalcli(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 dgcloud(){
 	local container_name="gcloud"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcloud"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.gcloud:${container_home}/.config/gcloud"
 		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
@@ -622,15 +753,21 @@ dgcloud(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 gimp(){
 	local container_name="gimp"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gimp"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/Pictures:${container_home}/Pictures"
 	)
@@ -638,15 +775,21 @@ gimp(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 gitsome(){
 	local container_name="gitsome"
 	local container_home="/home/anon"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gitsome"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.gitsomeconfig:${container_home}/.gitsomeconfig"
 		-v "${HOME}/.gitsomeconfigurl:${container_home}/.gitsomeconfigurl"
@@ -655,29 +798,41 @@ gitsome(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 hollywood(){
 	local container_name="hollywood"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/hollywood"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=()
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 htop(){
 	local container_name="htop"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htop"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="none"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--pid host
 	)
@@ -685,15 +840,21 @@ htop(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 htpasswd(){
 	local container_name="htpasswd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htpasswd"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="none"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--log-driver none
 	)
@@ -701,16 +862,22 @@ htpasswd(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 alias http=httpie
 httpie(){
 	local container_name="httpie"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v /var/run/docker.sock:/var/run/docker.sock
 		--log-driver none
@@ -719,21 +886,31 @@ httpie(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 imagemin(){
 	local image_path=$(realpath "$1")
 	local directory=$(dirname "${image_path}")
 	local container_home="/root"
 	local image_name=$(basename "${image_path}")
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
 	local extension="${image_name##*.}"
 	local filename="${image_name%.*}"
 	local container_name="imagemin"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${directory}:${container_home}/Pictures"
 	)
@@ -741,15 +918,21 @@ imagemin(){
 		sh -c "imagemin ${container_home}/Pictures/${image_name} > ${container_home}/Pictures/${filename}_min.${extension}"
 	)
 
-	docker_run_tty
+	docker_run
 }
 irssi() {
 	local container_name="irssi"
 	local container_home="/home/user"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.irssi:${container_home}/.irssi"
 		--read-only
@@ -758,16 +941,22 @@ irssi() {
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 john(){
 	local file=$(realpath "$1")
 	local container_name="john"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${file}:${container_home}/$(basename "${file}")"
 	)
@@ -775,16 +964,22 @@ john(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 alias build_kernel=kernel_builder
 kernel_builder(){
 	local container_name="kernel-builder"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v '/usr/src:/usr/src'
 		-v '/lib/modules:/lib/modules'
@@ -795,15 +990,21 @@ kernel_builder(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 keepassxc(){
 	local container_name="keepassxc"
 	local container_home="/home/keepassxc"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v '/usr/share/X11/xkb:/usr/share/X11/xkb:ro'
 		-v '/etc/machine-id:/etc/machine-id:ro'
@@ -817,15 +1018,21 @@ keepassxc(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 kvm(){
 	local container_name="kvm"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v '/run/libvirt:/var/run/libvirt'
 		--privileged
@@ -837,15 +1044,21 @@ kvm(){
 	# modprobe the module
 	modprobe kvm
 
-	docker_run_gui
+	docker_run
 }
 libreoffice(){
 	local container_name="libreoffice"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/libreoffice"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/googledrive-home:${container_home}/googledrive-home"
 		-v "${HOME}/Documents:${container_home}/Documents"
@@ -854,16 +1067,22 @@ libreoffice(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 alias lpass=lastpass
 lastpass(){
 	local container_name="lpass"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.lpass:${container_home}/.lpass"
 	)
@@ -871,46 +1090,64 @@ lastpass(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 lynx(){
 	local container_name="lynx"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 masscan(){
 	local container_name="masscan"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/masscan"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 alias mc=midnight_commander
 midnight_commander(){
 	local container_name="mc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${PWD}:${PWD}"
 		--workdir "${PWD}"
@@ -919,15 +1156,21 @@ midnight_commander(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 mpd(){
 	local container_name="mpd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mpd"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	# adding cap sys_admin so I can use nfs mount
 	# the container runs as a unpriviledged user mpd
 	local extra_docker_args=(
@@ -941,15 +1184,21 @@ mpd(){
 		"$@"
 	)
 
-	docker_run_daemon
+	docker_run
 }
 mutt(){
 	local container_name="mutt"
 	local container_home="/home/user"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=()
 	case "${1}" in
 		riseup)
@@ -983,16 +1232,22 @@ mutt(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 ncmpc(){
 	relies_on mpd
 	local container_name="ncmpc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.mpd/socket:/var/run/mpd/socket"
 		-e MPD_HOST=/var/run/mpd/socket
@@ -1001,15 +1256,21 @@ ncmpc(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 neoman(){
 	local container_name="neoman"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--device /dev/bus/usb
 		--device /dev/usb
@@ -1018,7 +1279,7 @@ neoman(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 nes(){
 	local game=$1
@@ -1026,40 +1287,58 @@ nes(){
 	local container_name="nes"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nes"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"/games/${game}.rom" "$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 alias nc=netcat
 netcat(){
 	local container_name="netcat"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="host"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 nginx(){
 	local container_name="nginx-${1}"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.nginx:/etc/nginx:ro"
 		-v "${2}:/usr/share/nginx/html:ro"
@@ -1067,8 +1346,8 @@ nginx(){
 	local application_args=(
 	)
 
-	docker_run_daemon
-	if [[ "${container_ip}" != "<no value>" ]]; then
+	docker_run
+	if is_valid_ip "${container_ip}"; then
 		hostess add ${1} ${container_ip}
 	fi
 }
@@ -1076,31 +1355,43 @@ nmap(){
 	local container_name="nmap"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nmap"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="host"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 notify_osd(){
 	local container_name="notify_osd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_daemon
+	docker_run
 }
 alias notify-send=notify_send
 notify_send(){
@@ -1112,9 +1403,15 @@ now(){
 	local container_name="now"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.now:${container_home}/.now"
 		-v "${PWD}:/usr/src/repo:ro"
@@ -1125,35 +1422,50 @@ now(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 opensnitch(){
-	del_stopped opensnitchd
-	del_stopped opensnitch
+	relies_on opensnitchd
+	local container_name="opensnitch"
+	local container_home="${HOME}"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitch"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="host"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v /etc/machine-id:/etc/machine-id:ro
+		-v /var/run/dbus:/var/run/dbus
+		-v /usr/share/dbus-1:/usr/share/dbus-1
+		-v "/run/user/$(id -u):/run/user/$(id -u)"
+		-e DBUS_SESSION_BUS_ADDRESS
+		-v /tmp:/tmp
+		-u $(id -u):$(id -g)
+		-v /etc/passwd:/etc/passwd:ro
+		-v /etc/group:/etc/group:ro
+		-e HOME=${container_home}
+		-w "${container_home}"
+		--security-opt seccomp=unconfined
+	)
+	local application_args=(
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		--network host \
-		--cap-add NET_ADMIN \
-		-v /etc/machine-id:/etc/machine-id:ro \
-		-v /var/run/dbus:/var/run/dbus \
-		-v /usr/share/dbus-1:/usr/share/dbus-1 \
-		-v "/var/run/user/$(id -u):/var/run/user/$(id -u)" \
-		-e DBUS_SESSION_BUS_ADDRESS \
-		-e XAUTHORITY \
-		-v "${HOME}/.Xauthority:${HOME}/.Xauthority" \
-		-v /tmp:/tmp \
-		--name opensnitchd \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitchd
-
-	docker run --rm -d \
+	docker_run
+}
+opensnitch-old(){
+	docker run --rm -it \
 		-v /etc/localtime:/etc/localtime:ro \
 		-e DISPLAY \
 		-v /usr/share/X11:/usr/share/X11:ro \
 		-v /usr/share/dbus-1:/usr/share/dbus-1 \
 		-v /etc/machine-id:/etc/machine-id:ro \
 		-v /var/run/dbus:/var/run/dbus \
-		-v "/var/run/user/$(id -u):/var/run/user/$(id -u)" \
+		-v "/run/user/$(id -u):/run/user/$(id -u)" \
 		-e DBUS_SESSION_BUS_ADDRESS \
 		-e XAUTHORITY \
 		-v "${HOME}/.Xauthority:${HOME}/.Xauthority" \
@@ -1168,13 +1480,47 @@ opensnitch(){
 		--name opensnitch \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitch
 }
+opensnitchd(){
+	local container_name="opensnitchd"
+	local container_home="/root"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitchd"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="host"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		--cap-add NET_ADMIN
+		-v /etc/machine-id:/etc/machine-id:ro
+		-v /var/run/dbus:/var/run/dbus
+		-v /usr/share/dbus-1:/usr/share/dbus-1
+		-v "/var/run/user/$(id -u):/var/run/user/$(id -u)"
+		-e DBUS_SESSION_BUS_ADDRESS
+		-v /tmp:/tmp
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run
+}
 osquery(){
 	local container_name="osquery"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/osquery"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="host"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v /var/run/docker.sock:/var/run/docker.sock
 		-v /etc/os-release:/etc/os-release:ro
@@ -1205,7 +1551,7 @@ osquery(){
 		"$@"
 	)
 
-	docker_run_daemon
+	docker_run
 }
 pandoc(){
 	local file=${*: -1}
@@ -1218,9 +1564,15 @@ pandoc(){
 	local container_name="pandoc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${lfile}:${rfile}"
 		--tmpfs /tmp
@@ -1230,15 +1582,21 @@ pandoc(){
 		"${rfile}"
 	)
 
-	docker_run_tty
+	docker_run
 }
 pivman(){
 	local container_name="pivman"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--device /dev/bus/usb
 		--device /dev/usb
@@ -1247,16 +1605,22 @@ pivman(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 pms(){
 	relies_on mpd
 	local container_name="pms"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pms"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.mpd/socket:/var/run/mpd/socket" \
 		-e MPD_HOST=/var/run/mpd/socket \
@@ -1265,40 +1629,52 @@ pms(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 pond(){
 	local container_name="pond"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="torproxy"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 privoxy(){
 	relies_on torproxy
 	local container_name="privoxy"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="untrusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_daemon
+	docker_run
 
-	if [[ "${container_ip}" != "<no value>" ]]; then
+	if is_valid_ip "${container_ip}"; then
 		hostess add ${container_name} ${container_ip}
 	fi
 }
@@ -1306,11 +1682,17 @@ pulseaudio(){
 	local container_name="pulseaudio"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=(
 		untrusted
 	)
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--restart always
 	)
@@ -1318,9 +1700,9 @@ pulseaudio(){
 		"$@"
 	)
 
-	docker_run_daemon
+	docker_run
 
-	if [[ "${container_ip}" != "<no value>" ]]; then
+	if is_valid_ip "${container_ip}"; then
 		hostess add ${container_name} ${container_ip}
 	fi
 	export PULSE_SERVER=${container_name}
@@ -1329,9 +1711,15 @@ rainbowstream(){
 	local container_name="rainbowstream"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.rainbowstream:/root"
 	)
@@ -1339,7 +1727,7 @@ rainbowstream(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 registrator(){
 	del_stopped registrator
@@ -1614,18 +2002,24 @@ torproxy(){
 	local container_name="torproxy"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="untrusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 	)
 	local application_args=(
 		"$@"
 	)
 
-	docker_run_daemon
+	docker_run
 
-	if [[ "${container_ip}" != "<no value>" ]]; then
+	if is_valid_ip "${container_ip}"; then
 		hostess add ${container_name} ${container_ip}
 	fi
 }
@@ -1699,9 +2093,15 @@ vscodium(){
 	local container_name="vscodium-${args_hash}"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v /etc/passwd:/etc/passwd:ro
 		-u $(id -u):$(id -g)
@@ -1716,7 +2116,7 @@ vscodium(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 vlc(){
 	del_stopped vlc
@@ -1874,9 +2274,15 @@ chromium(){
 	local container_name="chromium"
 	local container_home="/home/chromium"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chromium"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		--cpuset-cpus 0
 		--memory 3gb
@@ -1943,9 +2349,8 @@ chromium(){
 			;;
 		*)
 			container_home="${HOME}"
+			use_host_user=true
 			extra_docker_args+=(
-				-v /etc/passwd:/etc/passwd:ro
-				-u $(id -u):$(id -g)
 				-v ${HOME}/.chromium/cache:${container_home}/.cache
 				-v ${HOME}/.chromium/config:${container_home}/.config
 				-v ${HOME}/.chromium/pki:${container_home}/.pki
@@ -1972,15 +2377,21 @@ chromium(){
 		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
 	fi
 
-	docker_run_gui
+	docker_run
 }
 dive(){
 	local container_name="dive"
 	local container_home="/root"
 	local image_name="wagoodman/dive"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v /var/run/docker.sock:/var/run/docker.sock
 	)
@@ -1988,15 +2399,21 @@ dive(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 hostess(){
 	local container_name="hostess"
 	local container_home="/root"
 	local image_name="ondrejmo/hostess"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v /etc/hosts:/tmp/hosts:rw
 		-e HOSTESS_PATH=/tmp/hosts
@@ -2005,7 +2422,7 @@ hostess(){
 		"$@"
 	)
 
-	docker_run_tty
+	docker_run
 }
 keepass2(){
 	del_stopped keepass2
@@ -2028,6 +2445,7 @@ keepass2(){
 pia-vpn(){
 	local region
 	local name_prefix=
+	local attach_tty=false
 	local network="untrusted"
 	local extra_networks=()
 
@@ -2061,9 +2479,15 @@ signal-messenger(){
 	local container_name="signal-messenger"
 	local container_home="/home/signal"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v ${HOME}/.signal/config:${container_home}/.config
 		-v ${HOME}/.signal/cache:${container_home}/.cache
@@ -2072,16 +2496,22 @@ signal-messenger(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 alias signal-beta=signal-messenger-beta
 signal-messenger-beta(){
 	local container_name="signal-messenger-beta"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
+	local container_hostname
 	local extra_docker_args=(
 		-v ${HOME}/.signal/config:${container_home}/.config
 		-v ${HOME}/.signal/cache:${container_home}/.cache
@@ -2090,7 +2520,7 @@ signal-messenger-beta(){
 		"$@"
 	)
 
-	docker_run_gui
+	docker_run
 }
 vivaldi(){
 	relies_on pulseaudio
@@ -2106,6 +2536,7 @@ vivaldi(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
+local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	case "${run_type}" in
