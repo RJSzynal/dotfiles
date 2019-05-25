@@ -97,6 +97,7 @@ generate_docker_args(){
 		echo "use_host_audio: ${use_host_audio}"
 		docker_args+=(
 			-e PULSE_SERVER=${audio_ip}
+			--device /dev/snd
 			--group-add audio
 		)
 	fi
