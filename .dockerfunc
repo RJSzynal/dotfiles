@@ -63,28 +63,36 @@ generate_docker_args(){
 	if ${use_host_video}; then
 		echo "use_host_video: ${use_host_video}"
 		docker_args+=(
-			# -e DISPLAY="${display_ip}${DISPLAY}"
 			-e GDK_SCALE
 			-e GDK_DPI_SCALE
 			-e QT_DEVICE_PIXEL_RATIO
 			-v "${HOME}/.gtkrc:${container_home}/.gtkrc:ro"
 			--group-add video
-			-e DISPLAY
-			-v /tmp/.X11-unix:/tmp/.X11-unix
 			# -e XAUTHORITY=${container_home}/.Xauthority
 			# -v "${HOME}/.Xauthority:${container_home}/.Xauthority"
 			# -v /usr/share/X11:/usr/share/X11:ro
 		)
-
-		# Add container to xhost allowed list for 5 seconds
 		if [ -z "${container_hostname}" ]; then
 			get_container_hostname ${container_name}
 		fi
-		if [ ! -z "${container_hostname}" ]; then
-			xhost +local:${container_hostname}
-			(sleep 5; xhost -local:${container_hostname}) &
+		if ${use_x11_socket}; then
+			echo "use_x11_socket: ${use_x11_socket}"
+			docker_args+=(
+				-e DISPLAY
+				-v /tmp/.X11-unix:/tmp/.X11-unix
+			)
+			# Add container to xhost allowed list for 5 seconds
+			if [ ! -z "${container_hostname}" ]; then
+				xhost +local:${container_hostname}
+				echo xhost +local:${container_hostname}
+				(sleep 5; xhost -local:${container_hostname}) &
+			else
+				echo "Error: Container hostname not set"
+			fi
 		else
-			echo "Error: Container hostname not set"
+			docker_args+=(
+				-e DISPLAY="${display_ip}${DISPLAY}"
+			)
 		fi
 	fi
 	if ${use_host_audio}; then
@@ -116,6 +124,7 @@ generate_docker_args(){
 }
 docker_run(){
 	use_host_video=${use_host_video:-false}
+	use_x11_socket=${use_x11_socket:-true}
 	use_host_audio=${use_host_audio:-false}
 	use_host_dbus=${use_host_dbus:-false}
 	use_host_user=${use_host_user:-false}
@@ -142,16 +151,18 @@ docker_run(){
 
 	docker start${docker_start_tty} ${container_name}
 
-# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
 	if ${use_host_video}; then
-		if [ -z "${container_ip}" ]; then
-			get_container_ip ${network} ${container_name}
-		fi
-		if [ ! -z "${container_ip}" ]; then
-			xhost +${container_ip}
-			(sleep 5; xhost -${container_ip}) &
-		else
-			echo "Error: Container IP not set"
+		if ! ${use_x11_socket}; then
+# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
+			if [ -z "${container_ip}" ]; then
+				get_container_ip ${network} ${container_name}
+			fi
+			if [ ! -z "${container_ip}" ]; then
+				xhost +${container_ip}
+				(sleep 5; xhost -${container_ip}) &
+			else
+				echo "Error: Container IP not set"
+			fi
 		fi
 
 		if [ -z "${container_hostname}" ]; then
@@ -165,15 +176,17 @@ docker_run(){
 del_stopped(){
 	local name=$1
 	local force=${2:-false}
-	local state
-	state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
+	local exists=$(docker ps -a --format "{{.Names}}" --filter "name=${name}" | wc -l)
 
-	if [[ "${state}" == "false" ]]; then
-		docker rm "${name}" 2>/dev/null
-	elif [[ "${force}" == "true" ]]; then
-		docker rm -f "${name}" 2>/dev/null
-	else
-		echo "${name} is already running"
+	if [ ${exists} -eq 1 ]; then
+		local state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
+		if ! ${state}; then
+			docker rm "${name}" 2>/dev/null
+		elif ${force}; then
+			docker rm -f "${name}" 2>/dev/null
+		else
+			echo "${name} is already running"
+		fi
 	fi
 }
 get_container_ip(){
