@@ -150,10 +150,10 @@ docker_run(){
 
 	docker start${docker_start_tty} ${container_name}
 
-# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
 	if [ -z "${container_ip}" ]; then
 		set_container_ip ${network} ${container_name}
 	fi
+# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
 	if ${use_host_video}; then
 		if ! ${use_x11_socket}; then
 			if [ -n "${container_ip}" ]; then
@@ -2092,30 +2092,53 @@ visualstudio(){
 		--name visualstudio \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/vscode
 }
-#alias vscode="visualstudio"
-vscodium(){
+vscode(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local container_name="vscodium-${args_hash}"
-	local container_home="/root"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium"
+	local container_name="vscode-${args_hash}"
+	local container_home="/home/vscode"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/vscode"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
-	local use_host_user=false
+	local use_host_user=true
 	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v /etc/passwd:/etc/passwd:ro
-		-u $(id -u):$(id -g)
+		-v ${HOME}/.ssh:${HOME}/.ssh:ro
+		-v ${HOME}/.gitconfig:${HOME}/.gitconfig
+		-v ${HOME}/.ms-vscode/config:${HOME}/.config
+		-v ${HOME}/.ms-vscode/vscode:${HOME}/.vscode
+		-v ${HOME}/development:${HOME}/development
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run
+}
+vscodium(){
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local container_name="vscodium-${args_hash}"
+	local container_home="/home/vscodium"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=true
+	local attach_tty=false
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
 		-v ${HOME}/.ssh:${HOME}/.ssh:ro
 		-v ${HOME}/.gitconfig:${HOME}/.gitconfig
 		-v ${HOME}/.vscodium/config:${HOME}/.config
 		-v ${HOME}/.vscodium/vscode-oss:${HOME}/.vscode-oss
 		-v ${HOME}/development:${HOME}/development
-		-w "${PWD}"
 	)
 	local application_args=(
 		"$@"
