@@ -13,6 +13,9 @@ generate_docker_args(){
 	docker_args=(
 		-v /etc/localtime:/etc/localtime:ro
 	)
+	if [ -z ${container_hostname} ]; then
+		container_hostname="${container_name}"
+	fi
 	case ${network} in
 		none) ;;
 		host)
@@ -22,14 +25,11 @@ generate_docker_args(){
 			container_hostname="$(hostname)"
 			;;
 		bridge)
-			if [[ "${extra_networks[@]}" != "" ]]; then
-				relies_on_networks ${extra_networks[@]};
-			fi
+			relies_on_networks ${extra_networks[@]};
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-			container_hostname="${container_name}"
 			common_docker_args+=(
-				--hostname ${container_name}
+				--hostname ${container_hostname}
 			)
 			;;
 		secure)
@@ -37,24 +37,23 @@ generate_docker_args(){
 			network="container:pia-vpn"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
-			get_container_hostname pia-vpn
-			get_container_ip untrusted pia-vpn
+			set_container_hostname pia-vpn
+			set_container_ip untrusted pia-vpn
 			;;
 		torproxy)
 			relies_on torproxy
 			network="container:torproxy"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
-			get_container_hostname torproxy
-			get_container_ip untrusted torproxy
+			set_container_hostname torproxy
+			set_container_ip untrusted torproxy
 			;;
 		*)
 			relies_on_networks ${network} ${extra_networks[@]}
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-			container_hostname="${container_name}"
 			common_docker_args+=(
-				--hostname ${container_name}
+				--hostname ${container_hostname}
 			)
 			;;
 	esac
@@ -80,14 +79,14 @@ generate_docker_args(){
 				-e DISPLAY
 				-v /tmp/.X11-unix:/tmp/.X11-unix
 			)
-			# Add container to xhost allowed list for 5 seconds
-			if [ ! -z "${container_hostname}" ]; then
-				xhost +local:${container_hostname}
-				echo xhost +local:${container_hostname}
-				(sleep 5; xhost -local:${container_hostname}) &
-			else
-				echo "Error: Container hostname not set"
-			fi
+			# Add container to xhost allowed list for 5 seconds (not needed?)
+			# if [ -n "${container_hostname}" ]; then
+			# 	xhost +local:${container_hostname}
+			# 	echo xhost +local:${container_hostname}
+			# 	(sleep 5; xhost -local:${container_hostname}) &
+			# else
+			# 	echo "Error: Container hostname not set"
+			# fi
 		else
 			docker_args+=(
 				-e DISPLAY="${display_ip}${DISPLAY}"
@@ -150,25 +149,18 @@ docker_run(){
 
 	docker start${docker_start_tty} ${container_name}
 
+# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
+	if [ -z "${container_ip}" ]; then
+		set_container_ip ${network} ${container_name}
+	fi
 	if ${use_host_video}; then
 		if ! ${use_x11_socket}; then
-# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
-			if [ -z "${container_ip}" ]; then
-				get_container_ip ${network} ${container_name}
-			fi
-			if [ ! -z "${container_ip}" ]; then
+			if [ -n "${container_ip}" ]; then
 				xhost +${container_ip}
 				(sleep 5; xhost -${container_ip}) &
 			else
 				echo "Error: Container IP not set"
 			fi
-		fi
-
-		if [ -z "${container_hostname}" ]; then
-			get_container_hostname ${container_name}
-		fi
-		if [ -z "${container_ip}" ]; then
-			get_container_ip ${network} ${container_name}
 		fi
 	fi
 }
@@ -188,11 +180,11 @@ del_stopped(){
 		fi
 	fi
 }
-get_container_ip(){
+set_container_ip(){
 	local container_network_format="{{.NetworkSettings.Networks.${1}.IPAddress}}"
 	container_ip=$(docker inspect --format ${container_network_format} ${2} 2>/dev/null)
 }
-get_container_hostname(){
+set_container_hostname(){
 	local container_hostname_format="{{.Config.Hostname}}"
 	container_hostname=$(docker inspect --format ${container_hostname_format} ${1} 2>/dev/null)
 }
