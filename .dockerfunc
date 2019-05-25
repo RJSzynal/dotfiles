@@ -27,6 +27,7 @@ generate_docker_args(){
 			fi
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			container_hostname="${container_name}"
 			common_docker_args+=(
 				--hostname ${container_name}
 			)
@@ -51,6 +52,7 @@ generate_docker_args(){
 			relies_on_networks ${network} ${extra_networks[@]}
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			container_hostname="${container_name}"
 			common_docker_args+=(
 				--hostname ${container_name}
 			)
@@ -72,9 +74,6 @@ generate_docker_args(){
 			# -v "${HOME}/.Xauthority:${container_home}/.Xauthority"
 			# -v /usr/share/X11:/usr/share/X11:ro
 		)
-		if [ -z "${container_hostname}" ]; then
-			get_container_hostname ${container_name}
-		fi
 		if ${use_x11_socket}; then
 			echo "use_x11_socket: ${use_x11_socket}"
 			docker_args+=(
