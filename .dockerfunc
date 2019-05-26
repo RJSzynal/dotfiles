@@ -1,5 +1,6 @@
 #!/bin/bash
 # Bash wrappers for docker run commands
+# Log levels match the standard syslog severity levels. Set with `dockerfunc_debug` env var.
 
 export JESSFRAZ_DOCKER_REPO_PREFIX=jess
 export MY_DOCKER_REPO_PREFIX=rjszynal
@@ -61,8 +62,10 @@ generate_docker_args(){
 	docker_args+=(
 		--network ${network}
 	)
-	if ${use_host_video}; then
-		echo "use_host_video: ${use_host_video}"
+	if [ "${use_host_video}" = "true" ]; then
+		if [ "${dockerfunc_debug}" -ge 6 ]; then
+			echo "use_host_video: ${use_host_video}"
+		fi
 		docker_args+=(
 			-e GDK_SCALE
 			-e GDK_DPI_SCALE
@@ -73,44 +76,51 @@ generate_docker_args(){
 			# -v "${HOME}/.Xauthority:${container_home}/.Xauthority"
 			# -v /usr/share/X11:/usr/share/X11:ro
 		)
-		if ${use_x11_socket}; then
-			echo "use_x11_socket: ${use_x11_socket}"
+		if [ "${use_x11_socket}" = "true" ]; then
+			if [ "${dockerfunc_debug}" -ge 6 ]; then
+				echo "use_x11_socket: ${use_x11_socket}"
+			fi
 			docker_args+=(
 				-e DISPLAY
 				-v /tmp/.X11-unix:/tmp/.X11-unix
 			)
-			# Add container to xhost allowed list for 5 seconds (not needed?)
-			# if [ -n "${container_hostname}" ]; then
-			# 	xhost +local:${container_hostname}
-			# 	echo xhost +local:${container_hostname}
-			# 	(sleep 5; xhost -local:${container_hostname}) &
-			# else
-			# 	echo "Error: Container hostname not set"
-			# fi
+			# Add container to xhost allowed list for 5 seconds
+			if [ -n "${container_hostname}" ]; then
+				xhost +local:${container_hostname}
+				(sleep 5; xhost -local:${container_hostname}) &
+			else
+				echo "Error: Container hostname not set"
+			fi
 		else
 			docker_args+=(
 				-e DISPLAY="${display_ip}${DISPLAY}"
 			)
 		fi
 	fi
-	if ${use_host_audio}; then
-		echo "use_host_audio: ${use_host_audio}"
+	if [ "${use_host_audio}" = "true" ]; then
+		if [ "${dockerfunc_debug}" -ge 6 ]; then
+			echo "use_host_audio: ${use_host_audio}"
+		fi
 		docker_args+=(
 			-e PULSE_SERVER=${audio_ip}
 			--device /dev/snd
 			--group-add audio
 		)
 	fi
-	if ${use_host_dbus}; then
-		echo "use_host_dbus: ${use_host_dbus}"
+	if [ "${use_host_dbus}" = "true" ]; then
+		if [ "${dockerfunc_debug}" -ge 6 ]; then
+			echo "use_host_dbus: ${use_host_dbus}"
+		fi
 		use_host_user=true
 		docker_args+=(
 			-e DBUS_SESSION_BUS_ADDRESS
 			-v "/run/user/$(id -u):/run/user/$(id -u)"
 		)
 	fi
-	if ${use_host_user}; then
-		echo "use_host_user: ${use_host_user}"
+	if [ "${use_host_user}" = "true" ]; then
+		if [ "${dockerfunc_debug}" -ge 6 ]; then
+			echo "use_host_user: ${use_host_user}"
+		fi
 		docker_args+=(
 			-u $(id -u):$(id -g)
 			-v /etc/passwd:/etc/passwd:ro
@@ -133,7 +143,7 @@ docker_run(){
 
 	local docker_create_tty=
 	local docker_start_tty=
-	if ${attach_tty}; then
+	if [ "${attach_tty}" = "true" ]; then
 		docker_create_tty=" -it"
 		docker_start_tty=" -i"
 	fi
@@ -154,7 +164,7 @@ docker_run(){
 		set_container_ip ${network} ${container_name}
 	fi
 # I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
-	if ${use_host_video}; then
+	if [ "${use_host_video}" = "true" ]; then
 		if ! ${use_x11_socket}; then
 			if [ -n "${container_ip}" ]; then
 				xhost +${container_ip}
@@ -174,7 +184,7 @@ del_stopped(){
 		local state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
 		if ! ${state}; then
 			docker rm "${name}" 2>/dev/null
-		elif ${force}; then
+		elif [ "${force}" = "true" ]; then
 			docker rm -f "${name}" 2>/dev/null
 		else
 			echo "${name} is already running"
