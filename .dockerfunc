@@ -2157,24 +2157,27 @@ vscodium(){
 	docker_run
 }
 vlc(){
-	del_stopped vlc
-	relies_on pulseaudio
+	local container_name="vlc"
+	local container_home="/home/vlc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v "${HOME}/.vlc/config:${container_home}/.config"
+		-v "${HOME}/Videos:${container_home}/Videos"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--group-add video \
-		--group-add audio \
-		--network trusted \
-		-e PULSE_SERVER=pulseaudio \
-		-v "${HOME}/Torrents:/home/vlc/Torrents" \
-		-v "${HOME}/Videos:/home/vlc/Videos" \
-		--device /dev/dri \
-		--name vlc \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc
+	docker_run
 }
 watchman(){
 	del_stopped watchman
