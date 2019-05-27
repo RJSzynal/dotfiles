@@ -432,14 +432,19 @@ cheese(){
 	docker_run
 }
 chrome(){
+	local build=
+	if [[ "$1" == "beta" ]]; then
+		build="-$1"
+		shift
+	fi
 	local run_type=
 	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
 		run_type="$1"
 		shift
 	fi
-	local container_name="chrome"
+	local container_name="chrome${build}"
 	local container_home="/home/chrome"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/chrome${build}"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -452,7 +457,7 @@ chrome(){
 	local extra_docker_args=(
 		--cpuset-cpus 0
 		--memory 3gb
-		--shm-size=2g
+		--shm-size 2g
 		--device /dev/dri
 		--device /dev/usb
 		--device /dev/bus/usb
