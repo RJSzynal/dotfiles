@@ -672,7 +672,7 @@ gcloud(){
 }
 gimp(){
 	local container_name="gimp"
-	local container_home="/root"
+	local container_home="/home/gimp"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gimp"
 	local use_host_video=true
 	local use_host_audio=true
