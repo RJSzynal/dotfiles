@@ -1745,14 +1745,27 @@ rainbowstream(){
 	docker_run
 }
 registrator(){
-	del_stopped registrator
+	local container_name="registrator"
+	local container_home="/root"
+	local image_name="gliderlabs/registrator"
+	local use_host_video=false
+	local use_host_audio=false
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v /var/run/docker.sock:/tmp/docker.sock:ro
+		--restart=unless-stopped
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run -d \
-		--restart always \
-		-v /var/run/docker.sock:/tmp/docker.sock \
-		--network host \
-		--name registrator \
-		gliderlabs/registrator consul:
+	docker_run
 }
 remmina(){
 	del_stopped remmina
