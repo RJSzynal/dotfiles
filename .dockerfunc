@@ -645,57 +645,10 @@ firefox-browser(){
 
 	docker_run
 }
-fleetctl(){
-	local container_name="fleet"
-	local container_home="/root"
-	local image_name="r.j3ss.co/fleet"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		--entrypoint fleetctl
-		-v "${HOME}/.fleet://.fleet"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-gcalcli(){
-	local container_name="gcalcli"
-	local container_home="/home/gcalcli"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcalcli"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v "${HOME}/.gcalcli/home:${container_home}/home"
-		-v "${HOME}/.gcalcli/work/oauth:${container_home}/.gcalcli_oauth"
-		-v "${HOME}/.gcalcli/work/gcalclirc:${container_home}/.gcalclirc"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-dgcloud(){
+gcloud(){
 	local container_name="gcloud"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gcloud"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/gcloud"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -720,7 +673,7 @@ dgcloud(){
 gimp(){
 	local container_name="gimp"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gimp"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/gimp"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
