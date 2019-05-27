@@ -144,21 +144,33 @@ docker_run(){
 	local docker_create_tty=
 	local docker_start_tty=
 	if [ "${attach_tty}" = "true" ]; then
-		docker_create_tty=" -it"
-		docker_start_tty=" -i"
+		docker_create_tty="-it"
+		docker_start_tty="-ia"
 	fi
 
-	docker create --rm${docker_tty} \
-		${docker_args[@]} \
-		--name ${container_name} \
-		${image_name} \
-		${application_args[@]} 2>/dev/null
+	local create_cmd=(
+		docker create --rm ${docker_tty}
+		${docker_args[@]}
+		--name ${container_name}
+		${image_name}
+		${application_args[@]}
+	)
+	if [ "${dockerfunc_debug}" -ge 7 ]; then
+		echo "DEBUG: ${create_cmd[@]}"
+	fi
+	${create_cmd[@]} >/dev/null
 
 	for net in "${extra_networks[@]}"; do
 		docker network connect ${net} ${container_name}
 	done
 
-	docker start${docker_start_tty} ${container_name}
+	local start_cmd=(
+		docker start ${docker_start_tty} ${container_name}
+	)
+	if [ "${dockerfunc_debug}" -ge 7 ]; then
+		echo "DEBUG: ${start_cmd[@]}"
+	fi
+	${start_cmd[@]}
 
 	if [ -z "${container_ip}" ]; then
 		set_container_ip ${network} ${container_name}
@@ -299,8 +311,8 @@ apt_file(){
 }
 audacity(){
 	local container_name="audacity"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/audacity"
+	local container_home="/home/audacity"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/audacity"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -319,8 +331,8 @@ audacity(){
 }
 aws(){
 	local container_name="aws"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/awscli"
+	local container_home="/home/aws"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/awscli"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -331,7 +343,7 @@ aws(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v "${HOME}/.aws:${container_home}/.aws"
+		-v ${HOME}/.aws:${container_home}/.aws
 		-e AWS_DEFAULT_REGION
 		-e AMAZON_ACCESS_KEY_ID
 		-e AMAZON_SECRET_ACCESS_KEY
@@ -345,7 +357,7 @@ aws(){
 az(){
 	local container_name="az"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/azure-cli"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/azure-cli"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -356,33 +368,8 @@ az(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v "${HOME}/.azure:${container_home}/.azure"
-		--log-driver none
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-bees(){
-	local container_name="bees"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/beeswithmachineguns"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-e NOTARY_TOKEN
-		-v "${HOME}/.bees:${container_home}/.bees"
-		-v "${HOME}/.boto:${container_home}/.boto"
-		-v "${HOME}/.dev:${container_home}/.ssh:ro"
+		-v ${HOME}/.azure:${container_home}/.azure
+		-v ${HOME}/.ssh:${container_home}/.ssh:ro
 		--log-driver none
 	)
 	local application_args=(
@@ -409,6 +396,7 @@ cadvisor(){
 		-v /:/rootfs:ro
 		-v /var/run:/var/run:rw
 		-v /sys:/sys:ro
+		-v /dev/disk/:/dev/disk:ro
 		-v /var/lib/docker/:/var/lib/docker:ro
 	)
 	local application_args=(
