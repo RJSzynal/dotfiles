@@ -409,28 +409,6 @@ cadvisor(){
 	fi
 	browser-exec "http://${container_name}:8080"
 }
-cheese(){
-	local container_name="cheese"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/cheese"
-	local use_host_video=true
-	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v "${HOME}/Pictures:${container_home}/Pictures"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
 chrome(){
 	local build=
 	if [[ "$1" == "beta" ]]; then
@@ -2329,7 +2307,7 @@ chromium(){
 	fi
 	local container_name="chromium"
 	local container_home="/home/chromium"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/chromium"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
