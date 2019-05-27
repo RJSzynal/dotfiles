@@ -1768,17 +1768,26 @@ registrator(){
 	docker_run
 }
 remmina(){
-	del_stopped remmina
+	local container_name="remmina"
+	local container_home="/root"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/remmina"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v "${HOME}/.remmina:${container_home}/.remmina"
+	)
+	local application_args=(
+		"$@"
+	)
 
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-v "${HOME}/.remmina:/root/.remmina" \
-		--name remmina \
-		--network host \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/remmina
+	docker_run
 }
 ricochet(){
 	del_stopped ricochet
