@@ -287,28 +287,6 @@ function is_valid_ip(){
 #
 # Container Aliases
 #
-alias apt-file="apt_file"
-apt_file(){
-	local container_name="apt-file"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/apt-file"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=()
-	local application_args=(
-		apt-file
-		"$@"
-	)
-
-	docker_run
-}
 audacity(){
 	local container_name="audacity"
 	local container_home="/home/audacity"
