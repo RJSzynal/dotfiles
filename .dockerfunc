@@ -149,7 +149,7 @@ docker_run(){
 	fi
 
 	local create_cmd=(
-		docker create --rm ${docker_tty}
+		docker create --rm ${docker_create_tty}
 		${docker_args[@]}
 		--name ${container_name}
 		${image_name}
@@ -158,7 +158,7 @@ docker_run(){
 	if [ "${dockerfunc_debug}" -ge 7 ]; then
 		echo "DEBUG: ${create_cmd[@]}"
 	fi
-	${create_cmd[@]} >/dev/null
+	eval "${create_cmd[@]} >/dev/null"
 
 	for net in "${extra_networks[@]}"; do
 		docker network connect ${net} ${container_name}
@@ -170,7 +170,7 @@ docker_run(){
 	if [ "${dockerfunc_debug}" -ge 7 ]; then
 		echo "DEBUG: ${start_cmd[@]}"
 	fi
-	${start_cmd[@]}
+	eval "${start_cmd[@]}"
 
 	if [ -z "${container_ip}" ]; then
 		set_container_ip ${network} ${container_name}
@@ -672,8 +672,8 @@ gimp(){
 }
 gitsome(){
 	local container_name="gitsome"
-	local container_home="/home/anon"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/gitsome"
+	local container_home="/home/gitsome"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/gitsome:test"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -684,8 +684,10 @@ gitsome(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v "${HOME}/.gitsomeconfig:${container_home}/.gitsomeconfig"
-		-v "${HOME}/.gitsomeconfigurl:${container_home}/.gitsomeconfigurl"
+		-v "${HOME}/.gitsome/config:${container_home}/.gitsomeconfig"
+		-v "${HOME}/.gitsome/configurl:${container_home}/.gitsomeconfigurl"
+		-v "${HOME}/development:${container_home}/development"
+		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
 	)
 	local application_args=(
 		"$@"
@@ -695,7 +697,7 @@ gitsome(){
 }
 hollywood(){
 	local container_name="hollywood"
-	local container_home="/root"
+	local container_home="/home/hollywood"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/hollywood"
 	local use_host_video=false
 	local use_host_audio=false
