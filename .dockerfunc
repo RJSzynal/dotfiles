@@ -737,28 +737,6 @@ htop(){
 
 	docker_run
 }
-htpasswd(){
-	local container_name="htpasswd"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htpasswd"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=true
-	local network="none"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		--log-driver none
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
 alias http=httpie
 httpie(){
 	local container_name="httpie"
