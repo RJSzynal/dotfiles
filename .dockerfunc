@@ -698,7 +698,7 @@ gitsome(){
 hollywood(){
 	local container_name="hollywood"
 	local container_home="/home/hollywood"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/hollywood"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/hollywood"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
