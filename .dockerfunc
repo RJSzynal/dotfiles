@@ -718,7 +718,7 @@ hollywood(){
 htop(){
 	local container_name="htop"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/htop"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/htop"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
