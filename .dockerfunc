@@ -84,10 +84,10 @@ generate_docker_args(){
 				-e DISPLAY
 				-v /tmp/.X11-unix:/tmp/.X11-unix
 			)
-			# Add container to xhost allowed list for 5 seconds
+			# Add container to xhost allowed list for 3 seconds
 			if [ -n "${container_hostname}" ]; then
 				xhost +local:${container_hostname}
-				(sleep 5; xhost -local:${container_hostname}) &
+				(sleep 3; xhost -local:${container_hostname}) &
 			else
 				echo "Error: Container hostname not set"
 			fi
@@ -180,7 +180,7 @@ docker_run(){
 		if ! ${use_x11_socket}; then
 			if [ -n "${container_ip}" ]; then
 				xhost +${container_ip}
-				(sleep 5; xhost -${container_ip}) &
+				(sleep 3; xhost -${container_ip}) &
 			else
 				echo "Error: Container IP not set"
 			fi
@@ -222,6 +222,7 @@ relies_on(){
 		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			echo "${container} is not running, starting it for you."
 			${container}
+			sleep 1 # Give it a second to ensure it starts before the application
 		fi
 	done
 }
