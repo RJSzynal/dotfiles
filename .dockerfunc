@@ -222,7 +222,7 @@ relies_on(){
 		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			echo "${container} is not running, starting it for you."
 			${container}
-			sleep 1 # Give it a second to ensure it starts before the application
+			sleep 3 # Give it a few seconds to ensure it starts before the application
 		fi
 	done
 }
