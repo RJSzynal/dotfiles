@@ -177,8 +177,7 @@ docker_run(){
 		set_container_ip ${network} ${container_name}
 	fi
 # I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
-	if [ "${use_host_video}" = "true" ]; then
-		if ! ${use_x11_socket}; then
+	if [ "${use_host_video}" = "true" ] && [ "${use_x11_socket}" = "false" ]; then
 			if [ -n "${container_ip}" ]; then
 				xhost +${container_ip}
 				(sleep 3; xhost -${container_ip}) &
@@ -187,7 +186,6 @@ docker_run(){
 				echo "Error: Container IP not set"
 			fi
 		fi
-	fi
 }
 del_stopped(){
 	local name=$1
@@ -196,7 +194,7 @@ del_stopped(){
 
 	if [ ${exists} -eq 1 ]; then
 		local state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
-		if ! ${state}; then
+		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			docker rm "${name}" 2>/dev/null
 		elif [ "${force}" = "true" ]; then
 			docker rm -f "${name}" 2>/dev/null
