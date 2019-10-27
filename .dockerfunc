@@ -84,6 +84,21 @@ generate_docker_args(){
 				-e DISPLAY
 				-v /tmp/.X11-unix:/tmp/.X11-unix
 			)
+			if [ "${XDG_SESSION_TYPE}" = "wayland" ]; then
+				docker_args+=(
+					-e QT_QPA_PLATFORM=wayland
+					-e GDK_BACKEND=wayland
+					-e CLUTTER_BACKEND=wayland
+					-e SDL_VIDEODRIVER=wayland
+					-e ELM_DISPLAY=wl
+					-e ELM_ACCEL=opengl
+					-e ECORE_EVAS_ENGINE=wayland_egl
+					-e XDG_RUNTIME_DIR=/tmp
+					-e WAYLAND_DISPLAY
+					-v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY
+					--user=$(id -u):$(id -g)
+				)
+			fi
 			# Add container to xhost allowed list for 3 seconds
 			if [ -n "${container_hostname}" ]; then
 				xhost +local:${container_hostname}
@@ -178,14 +193,14 @@ docker_run(){
 	fi
 # I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
 	if [ "${use_host_video}" = "true" ] && [ "${use_x11_socket}" = "false" ]; then
-			if [ -n "${container_ip}" ]; then
-				xhost +${container_ip}
-				(sleep 3; xhost -${container_ip}) &
+		if [ -n "${container_ip}" ]; then
+			xhost +${container_ip}
+			(sleep 3; xhost -${container_ip}) &
 			disown
-			else
-				echo "Error: Container IP not set"
-			fi
+		else
+			echo "Error: Container IP not set"
 		fi
+	fi
 }
 del_stopped(){
 	local name=$1
