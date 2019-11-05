@@ -63,7 +63,7 @@ generate_docker_args(){
 		--network ${network}
 	)
 	if [ "${use_host_video}" = "true" ]; then
-		if [ "${dockerfunc_debug}" -ge 6 ]; then
+		if [ ${debug_level} -ge 6 ]; then
 			echo "use_host_video: ${use_host_video}"
 		fi
 		docker_args+=(
@@ -77,7 +77,7 @@ generate_docker_args(){
 			# -v /usr/share/X11:/usr/share/X11:ro
 		)
 		if [ "${use_x11_socket}" = "true" ]; then
-			if [ "${dockerfunc_debug}" -ge 6 ]; then
+			if [ ${debug_level} -ge 6 ]; then
 				echo "use_x11_socket: ${use_x11_socket}"
 			fi
 			docker_args+=(
@@ -99,14 +99,6 @@ generate_docker_args(){
 					--user=$(id -u):$(id -g)
 				)
 			fi
-			# Add container to xhost allowed list for 3 seconds
-			if [ -n "${container_hostname}" ]; then
-				xhost +local:${container_hostname}
-				(sleep 3; xhost -local:${container_hostname}) &
-				disown
-			else
-				echo "Error: Container hostname not set"
-			fi
 		else
 			docker_args+=(
 				-e DISPLAY="${display_ip}${DISPLAY}"
@@ -114,7 +106,7 @@ generate_docker_args(){
 		fi
 	fi
 	if [ "${use_host_audio}" = "true" ]; then
-		if [ "${dockerfunc_debug}" -ge 6 ]; then
+		if [ ${debug_level} -ge 6 ]; then
 			echo "use_host_audio: ${use_host_audio}"
 		fi
 		docker_args+=(
@@ -124,7 +116,7 @@ generate_docker_args(){
 		)
 	fi
 	if [ "${use_host_dbus}" = "true" ]; then
-		if [ "${dockerfunc_debug}" -ge 6 ]; then
+		if [ ${debug_level} -ge 6 ]; then
 			echo "use_host_dbus: ${use_host_dbus}"
 		fi
 		use_host_user=true
@@ -134,7 +126,7 @@ generate_docker_args(){
 		)
 	fi
 	if [ "${use_host_user}" = "true" ]; then
-		if [ "${dockerfunc_debug}" -ge 6 ]; then
+		if [ ${debug_level} -ge 6 ]; then
 			echo "use_host_user: ${use_host_user}"
 		fi
 		docker_args+=(
@@ -148,12 +140,43 @@ generate_docker_args(){
 	docker_args+=( ${extra_docker_args[@]} )
 }
 docker_run(){
+	case ${dockerfunc_debug:-3} in
+		Debug|debug|7)
+			debug_level=7
+			;;
+		Informational|informational|info|6)
+			debug_level=6
+			;;
+		Notice|notice|5)
+			debug_level=5
+			;;
+		Warning|warning|warn|4)
+			debug_level=4
+			;;
+		Error|error|err|3)
+			debug_level=3
+			;;
+		Critical|critical|crit|2)
+			debug_level=2
+			;;
+		Alert|alert|1)
+			debug_level=1
+			;;
+		Emergency|emergency|emerg|0)
+			debug_level=0
+			;;
+		*)
+			debug_level=3
+			;;
+	esac
 	use_host_video=${use_host_video:-false}
 	use_x11_socket=${use_x11_socket:-true}
 	use_host_audio=${use_host_audio:-false}
 	use_host_dbus=${use_host_dbus:-false}
 	use_host_user=${use_host_user:-false}
 	attach_tty=${attach_tty:-false}
+
+	docker pull ${image_name}
 	generate_docker_args
 	del_stopped ${container_name}
 
@@ -171,7 +194,7 @@ docker_run(){
 		${image_name}
 		${application_args[@]}
 	)
-	if [ "${dockerfunc_debug}" -ge 7 ]; then
+	if [ ${debug_level} -ge 7 ]; then
 		echo "DEBUG: ${create_cmd[@]}"
 	fi
 	eval "${create_cmd[@]} >/dev/null"
@@ -180,10 +203,20 @@ docker_run(){
 		docker network connect ${net} ${container_name}
 	done
 
+	if [ "${use_host_video}" = "true" ] && [ "${use_x11_socket}" = "true" ]; then
+		# Add container to xhost allowed list for 3 seconds
+		if [ -n "${container_hostname}" ]; then
+			xhost +local:${container_hostname}
+			(sleep 3; xhost -local:${container_hostname}) &
+			disown
+		else
+			echo "Error: Container hostname not set"
+		fi
+	fi
 	local start_cmd=(
 		docker start ${docker_start_tty} ${container_name}
 	)
-	if [ "${dockerfunc_debug}" -ge 7 ]; then
+	if [ ${debug_level} -ge 7 ]; then
 		echo "DEBUG: ${start_cmd[@]}"
 	fi
 	eval "${start_cmd[@]}"
@@ -191,7 +224,7 @@ docker_run(){
 	if [ -z "${container_ip}" ]; then
 		set_container_ip ${network} ${container_name}
 	fi
-# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
+	# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
 	if [ "${use_host_video}" = "true" ] && [ "${use_x11_socket}" = "false" ]; then
 		if [ -n "${container_ip}" ]; then
 			xhost +${container_ip}
@@ -498,7 +531,7 @@ chrome(){
 				-v ${HOME}/.chrome/cache:${container_home}/.cache
 				-v ${HOME}/.chrome/config:${container_home}/.config
 				-v ${HOME}/.chrome/pki:${container_home}/.pki
-				-v ${HOME}/.chrome/local:${container_home}/.local
+				-v ${HOME}/.local:${container_home}/.local
 				-v ${HOME}/.chrome/gnome:${container_home}/.gnome
 				-v ${HOME}/Downloads:${container_home}/Downloads
 				-v ${HOME}/Pictures:${container_home}/Pictures
@@ -1766,22 +1799,27 @@ slack(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/slack "$@"
 }
 spotify(){
-	del_stopped spotify
-	relies_on pulseaudio
+        local container_name="spotify"
+        local container_home="/home/spotify"
+        local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/spotify"
+        local use_host_video=true
+        local use_host_audio=true
+        local use_host_dbus=false
+        local use_host_user=false
+        local attach_tty=false
+        local network="trusted"
+        local extra_networks=()
+        local container_ip
+        local container_hostname
+        local extra_docker_args=(
+		-v ${HOME}/.spotify/config:/home/spotify/.config/spotify
+                -v ${HOME}/.spotify/cache:/home/spotify/.cache/spotify
+	)
+        local application_args=(
+                "$@"
+        )
 
-	docker run --rm -d \
-		--network trusted \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		-e QT_DEVICE_PIXEL_RATIO \
-		--security-opt seccomp:unconfined \
-		--group-add video \
-		--group-add audio \
-		-e PULSE_SERVER=pulseaudio \
-		-v ${HOME}/.config/spotify:/home/spotify/.config/spotify \
-		-v ${HOME}/.cache/spotify:/home/spotify/spotify \
-		--name spotify \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/spotify
+        docker_run
 }
 ssh2john(){
 	local file
@@ -1974,6 +2012,7 @@ virsh(){
 		--network container:kvm \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/libvirt-client "$@"
 }
+alias virt-viewer="virt_viewer"
 virt_viewer(){
 	relies_on kvm
 
@@ -1987,17 +2026,6 @@ virt_viewer(){
 		--network container:kvm \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/virt-viewer "$@"
 }
-alias virt-viewer="virt_viewer"
-visualstudio(){
-	del_stopped visualstudio
-
-	docker run --rm -d \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY \
-		--device /dev/dri \
-		--name visualstudio \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/vscode
-}
 vscode(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscode-${args_hash}"
@@ -2006,17 +2034,17 @@ vscode(){
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
-	local use_host_user=true
+	local use_host_user=false
 	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.ssh:${HOME}/.ssh:ro
-		-v ${HOME}/.gitconfig:${HOME}/.gitconfig
-		-v ${HOME}/.ms-vscode/config:${HOME}/.config
-		-v ${HOME}/.ms-vscode/vscode:${HOME}/.vscode
+		-v ${HOME}/.ssh:${container_home}/.ssh:ro
+		-v ${HOME}/.gitconfig:${container_home}/.gitconfig
+		-v ${HOME}/.ms-vscode/config:${container_home}/.config
+		-v ${HOME}/.ms-vscode/vscode:${container_home}/.vscode
 		-v ${HOME}/development:${HOME}/development
 	)
 	local application_args=(
@@ -2033,17 +2061,18 @@ vscodium(){
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
-	local use_host_user=true
+	local use_host_user=false
 	local attach_tty=false
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.ssh:${HOME}/.ssh:ro
-		-v ${HOME}/.gitconfig:${HOME}/.gitconfig
-		-v ${HOME}/.vscodium/config:${HOME}/.config
-		-v ${HOME}/.vscodium/vscode-oss:${HOME}/.vscode-oss
+		-v ${HOME}/.ssh:${container_home}/.ssh:ro
+		-v ${HOME}/.gitconfig:${container_home}/.gitconfig
+		-v ${HOME}/.vscodium/config:${container_home}/.config
+		-v ${HOME}/.vscodium/vscode-oss:${container_home}/.vscode-oss
+		-v ${HOME}/development:${container_home}/development
 		-v ${HOME}/development:${HOME}/development
 	)
 	local application_args=(
@@ -2153,55 +2182,6 @@ yubico_piv_tool(){
 alias yubico-piv-tool="yubico_piv_tool"
 
 ## Robert's extras
-chrome-secure(){
-	del_stopped chrome-secure
-	del_stopped chrome-vpn
-
-	docker run --rm -d \
-		--cap-add=NET_ADMIN \
-		--device=/dev/net/tun \
-		--dns 209.222.18.222 --dns 209.222.18.218 \
-		-e REGION=Switzerland \
-		-e "USERNAME=$(head -n 1 ${HOME}/pia/login)" \
-		-e "PASSWORD=$(tail -n 1 ${HOME}/pia/login)" \
-		--name chrome-vpn \
-		colinhebert/pia-openvpn
-
-	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
-		mkdir -p ${HOME}/seccomp
-		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
-	fi
-
-	SESSIONXAUTH=${XAUTHORITY:-${HOME}/.Xauthority}
-	DOCKER_XAUTH=${SESSIONXAUTH}.docker
-	cp --preserve=all ${SESSIONXAUTH} ${DOCKER_XAUTH}
-	echo "ffff 0000  $(xauth nlist ${DISPLAY} | cut -d\  -f4-)" | xauth -f ${DOCKER_XAUTH} nmerge -
-
-	xhost +"local:docker@"
-
-	docker run --rm -i \
-		--network container:chrome-vpn \
-		--cpuset-cpus 0 \
-		--memory 1gb \
-		-e DISPLAY \
-		-v ${DOCKER_XAUTH}:${DOCKER_XAUTH}:ro \
-		-e XAUTHORITY=${DOCKER_XAUTH} \
-		-v ${HOME}/Downloads:/home/chrome/Downloads \
-		--security-opt seccomp:${HOME}/seccomp/chrome.json \
-		--device /dev/snd \
-		--device /dev/dri \
-		--group-add audio \
-		--shm-size=2g \
-		--name chrome-secure \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/chrome \
-			-new-instance \
-			--incognito \
-			--user-data-dir=/data
-
-	xhost -"local:docker@"
-
-	docker rm -fv chrome-vpn
-}
 chromium(){
 	local run_type=
 	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
@@ -2286,12 +2266,12 @@ chromium(){
 			;;
 		*)
 			container_home="${HOME}"
-			use_host_user=true
+			use_host_user=false
 			extra_docker_args+=(
 				-v ${HOME}/.chromium/cache:${container_home}/.cache
 				-v ${HOME}/.chromium/config:${container_home}/.config
 				-v ${HOME}/.chromium/pki:${container_home}/.pki
-				-v ${HOME}/.chromium/local:${container_home}/.local
+				-v ${HOME}/.local:${container_home}/.local
 				-v ${HOME}/.chromium/gnome:${container_home}/.gnome
 				-v ${HOME}/Downloads:${container_home}/Downloads
 				-v ${HOME}/Pictures:${container_home}/Pictures
