@@ -176,7 +176,6 @@ docker_run(){
 	use_host_user=${use_host_user:-false}
 	attach_tty=${attach_tty:-false}
 
-	docker pull ${image_name}
 	generate_docker_args
 	del_stopped ${container_name}
 
@@ -186,6 +185,9 @@ docker_run(){
 		docker_create_tty="-it"
 		docker_start_tty="-ia"
 	fi
+
+	# Pull the image if we don't have it
+	docker image inspect ${image_name} >/dev/null 2>&1 || docker pull ${image_name}
 
 	local create_cmd=(
 		docker create --rm ${docker_create_tty}
@@ -339,7 +341,7 @@ function is_valid_ip(){
 audacity(){
 	local container_name="audacity"
 	local container_home="/home/audacity"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/audacity"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/audacity:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -359,7 +361,7 @@ audacity(){
 aws(){
 	local container_name="aws"
 	local container_home="/home/aws"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/awscli"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/awscli:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -384,7 +386,7 @@ aws(){
 az(){
 	local container_name="az"
 	local container_home="/root"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/azure-cli"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/azure-cli:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -408,7 +410,7 @@ az(){
 cadvisor(){
 	local container_name="cadvisor"
 	local container_home="/root"
-	local image_name="google/cadvisor"
+	local image_name="google/cadvisor:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -449,7 +451,7 @@ chrome(){
 	fi
 	local container_name="chrome${build}"
 	local container_home="/home/chrome"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/chrome${build}"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/chrome${build}:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -559,7 +561,7 @@ chrome(){
 consul(){
 	local container_name="consul"
 	local container_home="/root"
-	local image_name="consul"
+	local image_name="consul:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -608,7 +610,7 @@ firefox-browser(){
 	fi
 	local container_name="firefox"
 	local container_home="/home/firefox"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/firefox"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/firefox:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -675,7 +677,7 @@ firefox-browser(){
 gcloud(){
 	local container_name="gcloud"
 	local container_home="/root"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/gcloud"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/gcloud:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -700,7 +702,7 @@ gcloud(){
 gimp(){
 	local container_name="gimp"
 	local container_home="/home/gimp"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/gimp"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/gimp:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -722,7 +724,7 @@ gimp(){
 gitsome(){
 	local container_name="gitsome"
 	local container_home="/home/gitsome"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/gitsome:test"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/gitsome:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -747,7 +749,7 @@ gitsome(){
 hollywood(){
 	local container_name="hollywood"
 	local container_home="/home/hollywood"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/hollywood"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/hollywood:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -767,7 +769,7 @@ hollywood(){
 htop(){
 	local container_name="htop"
 	local container_home="/home/htop"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/htop"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/htop:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -790,7 +792,7 @@ alias http=httpie
 httpie(){
 	local container_name="httpie"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -823,7 +825,7 @@ imagemin(){
 	local filename="${image_name%.*}"
 	local container_name="imagemin"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -845,7 +847,7 @@ imagemin(){
 irssi() {
 	local container_name="irssi"
 	local container_home="/home/user"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -869,7 +871,7 @@ john(){
 	local file=$(realpath "$1")
 	local container_name="john"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -892,7 +894,7 @@ alias build_kernel=kernel_builder
 kernel_builder(){
 	local container_name="kernel-builder"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -917,7 +919,7 @@ kernel_builder(){
 keepassxc(){
 	local container_name="keepassxc"
 	local container_home="/home/keepassxc"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -945,7 +947,7 @@ keepassxc(){
 kvm(){
 	local container_name="kvm"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -971,7 +973,7 @@ kvm(){
 libreoffice(){
 	local container_name="libreoffice"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/libreoffice"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/libreoffice:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -995,7 +997,7 @@ alias lpass=lastpass
 lastpass(){
 	local container_name="lpass"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1017,7 +1019,7 @@ lastpass(){
 lynx(){
 	local container_name="lynx"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1038,7 +1040,7 @@ lynx(){
 masscan(){
 	local container_name="masscan"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/masscan"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/masscan:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1060,7 +1062,7 @@ alias mc=midnight_commander
 midnight_commander(){
 	local container_name="mc"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1083,7 +1085,7 @@ midnight_commander(){
 mpd(){
 	local container_name="mpd"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mpd"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mpd:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1111,7 +1113,7 @@ mpd(){
 mutt(){
 	local container_name="mutt"
 	local container_home="/home/user"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1160,7 +1162,7 @@ ncmpc(){
 	relies_on mpd
 	local container_name="ncmpc"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1183,7 +1185,7 @@ ncmpc(){
 neoman(){
 	local container_name="neoman"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -1208,7 +1210,7 @@ nes(){
 	shift
 	local container_name="nes"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nes"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nes:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -1230,7 +1232,7 @@ alias nc=netcat
 netcat(){
 	local container_name="netcat"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1251,7 +1253,7 @@ netcat(){
 nginx(){
 	local container_name="nginx-${1}"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1276,7 +1278,7 @@ nginx(){
 nmap(){
 	local container_name="nmap"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nmap"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nmap:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1297,7 +1299,7 @@ nmap(){
 notify_osd(){
 	local container_name="notify_osd"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1324,7 +1326,7 @@ notify_send(){
 now(){
 	local container_name="now"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1350,7 +1352,7 @@ opensnitch(){
 	relies_on opensnitchd
 	local container_name="opensnitch"
 	local container_home="${HOME}"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitch"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitch:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -1405,7 +1407,7 @@ opensnitch-old(){
 opensnitchd(){
 	local container_name="opensnitchd"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitchd"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitchd:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1433,7 +1435,7 @@ opensnitchd(){
 osquery(){
 	local container_name="osquery"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/osquery"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/osquery:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1485,7 +1487,7 @@ pandoc(){
 
 	local container_name="pandoc"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1509,7 +1511,7 @@ pandoc(){
 pivman(){
 	local container_name="pivman"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -1533,7 +1535,7 @@ pms(){
 	relies_on mpd
 	local container_name="pms"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pms"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pms:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1556,7 +1558,7 @@ pms(){
 pond(){
 	local container_name="pond"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1578,7 +1580,7 @@ privoxy(){
 	relies_on torproxy
 	local container_name="privoxy"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1603,7 +1605,7 @@ privoxy(){
 pulseaudio(){
 	local container_name="pulseaudio"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1632,7 +1634,7 @@ pulseaudio(){
 rainbowstream(){
 	local container_name="rainbowstream"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1654,7 +1656,7 @@ rainbowstream(){
 registrator(){
 	local container_name="registrator"
 	local container_home="/root"
-	local image_name="gliderlabs/registrator"
+	local image_name="gliderlabs/registrator:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -1677,7 +1679,7 @@ registrator(){
 remmina(){
 	local container_name="remmina"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/remmina"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/remmina:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -1801,7 +1803,7 @@ slack(){
 spotify(){
         local container_name="spotify"
         local container_home="/home/spotify"
-        local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/spotify"
+        local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/spotify:latest"
         local use_host_video=true
         local use_host_audio=true
         local use_host_dbus=false
@@ -1950,7 +1952,7 @@ tormessenger(){
 torproxy(){
 	local container_name="torproxy"
 	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -2030,7 +2032,7 @@ vscode(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscode-${args_hash}"
 	local container_home="/home/vscode"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/vscode"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/vscode:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -2057,7 +2059,7 @@ vscodium(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscodium-${args_hash}"
 	local container_home="/home/vscodium"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -2084,7 +2086,7 @@ vscodium(){
 vlc(){
 	local container_name="vlc"
 	local container_home="/home/vlc"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc"
+	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -2190,7 +2192,7 @@ chromium(){
 	fi
 	local container_name="chromium"
 	local container_home="/home/chromium"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
@@ -2299,7 +2301,7 @@ chromium(){
 dive(){
 	local container_name="dive"
 	local container_home="/root"
-	local image_name="wagoodman/dive"
+	local image_name="wagoodman/dive:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -2321,7 +2323,7 @@ dive(){
 hostess(){
 	local container_name="hostess"
 	local container_home="/root"
-	local image_name="ondrejmo/hostess"
+	local image_name="ondrejmo/hostess:latest"
 	local use_host_video=false
 	local use_host_audio=false
 	local use_host_dbus=false
@@ -2395,7 +2397,7 @@ alias signal=signal-messenger
 signal-messenger(){
 	local container_name="signal-messenger"
 	local container_home="/home/signal"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local use_host_dbus=false
