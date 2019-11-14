@@ -1803,7 +1803,7 @@ slack(){
 spotify(){
         local container_name="spotify"
         local container_home="/home/spotify"
-        local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/spotify:latest"
+        local image_name="${MY_DOCKER_REPO_PREFIX}/spotify-client:latest"
         local use_host_video=true
         local use_host_audio=true
         local use_host_dbus=false
