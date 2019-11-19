@@ -320,19 +320,19 @@ browser_exec(){
 }
 function is_valid_ip(){
 	# Thanks Mitch Frazier https://www.linuxjournal.com/content/validating-ip-address-bash-script
-    local  ip=$1
-    local  stat=1
+	local  ip=$1
+	local  stat=1
 
-    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        OIFS=$IFS
-        IFS='.'
-        ip=($ip)
-        IFS=$OIFS
-        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
-            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
-        stat=$?
-    fi
-    return $stat
+	if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+		OIFS=$IFS
+		IFS='.'
+		ip=($ip)
+		IFS=$OIFS
+		[[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+			&& ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+		stat=$?
+	fi
+	return $stat
 }
 
 #
@@ -1801,27 +1801,27 @@ slack(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/slack "$@"
 }
 spotify(){
-        local container_name="spotify"
-        local container_home="/home/spotify"
-        local image_name="${MY_DOCKER_REPO_PREFIX}/spotify-client:latest"
-        local use_host_video=true
-        local use_host_audio=true
-        local use_host_dbus=false
-        local use_host_user=false
-        local attach_tty=false
-        local network="trusted"
-        local extra_networks=()
-        local container_ip
-        local container_hostname
-        local extra_docker_args=(
-		-v ${HOME}/.spotify/config:/home/spotify/.config/spotify
-                -v ${HOME}/.spotify/cache:/home/spotify/.cache/spotify
+	local container_name="spotify"
+	local container_home="/home/spotify"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/spotify-client:latest"
+	local use_host_video=true
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+	-v ${HOME}/.spotify/config:/home/spotify/.config/spotify
+			-v ${HOME}/.spotify/cache:/home/spotify/.cache/spotify
 	)
-        local application_args=(
-                "$@"
-        )
+	local application_args=(
+			"$@"
+	)
 
-        docker_run
+	docker_run
 }
 spotifyd(){
 	local container_name="spotifyd"
