@@ -1823,6 +1823,29 @@ spotify(){
 
         docker_run
 }
+spotifyd(){
+	local container_name="spotifyd"
+	local container_home="/home/spotify"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/spotifyd:latest"
+	local use_host_video=false
+	local use_host_audio=true
+	local use_host_dbus=false
+	local use_host_user=false
+	local attach_tty=false
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+	-v ${HOME}/.spotifyd/config:/home/spotify/.config/spotify
+	-v ${HOME}/.spotifyd/cache:/home/spotify/.cache/spotify
+	)
+	local application_args=(
+			"$@"
+	)
+
+	docker_run
+}
 ssh2john(){
 	local file
 	file=$(realpath "$1")
