@@ -1895,6 +1895,7 @@ spotifyd(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
+		-p 1234:1234
 		-v ${HOME}/.spotifyd/config:${container_home}/.config/spotifyd
 		-v ${HOME}/.spotifyd/cache:${container_home}/.cache/spotifyd
 	)
