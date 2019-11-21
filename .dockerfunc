@@ -202,6 +202,9 @@ docker_run(){
 	eval "${create_cmd[@]} >/dev/null"
 
 	for net in "${extra_networks[@]}"; do
+		if [ ${debug_level} -ge 7 ]; then
+			echo "DEBUG: docker network connect ${net} ${container_name}"
+		fi
 		docker network connect ${net} ${container_name}
 	done
 
