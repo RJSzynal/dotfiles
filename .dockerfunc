@@ -175,22 +175,29 @@ docker_run(){
 	use_host_dbus=${use_host_dbus:-false}
 	use_host_user=${use_host_user:-false}
 	attach_tty=${attach_tty:-false}
+	restart_policy=${restart_policy:-no}
 
 	generate_docker_args
 	del_stopped ${container_name}
 
 	local docker_create_tty=
 	local docker_start_tty=
+	local docker_restart_policy=
 	if [ "${attach_tty}" = "true" ]; then
 		docker_create_tty="-it"
 		docker_start_tty="-ia"
+	fi
+	if [ "${restart_policy}" = "no" ] && [ ${debug_level} -lt 7 ]; then
+		docker_restart_policy='--rm'
+	else
+		docker_restart_policy="--restart ${restart_policy}"
 	fi
 
 	# Pull the image if we don't have it
 	docker image inspect ${image_name} >/dev/null 2>&1 || docker pull ${image_name}
 
 	local create_cmd=(
-		docker create --rm ${docker_create_tty}
+		docker create ${docker_restart_policy} ${docker_create_tty}
 		${docker_args[@]}
 		--name ${container_name}
 		${image_name}
@@ -353,6 +360,7 @@ audacity(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -373,6 +381,7 @@ aws(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -398,6 +407,7 @@ az(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -422,12 +432,12 @@ cadvisor(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="always"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		--restart always
 		-v /:/rootfs:ro
 		-v /var/run:/var/run:rw
 		-v /sys:/sys:ro
@@ -463,6 +473,7 @@ chrome(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -573,6 +584,7 @@ consul(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="always"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -582,7 +594,6 @@ consul(){
 		-v "${HOME}/.consul:/consul/config"
 		-v /var/run/docker.sock:/var/run/docker.sock:ro
 		-e GOMAXPROCS=2
-		--restart always
 	)
 	local application_args=(
 		agent
@@ -622,6 +633,7 @@ firefox-browser(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -689,6 +701,7 @@ gcloud(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -714,6 +727,7 @@ gimp(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -736,6 +750,7 @@ gitsome(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -761,6 +776,7 @@ hollywood(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -781,6 +797,7 @@ htop(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="none"
 	local extra_networks=()
 	local container_ip
@@ -804,6 +821,7 @@ httpie(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -837,6 +855,7 @@ imagemin(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -859,6 +878,7 @@ irssi() {
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -883,6 +903,7 @@ john(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -906,6 +927,7 @@ kernel_builder(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -931,6 +953,7 @@ keepassxc(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -959,6 +982,7 @@ kvm(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -985,6 +1009,7 @@ libreoffice(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1009,6 +1034,7 @@ lastpass(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1031,6 +1057,7 @@ lynx(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1052,6 +1079,7 @@ masscan(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1074,6 +1102,7 @@ midnight_commander(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1097,6 +1126,7 @@ mpd(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1125,6 +1155,7 @@ mutt(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1174,6 +1205,7 @@ ncmpc(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1197,6 +1229,7 @@ neoman(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1222,6 +1255,7 @@ nes(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1244,6 +1278,7 @@ netcat(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1265,6 +1300,7 @@ nginx(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1290,6 +1326,7 @@ nmap(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1311,6 +1348,7 @@ notify_osd(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1338,6 +1376,7 @@ now(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1364,6 +1403,7 @@ opensnitch(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1419,6 +1459,7 @@ opensnitchd(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1447,6 +1488,7 @@ osquery(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1499,6 +1541,7 @@ pandoc(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1523,6 +1566,7 @@ pivman(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1547,6 +1591,7 @@ pms(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1570,6 +1615,7 @@ pond(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="torproxy"
 	local extra_networks=()
 	local container_ip
@@ -1592,6 +1638,7 @@ privoxy(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="untrusted"
 	local extra_networks=()
 	local container_ip
@@ -1617,6 +1664,7 @@ pulseaudio(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="always"
 	local network="trusted"
 	local extra_networks=(
 		untrusted
@@ -1624,7 +1672,6 @@ pulseaudio(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		--restart always
 	)
 	local application_args=(
 		"$@"
@@ -1632,6 +1679,7 @@ pulseaudio(){
 
 	docker_run
 
+	echo ${container_ip}
 	if is_valid_ip "${container_ip}"; then
 		hostess add ${container_name} ${container_ip}
 	fi
@@ -1646,6 +1694,7 @@ rainbowstream(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1668,13 +1717,13 @@ registrator(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="unless-stopped"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
 		-v /var/run/docker.sock:/tmp/docker.sock:ro
-		--restart=unless-stopped
 	)
 	local application_args=(
 		"$@"
@@ -1691,6 +1740,7 @@ remmina(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1815,6 +1865,7 @@ spotify(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1838,6 +1889,7 @@ spotifyd(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1987,6 +2039,7 @@ torproxy(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="untrusted"
 	local extra_networks=()
 	local container_ip
@@ -2067,6 +2120,7 @@ vscode(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2094,6 +2148,7 @@ vscodium(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2121,6 +2176,7 @@ vlc(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2227,6 +2283,7 @@ chromium(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2336,6 +2393,7 @@ dive(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2358,6 +2416,7 @@ hostess(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=true
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2394,6 +2453,7 @@ pia-vpn(){
 	local region
 	local name_prefix=
 	local attach_tty=false
+	local restart_policy="no"
 	local network="untrusted"
 	local extra_networks=()
 
@@ -2432,6 +2492,7 @@ signal-messenger(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2456,6 +2517,7 @@ signal-messenger-beta(){
 	local use_host_dbus=false
 	local use_host_user=false
 	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2484,7 +2546,8 @@ vivaldi(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
-local attach_tty=false
+	local attach_tty=false
+	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	case "${run_type}" in
