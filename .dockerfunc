@@ -357,10 +357,6 @@ audacity(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/audacity:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -376,12 +372,7 @@ aws(){
 	local container_name="aws"
 	local container_home="/home/aws"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/awscli:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -402,12 +393,7 @@ az(){
 	local container_name="az"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/azure-cli:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -427,11 +413,6 @@ cadvisor(){
 	local container_name="cadvisor"
 	local container_home="/root"
 	local image_name="google/cadvisor:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
 	local restart_policy="always"
 	local network="trusted"
 	local extra_networks=()
@@ -470,10 +451,6 @@ chrome(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/chrome${build}:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -579,11 +556,6 @@ consul(){
 	local container_name="consul"
 	local container_home="/root"
 	local image_name="consul:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
 	local restart_policy="always"
 	local network="trusted"
 	local extra_networks=()
@@ -630,10 +602,6 @@ firefox-browser(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/firefox:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -696,12 +664,7 @@ gcloud(){
 	local container_name="gcloud"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gcloud:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -724,10 +687,6 @@ gimp(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gimp:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -745,12 +704,7 @@ gitsome(){
 	local container_name="gitsome"
 	local container_home="/home/gitsome"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gitsome:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -771,12 +725,7 @@ hollywood(){
 	local container_name="hollywood"
 	local container_home="/home/hollywood"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/hollywood:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -792,12 +741,7 @@ htop(){
 	local container_name="htop"
 	local container_home="/home/htop"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/htop:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="none"
 	local extra_networks=()
 	local container_ip
@@ -816,12 +760,7 @@ httpie(){
 	local container_name="httpie"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -841,21 +780,12 @@ imagemin(){
 	local directory=$(dirname "${image_path}")
 	local container_home="/root"
 	local image_name=$(basename "${image_path}")
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local extension="${image_name##*.}"
 	local filename="${image_name%.*}"
 	local container_name="imagemin"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/imagemin:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -873,12 +803,7 @@ irssi() {
 	local container_name="irssi"
 	local container_home="/home/user"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -898,12 +823,7 @@ john(){
 	local container_name="john"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -922,12 +842,7 @@ kernel_builder(){
 	local container_name="kernel-builder"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -950,10 +865,6 @@ keepassxc(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -979,10 +890,6 @@ kvm(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1006,10 +913,6 @@ libreoffice(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/libreoffice:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1029,12 +932,7 @@ lastpass(){
 	local container_name="lpass"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1052,12 +950,7 @@ lynx(){
 	local container_name="lynx"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1074,12 +967,7 @@ masscan(){
 	local container_name="masscan"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/masscan:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1097,12 +985,7 @@ midnight_commander(){
 	local container_name="mc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1121,12 +1004,6 @@ mpd(){
 	local container_name="mpd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mpd:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1150,12 +1027,6 @@ mutt(){
 	local container_name="mutt"
 	local container_home="/home/user"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1200,12 +1071,7 @@ ncmpc(){
 	local container_name="ncmpc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1226,10 +1092,6 @@ neoman(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1252,10 +1114,6 @@ nes(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nes:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1273,12 +1131,7 @@ netcat(){
 	local container_name="netcat"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1295,12 +1148,6 @@ nginx(){
 	local container_name="nginx-${1}"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1321,12 +1168,7 @@ nmap(){
 	local container_name="nmap"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nmap:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1343,12 +1185,6 @@ notify_osd(){
 	local container_name="notify_osd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1371,12 +1207,7 @@ now(){
 	local container_name="now"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1400,10 +1231,6 @@ opensnitch(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitch:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1454,12 +1281,6 @@ opensnitchd(){
 	local container_name="opensnitchd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitchd:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1483,12 +1304,6 @@ osquery(){
 	local container_name="osquery"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/osquery:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="host"
 	local extra_networks=()
 	local container_ip
@@ -1536,12 +1351,7 @@ pandoc(){
 	local container_name="pandoc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pandoc:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1563,10 +1373,6 @@ pivman(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1586,12 +1392,7 @@ pms(){
 	local container_name="pms"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pms:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1610,12 +1411,7 @@ pond(){
 	local container_name="pond"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="torproxy"
 	local extra_networks=()
 	local container_ip
@@ -1633,12 +1429,6 @@ privoxy(){
 	local container_name="privoxy"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/privoxy:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="untrusted"
 	local extra_networks=()
 	local container_ip
@@ -1659,11 +1449,6 @@ pulseaudio(){
 	local container_name="pulseaudio"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
 	local restart_policy="always"
 	local network="trusted"
 	local extra_networks=(
@@ -1689,12 +1474,7 @@ rainbowstream(){
 	local container_name="rainbowstream"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1712,11 +1492,6 @@ registrator(){
 	local container_name="registrator"
 	local container_home="/root"
 	local image_name="gliderlabs/registrator:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
 	local restart_policy="unless-stopped"
 	local network="trusted"
 	local extra_networks=()
@@ -1737,10 +1512,6 @@ remmina(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/remmina:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1862,10 +1633,6 @@ spotify(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/spotify-client:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -1884,12 +1651,7 @@ spotifyd(){
 	local container_name="spotifyd"
 	local container_home="/home/spotify"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/spotifyd:latest"
-	local use_host_video=false
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2035,12 +1797,6 @@ torproxy(){
 	local container_name="torproxy"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="untrusted"
 	local extra_networks=()
 	local container_ip
@@ -2118,10 +1874,6 @@ vscode(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/vscode:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2146,10 +1898,6 @@ vscodium(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2174,10 +1922,6 @@ vlc(){
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2281,10 +2025,6 @@ chromium(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2389,12 +2129,7 @@ dive(){
 	local container_name="dive"
 	local container_home="/root"
 	local image_name="wagoodman/dive:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2412,12 +2147,7 @@ hostess(){
 	local container_name="hostess"
 	local container_home="/root"
 	local image_name="ondrejmo/hostess:latest"
-	local use_host_video=false
-	local use_host_audio=false
-	local use_host_dbus=false
-	local use_host_user=false
 	local attach_tty=true
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2453,8 +2183,6 @@ keepass2(){
 pia-vpn(){
 	local region
 	local name_prefix=
-	local attach_tty=false
-	local restart_policy="no"
 	local network="untrusted"
 	local extra_networks=()
 
@@ -2490,10 +2218,6 @@ signal-messenger(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:latest"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2515,10 +2239,6 @@ signal-messenger-beta(){
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
 	local use_host_video=true
 	local use_host_audio=true
-	local use_host_dbus=false
-	local use_host_user=false
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	local container_ip
@@ -2547,8 +2267,6 @@ vivaldi(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
 
-	local attach_tty=false
-	local restart_policy="no"
 	local network="trusted"
 	local extra_networks=()
 	case "${run_type}" in
