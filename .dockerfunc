@@ -281,8 +281,8 @@ relies_on(){
 	done
 }
 relies_on_networks(){
-	for network in "$@"; do
-		docker network create "${network}" 2>/dev/null || true
+	for this_network in "$@"; do
+		docker network create "${this_network}" 2>/dev/null || true
 	done
 }
 # creates an nginx config for a local route
