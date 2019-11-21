@@ -256,6 +256,7 @@ del_stopped(){
 		fi
 	fi
 }
+# Usage: set_container_ip [NETWORK NAME] [CONTAINER NAME]
 set_container_ip(){
 	local container_network_format="{{.NetworkSettings.Networks.${1}.IPAddress}}"
 	container_ip=$(docker inspect --format ${container_network_format} ${2} 2>/dev/null)
