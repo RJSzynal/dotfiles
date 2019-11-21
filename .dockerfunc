@@ -1871,8 +1871,8 @@ spotify(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-	-v ${HOME}/.spotify/config:/home/spotify/.config/spotify
-			-v ${HOME}/.spotify/cache:/home/spotify/.cache/spotify
+		-v ${HOME}/.spotify/config:${container_home}/.config/spotify
+		-v ${HOME}/.spotify/cache:${container_home}/.cache/spotify
 	)
 	local application_args=(
 			"$@"
@@ -1895,8 +1895,8 @@ spotifyd(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-	-v ${HOME}/.spotifyd/config:/home/spotify/.config/spotify
-	-v ${HOME}/.spotifyd/cache:/home/spotify/.cache/spotify
+		-v ${HOME}/.spotifyd/config:${container_home}/.config/spotifyd
+		-v ${HOME}/.spotifyd/cache:${container_home}/.cache/spotifyd
 	)
 	local application_args=(
 			"$@"
