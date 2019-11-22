@@ -25,7 +25,7 @@ BLURTYPE="5x3" # 3.80s
 # BLURTYPE="2x8" # 2.90s
 # BLURTYPE="2x3" # 2.92s
 
-scrot $IMAGE
+maim -u $IMAGE
 
 docker run --rm \
 	-v $IMAGE:$IMAGE \
