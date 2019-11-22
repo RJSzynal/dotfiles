@@ -1,0 +1,26 @@
+#!/bin/bash
+##############################################################################
+# lock-image-gen
+# -----------
+# Converts an image to work on dual monitors
+#
+# Dependencies: docker, xrandr, grep, cut, rm
+
+# :authors: Robert Szynal
+# :date: 22 November 2019
+# :version: 0.0.1
+##############################################################################
+set -e
+
+original_image="${1}"
+convert_command="docker run --rm -v ${original_image%/*}:${original_image%/*} jess/imagemagick convert"
+monitor1_res="$(xrandr | grep " connected" | grep +0+0 | cut -d' ' -f3 | cut -d'+' -f1)"
+monitor2_res="$(xrandr | grep " connected" | grep -v +0+0 | cut -d' ' -f3 | cut -d'+' -f1)"
+
+echo "Generating monitor 1 ($(echo ${monitor1_res} | cut -d'x' -f2)p)"
+${convert_command} ${original_image} -resize ${monitor1_res}^ -gravity center -extent ${monitor1_res} ${original_image%.*}-monitor_1.png
+echo "Generating monitor 2 ($(echo ${monitor2_res} | cut -d'x' -f2)p)"
+${convert_command} ${original_image} -resize ${monitor2_res}^ -gravity center -extent ${monitor2_res} ${original_image%.*}-monitor_2.png
+echo "Combining images"
+${convert_command} ${original_image%.*}-monitor_1.png ${original_image%.*}-monitor_2.png +append ${original_image%.*}-dual.png
+rm -f ${original_image%.*}-monitor_1.png ${original_image%.*}-monitor_2.png
