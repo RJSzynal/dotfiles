@@ -113,6 +113,7 @@ generate_docker_args(){
 			-e PULSE_SERVER=${audio_ip}
 			--device /dev/snd
 			--group-add audio
+			-v ${HOME}/.config/pulse:${container_home}/.config/pulse
 		)
 	fi
 	if [ "${use_host_dbus}" = "true" ]; then
