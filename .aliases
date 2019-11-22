@@ -27,10 +27,10 @@ alias ~="cd ~" # `cd` is probably faster to type though
 alias -- -="cd -"
 
 # Shortcuts
-alias dl="cd ~/Downloads"
 alias g="git"
 alias h="history"
-alias gc=". /usr/local/bin/gitdate && git commit -v "
+# alias gc=". /usr/local/bin/gitdate && git commit -v "
+alias gc="git commit"
 
 # Detect which `ls` flavor is in use
 if ls --color > /dev/null 2>&1; then # GNU `ls`
@@ -73,7 +73,7 @@ alias pubip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias localip="sudo ifconfig | grep -Eo 'inet (addr:)?([0-9]*\\.){3}[0-9]*' | grep -Eo '([0-9]*\\.){3}[0-9]*' | grep -v '127.0.0.1'"
 alias ips="sudo ifconfig -a | grep -o 'inet6\\? \\(addr:\\)\\?\\s\\?\\(\\(\\([0-9]\\+\\.\\)\\{3\\}[0-9]\\+\\)\\|[a-fA-F0-9:]\\+\\)' | awk '{ sub(/inet6? (addr:)? ?/, \"\"); print }'"
 
-# Flush Directory Service cache
+# Flush Directory Service cache (OSX)
 alias flush="dscacheutil -flushcache && killall -HUP mDNSResponder"
 
 # View HTTP traffic
@@ -95,10 +95,6 @@ alias c="tr -d '\\n' | xclip -selection clipboard"
 # URL-encode strings
 alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1]);"'
 
-# Merge PDF files
-# Usage: `mergepdf -o output.pdf input{1,2,3}.pdf`
-alias mergepdf='/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py'
-
 # Intuitive map function
 # For example, to list all directories that contain a certain file:
 # find . -name .gitattributes | map dirname
@@ -115,7 +111,7 @@ done
 alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
 
 # Lock the screen (when going AFK)
-alias afk="i3lock -c 000000"
+alias afk="fancy-i3lock -uti ~/Pictures/Wallpapers/Disney/disney-wooden-383301.png"
 
 # vhosts
 alias hosts='sudo vim /etc/hosts'
@@ -133,7 +129,11 @@ alias mv='mv -i'
 alias untar='tar xvf'
 
 # Pipe my public key to my clipboard.
-alias pubkey="more ~/.ssh/id_ed25519.pub | xclip -selection clipboard | echo '=> Public key copied to pasteboard.'"
+alias pubkey="more ~/.ssh/personal.pub | xclip -selection clipboard | echo '=> Public key copied to pasteboard.'"
 
 # Pipe my private key to my clipboard.
-alias prikey="more ~/.ssh/id_ed25519 | xclip -selection clipboard | echo '=> Private key copied to pasteboard.'"
+alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> Private key copied to pasteboard.'"
+
+# Webapps
+alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
+alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
