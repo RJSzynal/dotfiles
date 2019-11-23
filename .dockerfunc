@@ -553,6 +553,117 @@ chrome(){
 
 	docker_run
 }
+chromium(){
+	local run_type=
+	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
+		run_type="$1"
+		shift
+	fi
+	local container_name="chromium"
+	local container_home="/home/chromium"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium:latest"
+	local use_host_video=true
+	local use_host_audio=true
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		--cpuset-cpus 0
+		--memory 3gb
+		--shm-size=2g
+		--device /dev/dri
+		--device /dev/usb
+		--device /dev/bus/usb
+		-v "/etc/hosts:/etc/hosts:ro"
+		--security-opt seccomp:${HOME}/seccomp/chrome.json
+	)
+	local application_args=()
+
+	case "${run_type}" in
+		secure)
+			container_name="${container_name}-secure"
+			network="secure"
+
+			extra_docker_args+=(
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.config"
+				--tmpfs "${container_home}/.pki"
+				--tmpfs "${container_home}/.local"
+				--tmpfs "${container_home}/.gnome"
+			)
+			application_args+=(
+				--user-data-dir="${container_home}/.config/chromium"
+				--incognito
+				--no-first-run
+				--no-default-browser-check
+			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://www.privateinternetaccess.com/
+				)
+			fi
+			;;
+		tor)
+			relies_on torproxy
+			container_name="${container_name}-tor"
+			network="untrusted"
+
+			extra_docker_args+=(
+				--tmpfs "${container_home}/.cache"
+				--tmpfs "${container_home}/.config"
+				--tmpfs "${container_home}/.pki"
+				--tmpfs "${container_home}/.local"
+				--tmpfs "${container_home}/.gnome"
+			)
+			application_args+=(
+				--user-data-dir="${container_home}/.config/chromium"
+				--incognito
+				--no-first-run
+				--no-default-browser-check
+				--proxy-server="socks5://torproxy:9050"
+				--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE torproxy"
+			)
+
+			if [[ "$@" == "" ]]; then
+				application_args+=(
+					https://check.torproject.org/api/ip
+				)
+			fi
+			;;
+		*)
+			container_home="${HOME}"
+			use_host_user=false
+			extra_docker_args+=(
+				-v ${HOME}/.chromium/cache:${container_home}/.cache
+				-v ${HOME}/.chromium/config:${container_home}/.config
+				-v ${HOME}/.chromium/pki:${container_home}/.pki
+				-v ${HOME}/.local:${container_home}/.local
+				-v ${HOME}/.chromium/gnome:${container_home}/.gnome
+				-v ${HOME}/Downloads:${container_home}/Downloads
+				-v ${HOME}/Pictures:${container_home}/Pictures
+				-v ${HOME}/Torrents:${container_home}/Torrents
+			)
+			application_args+=(
+				--user-data-dir="${HOME}/.config/chromium"
+			)
+			;;
+	esac
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	container_name="${container_name}-${args_hash}"
+	unset args
+	application_args+=(
+		"$@"
+	)
+
+	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
+		mkdir -p ${HOME}/seccomp
+		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
+	fi
+
+	docker_run
+}
 consul(){
 	local container_name="consul"
 	local container_home="/root"
@@ -591,6 +702,24 @@ consul(){
 		hostess add ${container_name} ${container_ip}
 	fi
 	browser-exec "http://${container_name}:8500"
+}
+dive(){
+	local container_name="dive"
+	local container_home="/root"
+	local image_name="wagoodman/dive:latest"
+	local attach_tty=true
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v /var/run/docker.sock:/var/run/docker.sock
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run
 }
 firefox-browser(){
 	local run_type=
@@ -738,6 +867,25 @@ hollywood(){
 
 	docker_run
 }
+hostess(){
+	local container_name="hostess"
+	local container_home="/root"
+	local image_name="ondrejmo/hostess:latest"
+	local attach_tty=true
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v /etc/hosts:/tmp/hosts:rw
+		-e HOSTESS_PATH=/tmp/hosts
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run
+}
 htop(){
 	local container_name="htop"
 	local container_home="/home/htop"
@@ -800,26 +948,8 @@ imagemin(){
 
 	docker_run
 }
-irssi() {
-	local container_name="irssi"
-	local container_home="/home/user"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/irssi:latest"
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v "${HOME}/.irssi:${container_home}/.irssi"
-		--read-only
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-john(){
+alias john=john_the_ripper
+john_the_ripper(){
 	local file=$(realpath "$1")
 	local container_name="john"
 	local container_home="/root"
@@ -928,25 +1058,6 @@ libreoffice(){
 
 	docker_run
 }
-alias lpass=lastpass
-lastpass(){
-	local container_name="lpass"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lpass:latest"
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v "${HOME}/.lpass:${container_home}/.lpass"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
 lynx(){
 	local container_name="lynx"
 	local container_home="/root"
@@ -994,92 +1105,6 @@ midnight_commander(){
 	local extra_docker_args=(
 		-v "${PWD}:${PWD}"
 		--workdir "${PWD}"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-mpd(){
-	local container_name="mpd"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mpd:latest"
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	# adding cap sys_admin so I can use nfs mount
-	# the container runs as a unpriviledged user mpd
-	local extra_docker_args=(
-		--cap-add SYS_ADMIN
-		-e MPD_HOST=/var/lib/mpd/socket
-		-v /etc/exports:/etc/exports:ro
-		-v "${HOME}/.mpd:/var/lib/mpd"
-		-v "${HOME}/.mpd.conf:/etc/mpd.conf"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-mutt(){
-	local container_name="mutt"
-	local container_home="/home/user"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mutt:latest"
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=()
-	case "${1}" in
-		riseup)
-			container_name="mutt-${1}"
-			extra_docker_args+=(
-				-e GMAIL=${MAIL_RISEUP}
-				-e GMAIL_NAME=${MAIL_RISEUP_NAME}
-				-e GMAIL_PASS=${MAIL_RISEUP_PASS}
-				-e GMAIL_FROM=${MAIL_RISEUP_FROM}
-				-e GPG_ID
-				-e IMAP_SERVER=mail.riseup.net
-				-e SMTP_SERVER=mail.riseup.net
-				-v "${HOME}/.gnupg:${container_home}/.gnupg:ro"
-			)
-			shift
-			;;
-		*)
-			extra_docker_args+=(
-				-e GMAIL
-				-e GMAIL_NAME
-				-e GMAIL_PASS
-				-e GMAIL_FROM
-				-e GPG_ID
-				-e IMAP_SERVER
-				-e SMTP_SERVER
-				-v "${HOME}/.gnupg:${container_home}/.gnupg:ro"
-			)
-			;;
-	esac
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-ncmpc(){
-	relies_on mpd
-	local container_name="ncmpc"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/ncmpc:latest"
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v "${HOME}/.mpd/socket:/var/run/mpd/socket"
-		-e MPD_HOST=/var/run/mpd/socket
 	)
 	local application_args=(
 		"$@"
@@ -1368,6 +1393,37 @@ pandoc(){
 
 	docker_run
 }
+pia-vpn(){
+	local region
+	local name_prefix=
+	local network="untrusted"
+	local extra_networks=()
+
+	case "${1}" in
+		host)
+			name_prefix="host-"
+			network="host"
+			region="${2:-Switzerland}"
+			;;
+		*)
+			relies_on_networks untrusted
+			region="${1:-Switzerland}"
+			;;
+	esac
+
+	del_stopped ${name_prefix}pia-vpn
+
+	docker run --rm -d \
+		--network ${network} \
+		--cap-add=NET_ADMIN \
+		--device=/dev/net/tun \
+		--dns 209.222.18.222 --dns 209.222.18.218 \
+		-e REGION="${region}" \
+		-e USERNAME="$(head -n 1 ${HOME}/pia/login)" \
+		-e PASSWORD="$(tail -n 1 ${HOME}/pia/login)" \
+		--name ${name_prefix}pia-vpn \
+		colinhebert/pia-openvpn
+}
 pivman(){
 	local container_name="pivman"
 	local container_home="/root"
@@ -1471,24 +1527,6 @@ pulseaudio(){
 	fi
 	export PULSE_SERVER=${container_name}
 }
-rainbowstream(){
-	local container_name="rainbowstream"
-	local container_home="/root"
-	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/rainbowstream:latest"
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v "${HOME}/.rainbowstream:/root"
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
 registrator(){
 	local container_name="registrator"
 	local container_home="/root"
@@ -1552,7 +1590,7 @@ rstudio(){
 		--name rstudio \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/rstudio
 }
-s3cmdocker(){
+s3cmd(){
 	del_stopped s3cmd
 
 	docker run --rm -it \
@@ -1597,6 +1635,48 @@ shorewall(){
 		--privileged \
 		--name shorewall \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/shorewall "$@"
+}
+alias signal=signal-messenger
+signal-messenger(){
+	local container_name="signal-messenger"
+	local container_home="/home/signal"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:latest"
+	local use_host_video=true
+	local use_host_audio=true
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v ${HOME}/.signal/config:${container_home}/.config
+		-v ${HOME}/.signal/cache:${container_home}/.cache
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run
+}
+alias signal-beta=signal-messenger-beta
+signal-messenger-beta(){
+	local container_name="signal-messenger-beta"
+	local container_home="/root"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
+	local use_host_video=true
+	local use_host_audio=true
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v ${HOME}/.signal/config:${container_home}/.config
+		-v ${HOME}/.signal/cache:${container_home}/.cache
+	)
+	local application_args=(
+		"$@"
+	)
+
+	docker_run
 }
 skype(){
 	del_stopped skype
@@ -1868,6 +1948,79 @@ virt_viewer(){
 		--network container:kvm \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/virt-viewer "$@"
 }
+vivaldi(){
+	relies_on pulseaudio
+	local run_type=
+	if [[ "$1" == "secure" ]]; then
+		run_type="$1"
+		shift
+	fi
+
+	local extra_vivaldi_args=( ${@} )
+	local extra_docker_args=()
+	local name_suffix=
+	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+
+	local network="trusted"
+	local extra_networks=()
+	case "${run_type}" in
+		secure)
+			relies_on pia-vpn
+			name_suffix="-secure"
+			network="container:pia-vpn"
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+
+			extra_docker_args+=(
+				--tmpfs "/home/vivaldi/.cache"
+				--tmpfs "/home/vivaldi/.config"
+				--tmpfs "/home/vivaldi/.pki"
+			)
+			extra_vivaldi_args+=(
+				--incognito
+				https://www.privateinternetaccess.com/
+			)
+			;;
+		*)
+			relies_on_networks ${network}
+			extra_docker_args+=(
+				-v ${HOME}/.vivaldi/cache:/home/vivaldi/.cache
+				-v ${HOME}/.vivaldi/config:/home/vivaldi/.config
+				-v ${HOME}/.vivaldi/pki:/home/vivaldi/.pki
+				-v ${HOME}/Downloads:/home/vivaldi/Downloads
+				-v ${HOME}/Pictures:/home/vivaldi/Pictures
+				-v ${HOME}/Torrents:/home/vivaldi/Torrents
+			)
+			extra_vivaldi_args+=(
+				-new-window
+			)
+			;;
+	esac
+
+	del_stopped vivaldi${name_suffix}-${args_hash}
+	relies_on pulseaudio
+
+	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
+		mkdir -p ${HOME}/seccomp
+		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
+	fi
+
+	docker run --rm -d \
+		--network ${network} \
+		--memory 4gb \
+		--shm-size=2g \
+		-h "$(hostname)" \
+		-v /etc/localtime:/etc/localtime:ro \
+		-e DISPLAY="${display_ip}${DISPLAY}" \
+		-e GDK_SCALE \
+		-e GDK_DPI_SCALE \
+		-e PULSE_SERVER="pulseaudio" \
+		--security-opt seccomp:${HOME}/seccomp/chrome.json \
+		${extra_docker_args[@]} \
+		--name vivaldi${name_suffix}-${args_hash} \
+		${MY_DOCKER_REPO_PREFIX}/vivaldi \
+			${extra_vivaldi_args[@]}
+}
 vscode(){
 	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscode-${args_hash}"
@@ -2013,317 +2166,3 @@ yubico_piv_tool(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/yubico-piv-tool bash
 }
 alias yubico-piv-tool="yubico_piv_tool"
-
-## Robert's extras
-chromium(){
-	local run_type=
-	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
-		run_type="$1"
-		shift
-	fi
-	local container_name="chromium"
-	local container_home="/home/chromium"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium:latest"
-	local use_host_video=true
-	local use_host_audio=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		--cpuset-cpus 0
-		--memory 3gb
-		--shm-size=2g
-		--device /dev/dri
-		--device /dev/usb
-		--device /dev/bus/usb
-		-v "/etc/hosts:/etc/hosts:ro"
-		--security-opt seccomp:${HOME}/seccomp/chrome.json
-	)
-	local application_args=()
-
-	case "${run_type}" in
-		secure)
-			container_name="${container_name}-secure"
-			network="secure"
-
-			extra_docker_args+=(
-				--tmpfs "${container_home}/.cache"
-				--tmpfs "${container_home}/.config"
-				--tmpfs "${container_home}/.pki"
-				--tmpfs "${container_home}/.local"
-				--tmpfs "${container_home}/.gnome"
-			)
-			application_args+=(
-				--user-data-dir="${container_home}/.config/chromium"
-				--incognito
-				--no-first-run
-				--no-default-browser-check
-			)
-
-			if [[ "$@" == "" ]]; then
-				application_args+=(
-					https://www.privateinternetaccess.com/
-				)
-			fi
-			;;
-		tor)
-			relies_on torproxy
-			container_name="${container_name}-tor"
-			network="untrusted"
-
-			extra_docker_args+=(
-				--tmpfs "${container_home}/.cache"
-				--tmpfs "${container_home}/.config"
-				--tmpfs "${container_home}/.pki"
-				--tmpfs "${container_home}/.local"
-				--tmpfs "${container_home}/.gnome"
-			)
-			application_args+=(
-				--user-data-dir="${container_home}/.config/chromium"
-				--incognito
-				--no-first-run
-				--no-default-browser-check
-				--proxy-server="socks5://torproxy:9050"
-				--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE torproxy"
-			)
-
-			if [[ "$@" == "" ]]; then
-				application_args+=(
-					https://check.torproject.org/api/ip
-				)
-			fi
-			;;
-		*)
-			container_home="${HOME}"
-			use_host_user=false
-			extra_docker_args+=(
-				-v ${HOME}/.chromium/cache:${container_home}/.cache
-				-v ${HOME}/.chromium/config:${container_home}/.config
-				-v ${HOME}/.chromium/pki:${container_home}/.pki
-				-v ${HOME}/.local:${container_home}/.local
-				-v ${HOME}/.chromium/gnome:${container_home}/.gnome
-				-v ${HOME}/Downloads:${container_home}/Downloads
-				-v ${HOME}/Pictures:${container_home}/Pictures
-				-v ${HOME}/Torrents:${container_home}/Torrents
-			)
-			application_args+=(
-				--user-data-dir="${HOME}/.config/chromium"
-			)
-			;;
-	esac
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	container_name="${container_name}-${args_hash}"
-	unset args
-	application_args+=(
-		"$@"
-	)
-
-	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
-		mkdir -p ${HOME}/seccomp
-		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
-	fi
-
-	docker_run
-}
-dive(){
-	local container_name="dive"
-	local container_home="/root"
-	local image_name="wagoodman/dive:latest"
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v /var/run/docker.sock:/var/run/docker.sock
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-hostess(){
-	local container_name="hostess"
-	local container_home="/root"
-	local image_name="ondrejmo/hostess:latest"
-	local attach_tty=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v /etc/hosts:/tmp/hosts:rw
-		-e HOSTESS_PATH=/tmp/hosts
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-keepass2(){
-	del_stopped keepass2
-
-	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' trusted)
-
-	docker run --rm -d \
-		--network trusted \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY="${display_ip}${DISPLAY}" \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-v ${HOME}/.keepass2/plugins:/usr/lib/keepass2/Plugins \
-		-v ${HOME}/.keepass2/home:/home/keepass2 \
-		-v ${HOME}/googledrive-home/backup/keepass:/home/keepass2/databases \
-		-v ${HOME}/.ssh:/home/keepass2/.ssh \
-		--name keepass2 \
-		${MY_DOCKER_REPO_PREFIX}/keepass2
-}
-pia-vpn(){
-	local region
-	local name_prefix=
-	local network="untrusted"
-	local extra_networks=()
-
-	case "${1}" in
-		host)
-			name_prefix="host-"
-			network="host"
-			region="${2:-Switzerland}"
-			;;
-		*)
-			relies_on_networks untrusted
-			region="${1:-Switzerland}"
-			;;
-	esac
-
-	del_stopped ${name_prefix}pia-vpn
-
-	docker run --rm -d \
-		--network ${network} \
-		--cap-add=NET_ADMIN \
-		--device=/dev/net/tun \
-		--dns 209.222.18.222 --dns 209.222.18.218 \
-		-e REGION="${region}" \
-		-e USERNAME="$(head -n 1 ${HOME}/pia/login)" \
-		-e PASSWORD="$(tail -n 1 ${HOME}/pia/login)" \
-		--name ${name_prefix}pia-vpn \
-		colinhebert/pia-openvpn
-}
-alias signal=signal-messenger
-signal-messenger(){
-	local container_name="signal-messenger"
-	local container_home="/home/signal"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:latest"
-	local use_host_video=true
-	local use_host_audio=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v ${HOME}/.signal/config:${container_home}/.config
-		-v ${HOME}/.signal/cache:${container_home}/.cache
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-alias signal-beta=signal-messenger-beta
-signal-messenger-beta(){
-	local container_name="signal-messenger-beta"
-	local container_home="/root"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
-	local use_host_video=true
-	local use_host_audio=true
-	local network="trusted"
-	local extra_networks=()
-	local container_ip
-	local container_hostname
-	local extra_docker_args=(
-		-v ${HOME}/.signal/config:${container_home}/.config
-		-v ${HOME}/.signal/cache:${container_home}/.cache
-	)
-	local application_args=(
-		"$@"
-	)
-
-	docker_run
-}
-vivaldi(){
-	relies_on pulseaudio
-	local run_type=
-	if [[ "$1" == "secure" ]]; then
-		run_type="$1"
-		shift
-	fi
-
-	local extra_vivaldi_args=( ${@} )
-	local extra_docker_args=()
-	local name_suffix=
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-
-	local network="trusted"
-	local extra_networks=()
-	case "${run_type}" in
-		secure)
-			relies_on pia-vpn
-			name_suffix="-secure"
-			network="container:pia-vpn"
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
-
-			extra_docker_args+=(
-				--tmpfs "/home/vivaldi/.cache"
-				--tmpfs "/home/vivaldi/.config"
-				--tmpfs "/home/vivaldi/.pki"
-			)
-			extra_vivaldi_args+=(
-				--incognito
-				https://www.privateinternetaccess.com/
-			)
-			;;
-		*)
-			relies_on_networks ${network}
-			extra_docker_args+=(
-				-v ${HOME}/.vivaldi/cache:/home/vivaldi/.cache
-				-v ${HOME}/.vivaldi/config:/home/vivaldi/.config
-				-v ${HOME}/.vivaldi/pki:/home/vivaldi/.pki
-				-v ${HOME}/Downloads:/home/vivaldi/Downloads
-				-v ${HOME}/Pictures:/home/vivaldi/Pictures
-				-v ${HOME}/Torrents:/home/vivaldi/Torrents
-			)
-			extra_vivaldi_args+=(
-				-new-window
-			)
-			;;
-	esac
-
-	del_stopped vivaldi${name_suffix}-${args_hash}
-	relies_on pulseaudio
-
-	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
-		mkdir -p ${HOME}/seccomp
-		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
-	fi
-
-	docker run --rm -d \
-		--network ${network} \
-		--memory 4gb \
-		--shm-size=2g \
-		-h "$(hostname)" \
-		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY="${display_ip}${DISPLAY}" \
-		-e GDK_SCALE \
-		-e GDK_DPI_SCALE \
-		-e PULSE_SERVER="pulseaudio" \
-		--security-opt seccomp:${HOME}/seccomp/chrome.json \
-		${extra_docker_args[@]} \
-		--name vivaldi${name_suffix}-${args_hash} \
-		${MY_DOCKER_REPO_PREFIX}/vivaldi \
-			${extra_vivaldi_args[@]}
-}
