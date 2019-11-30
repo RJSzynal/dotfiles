@@ -1,5 +1,12 @@
 #!/bin/bash
 
+play () {
+	local workspace=${2:-3}
+	i3-msg "workspace ${workspace}
+	exec vlc \"${1}\""
+	unset workspace
+}
+
 # Simple calculator
 calc() {
 	local result=""
