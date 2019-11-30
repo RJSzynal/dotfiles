@@ -14,7 +14,7 @@ generate_docker_args(){
 	docker_args=(
 		-v /etc/localtime:/etc/localtime:ro
 	)
-	if [ -z ${container_hostname} ]; then
+	if [ -z "${container_hostname}" ]; then
 		container_hostname="${container_name}"
 	fi
 	case ${network} in
@@ -26,11 +26,12 @@ generate_docker_args(){
 			container_hostname="$(hostname)"
 			;;
 		bridge)
-			relies_on_networks ${extra_networks[@]};
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			# shellcheck disable=SC2068
+			relies_on_networks ${extra_networks[@]}
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
 			common_docker_args+=(
-				--hostname ${container_hostname}
+				--hostname "${container_hostname}"
 			)
 			;;
 		secure)
@@ -50,20 +51,21 @@ generate_docker_args(){
 			set_container_ip untrusted torproxy
 			;;
 		*)
+			# shellcheck disable=SC2068
 			relies_on_networks ${network} ${extra_networks[@]}
-			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
+			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
 			common_docker_args+=(
-				--hostname ${container_hostname}
+				--hostname "${container_hostname}"
 			)
 			;;
 	esac
 
 	docker_args+=(
-		--network ${network}
+		--network "${network}"
 	)
 	if [ "${use_host_video}" = "true" ]; then
-		if [ ${debug_level} -ge 6 ]; then
+		if [ "${debug_level}" -ge 6 ]; then
 			echo "use_host_video: ${use_host_video}"
 		fi
 		docker_args+=(
@@ -77,7 +79,7 @@ generate_docker_args(){
 			# -v /usr/share/X11:/usr/share/X11:ro
 		)
 		if [ "${use_x11_socket}" = "true" ]; then
-			if [ ${debug_level} -ge 6 ]; then
+			if [ "${debug_level}" -ge 6 ]; then
 				echo "use_x11_socket: ${use_x11_socket}"
 			fi
 			docker_args+=(
@@ -86,38 +88,38 @@ generate_docker_args(){
 			)
 			if [ "${XDG_SESSION_TYPE}" = "wayland" ]; then
 				docker_args+=(
-					-e QT_QPA_PLATFORM=wayland
-					-e GDK_BACKEND=wayland
-					-e CLUTTER_BACKEND=wayland
-					-e SDL_VIDEODRIVER=wayland
-					-e ELM_DISPLAY=wl
-					-e ELM_ACCEL=opengl
-					-e ECORE_EVAS_ENGINE=wayland_egl
-					-e XDG_RUNTIME_DIR=/tmp
+					-e "QT_QPA_PLATFORM=wayland"
+					-e "GDK_BACKEND=wayland"
+					-e "CLUTTER_BACKEND=wayland"
+					-e "SDL_VIDEODRIVER=wayland"
+					-e "ELM_DISPLAY=wl"
+					-e "ELM_ACCEL=opengl"
+					-e "ECORE_EVAS_ENGINE=wayland_egl"
+					-e "XDG_RUNTIME_DIR=/tmp"
 					-e WAYLAND_DISPLAY
-					-v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY
-					--user=$(id -u):$(id -g)
+					-v "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}"
+					--user "$(id -u):$(id -g)"
 				)
 			fi
 		else
 			docker_args+=(
-				-e DISPLAY="${display_ip}${DISPLAY}"
+				-e "DISPLAY=${display_ip}${DISPLAY}"
 			)
 		fi
 	fi
 	if [ "${use_host_audio}" = "true" ]; then
-		if [ ${debug_level} -ge 6 ]; then
+		if [ "${debug_level}" -ge 6 ]; then
 			echo "use_host_audio: ${use_host_audio}"
 		fi
 		docker_args+=(
-			-e PULSE_SERVER=${audio_ip}
+			-e "PULSE_SERVER=${audio_ip}"
 			--device /dev/snd
 			--group-add audio
-			-v ${HOME}/.config/pulse:${container_home}/.config/pulse
+			-v "${HOME}/.config/pulse:${container_home}/.config/pulse"
 		)
 	fi
 	if [ "${use_host_dbus}" = "true" ]; then
-		if [ ${debug_level} -ge 6 ]; then
+		if [ "${debug_level}" -ge 6 ]; then
 			echo "use_host_dbus: ${use_host_dbus}"
 		fi
 		use_host_user=true
@@ -127,18 +129,18 @@ generate_docker_args(){
 		)
 	fi
 	if [ "${use_host_user}" = "true" ]; then
-		if [ ${debug_level} -ge 6 ]; then
+		if [ "${debug_level}" -ge 6 ]; then
 			echo "use_host_user: ${use_host_user}"
 		fi
 		docker_args+=(
-			-u $(id -u):$(id -g)
+			-u "$(id -u):$(id -g)"
 			-v /etc/passwd:/etc/passwd:ro
 			-v /etc/group:/etc/group:ro
-			-e HOME=${HOME}
+			-e "HOME=${HOME}"
 			-w "${HOME}"
 		)
 	fi
-	docker_args+=( ${extra_docker_args[@]} )
+	docker_args+=( "${extra_docker_args[@]}" )
 }
 docker_run(){
 	case ${dockerfunc_debug:-3} in
@@ -179,7 +181,7 @@ docker_run(){
 	restart_policy=${restart_policy:-no}
 
 	generate_docker_args
-	del_stopped ${container_name}
+	del_stopped "${container_name}"
 
 	local docker_create_tty=
 	local docker_start_tty=
@@ -195,53 +197,53 @@ docker_run(){
 	fi
 
 	# Pull the image if we don't have it
-	docker image inspect ${image_name} >/dev/null 2>&1 || docker pull ${image_name}
+	docker image inspect "${image_name}" >/dev/null 2>&1 || docker pull "${image_name}"
 
 	local create_cmd=(
-		docker create ${docker_restart_policy} ${docker_create_tty}
-		${docker_args[@]}
-		--name ${container_name}
-		${image_name}
-		${application_args[@]}
+		docker create "${docker_restart_policy}" "${docker_create_tty}"
+		"${docker_args[@]}"
+		--name "${container_name}"
+		"${image_name}"
+		"${application_args[@]}"
 	)
-	if [ ${debug_level} -ge 7 ]; then
-		echo "DEBUG: ${create_cmd[@]}"
+	if [ "${debug_level}" -ge 7 ]; then
+		echo "DEBUG: ${create_cmd[*]}"
 	fi
-	eval "${create_cmd[@]} >/dev/null"
+	eval "${create_cmd[*]} >/dev/null"
 
 	for net in "${extra_networks[@]}"; do
-		if [ ${debug_level} -ge 7 ]; then
+		if [ "${debug_level}" -ge 7 ]; then
 			echo "DEBUG: docker network connect ${net} ${container_name}"
 		fi
-		docker network connect ${net} ${container_name}
+		docker network connect "${net}" "${container_name}"
 	done
 
 	if [ "${use_host_video}" = "true" ] && [ "${use_x11_socket}" = "true" ]; then
 		# Add container to xhost allowed list for 3 seconds
 		if [ -n "${container_hostname}" ]; then
-			xhost +local:${container_hostname}
-			(sleep 3; xhost -local:${container_hostname}) &
+			xhost "+local:${container_hostname}"
+			(sleep 3; xhost "-local:${container_hostname}") &
 			disown
 		else
 			echo "Error: Container hostname not set"
 		fi
 	fi
 	local start_cmd=(
-		docker start ${docker_start_tty} ${container_name}
+		docker start "${docker_start_tty}" "${container_name}"
 	)
-	if [ ${debug_level} -ge 7 ]; then
-		echo "DEBUG: ${start_cmd[@]}"
+	if [ "${debug_level}" -ge 7 ]; then
+		echo "DEBUG: ${start_cmd[*]}"
 	fi
-	eval "${start_cmd[@]}"
+	eval "${start_cmd[*]}"
 
 	if [ -z "${container_ip}" ]; then
-		set_container_ip ${network} ${container_name}
+		set_container_ip "${network}" "${container_name}"
 	fi
 	# I'm just banking on this happening fast enough to beat the container's first attempt to connect to the x server
 	if [ "${use_host_video}" = "true" ] && [ "${use_x11_socket}" = "false" ]; then
 		if [ -n "${container_ip}" ]; then
-			xhost +${container_ip}
-			(sleep 3; xhost -${container_ip}) &
+			xhost "+${container_ip}"
+			(sleep 3; xhost "-${container_ip}") &
 			disown
 		else
 			echo "Error: Container IP not set"
@@ -251,10 +253,12 @@ docker_run(){
 del_stopped(){
 	local name=$1
 	local force=${2:-false}
-	local exists=$(docker ps -a --format "{{.Names}}" --filter "name=${name}" | wc -l)
+	local exists
+	exists=$(docker ps -a --format "{{.Names}}" --filter "name=${name}" | wc -l)
 
-	if [ ${exists} -eq 1 ]; then
-		local state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
+	if [ "${exists}" -eq 1 ]; then
+		local state
+		state=$(docker inspect --format "{{.State.Running}}" "${name}" 2>/dev/null)
 		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			docker rm "${name}" 2>/dev/null
 		elif [ "${force}" = "true" ]; then
@@ -267,19 +271,19 @@ del_stopped(){
 # Usage: set_container_ip [NETWORK NAME] [CONTAINER NAME]
 set_container_ip(){
 	local container_network_format="{{.NetworkSettings.Networks.${1}.IPAddress}}"
-	container_ip=$(docker inspect --format ${container_network_format} ${2} 2>/dev/null)
+	container_ip=$(docker inspect --format "${container_network_format}" "${2}" 2>/dev/null)
 }
 set_container_hostname(){
 	local container_hostname_format="{{.Config.Hostname}}"
-	container_hostname=$(docker inspect --format ${container_hostname_format} ${1} 2>/dev/null)
+	container_hostname=$(docker inspect --format "${container_hostname_format}" "${1}" 2>/dev/null)
 }
 rmctr(){
-	# shellcheck disable=SC2068
-	docker rm -f $@ 2>/dev/null || true
+	docker rm -f "${@}" 2>/dev/null || true
 }
 relies_on(){
-	for container in "$@"; do
-		local state=$(docker inspect --format "{{.State.Running}}" "${container}" 2>/dev/null)
+	for container in "${@}"; do
+		local state
+		state=$(docker inspect --format "{{.State.Running}}" "${container}" 2>/dev/null)
 
 		if [[ "${state}" == "false" ]] || [[ "${state}" == "" ]]; then
 			echo "${container} is not running, starting it for you."
@@ -289,7 +293,7 @@ relies_on(){
 	done
 }
 relies_on_networks(){
-	for this_network in "$@"; do
+	for this_network in "${@}"; do
 		docker network create "${this_network}" 2>/dev/null || true
 	done
 }
@@ -328,13 +332,13 @@ nginx_config(){
 }
 alias browser-exec=browser_exec
 browser_exec(){
-	xdg-open ${@}
+	xdg-open "${@}"
 }
 function is_valid_ip(){
 	local  ip=${1}
 	local  stat=1
 
-	if [[ "${ip}" =~ "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$" ]]; then
+	if [[ "${ip}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
 		oct1=${ip%%.*}
 		ip=${ip#*.*}
 		oct2=${ip%%.*}
@@ -364,7 +368,7 @@ audacity(){
 	local container_hostname
 	local extra_docker_args=()
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -379,13 +383,13 @@ aws(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.aws:${container_home}/.aws
+		-v "${HOME}/.aws:${container_home}/.aws"
 		-e AWS_DEFAULT_REGION
 		-e AMAZON_ACCESS_KEY_ID
 		-e AMAZON_SECRET_ACCESS_KEY
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -400,12 +404,12 @@ az(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.azure:${container_home}/.azure
-		-v ${HOME}/.ssh:${container_home}/.ssh:ro
+		-v "${HOME}/.azure:${container_home}/.azure"
+		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
 		--log-driver none
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -427,12 +431,12 @@ cadvisor(){
 		-v /var/lib/docker/:/var/lib/docker:ro
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
 	if is_valid_ip "${container_ip}"; then
-		hostess add ${container_name} ${container_ip}
+		hostess add "${container_name}" "${container_ip}"
 	fi
 	browser-exec "http://${container_name}:8080"
 }
@@ -464,7 +468,7 @@ chrome(){
 		--device /dev/usb
 		--device /dev/bus/usb
 		-v "/etc/hosts:/etc/hosts:ro"
-		--security-opt seccomp:${HOME}/seccomp/chrome.json
+		--security-opt "seccomp:${HOME}/seccomp/chrome.json"
 	)
 	local application_args=()
 
@@ -481,13 +485,13 @@ chrome(){
 				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="${container_home}/.config/google-chrome"
+				"--user-data-dir=${container_home}/.config/google-chrome"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
 			)
 
-			if [[ "$@" == "" ]]; then
+			if [[ "${*}" == "" ]]; then
 				application_args+=(
 					https://www.privateinternetaccess.com/
 				)
@@ -506,15 +510,15 @@ chrome(){
 				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="${container_home}/.config/google-chrome"
+				"--user-data-dir=${container_home}/.config/google-chrome"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
-				--proxy-server="socks5://torproxy:9050"
-				--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE torproxy"
+				--proxy-server "socks5://torproxy:9050"
+				--host-resolver-rules "MAP * ~NOTFOUND , EXCLUDE torproxy"
 			)
 
-			if [[ "$@" == "" ]]; then
+			if [[ "${*}" == "" ]]; then
 				application_args+=(
 					https://check.torproject.org/api/ip
 				)
@@ -524,31 +528,32 @@ chrome(){
 			container_home="${HOME}"
 			extra_docker_args+=(
 				-v /etc/passwd:/etc/passwd:ro
-				-u $(id -u):$(id -g)
-				-v ${HOME}/.chrome/cache:${container_home}/.cache
-				-v ${HOME}/.chrome/config:${container_home}/.config
-				-v ${HOME}/.chrome/pki:${container_home}/.pki
-				-v ${HOME}/.local:${container_home}/.local
-				-v ${HOME}/.chrome/gnome:${container_home}/.gnome
-				-v ${HOME}/Downloads:${container_home}/Downloads
-				-v ${HOME}/Pictures:${container_home}/Pictures
-				-v ${HOME}/Torrents:${container_home}/Torrents
+				-u "$(id -u):$(id -g)"
+				-v "${HOME}/.chrome/cache:${container_home}/.cache"
+				-v "${HOME}/.chrome/config:${container_home}/.config"
+				-v "${HOME}/.chrome/pki:${container_home}/.pki"
+				-v "${HOME}/.local:${container_home}/.local"
+				-v "${HOME}/.chrome/gnome:${container_home}/.gnome"
+				-v "${HOME}/Downloads:${container_home}/Downloads"
+				-v "${HOME}/Pictures:${container_home}/Pictures"
+				-v "${HOME}/Torrents:${container_home}/Torrents"
 			)
 			application_args+=(
-				--user-data-dir="${HOME}/.config/google-chrome"
+				"--user-data-dir=${HOME}/.config/google-chrome"
 			)
 			;;
 	esac
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local args_hash
+	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	container_name="${container_name}-${args_hash}"
 	unset args
 	application_args+=(
-		"$@"
+		"${@}"
 	)
 
-	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
-		mkdir -p ${HOME}/seccomp
-		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
+	if [ ! -f "${HOME}/seccomp/chrome.json" ]; then
+		mkdir -p "${HOME}/seccomp"
+		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O "${HOME}/seccomp/chrome.json"
 	fi
 
 	docker_run
@@ -571,12 +576,12 @@ chromium(){
 	local extra_docker_args=(
 		--cpuset-cpus 0
 		--memory 3gb
-		--shm-size=2g
+		--shm-size 2g
 		--device /dev/dri
 		--device /dev/usb
 		--device /dev/bus/usb
 		-v "/etc/hosts:/etc/hosts:ro"
-		--security-opt seccomp:${HOME}/seccomp/chrome.json
+		--security-opt "seccomp:${HOME}/seccomp/chrome.json"
 	)
 	local application_args=()
 
@@ -593,13 +598,13 @@ chromium(){
 				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="${container_home}/.config/chromium"
+				"--user-data-dir=${container_home}/.config/chromium"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
 			)
 
-			if [[ "$@" == "" ]]; then
+			if [[ "${*}" == "" ]]; then
 				application_args+=(
 					https://www.privateinternetaccess.com/
 				)
@@ -618,15 +623,15 @@ chromium(){
 				--tmpfs "${container_home}/.gnome"
 			)
 			application_args+=(
-				--user-data-dir="${container_home}/.config/chromium"
+				"--user-data-dir=${container_home}/.config/chromium"
 				--incognito
 				--no-first-run
 				--no-default-browser-check
-				--proxy-server="socks5://torproxy:9050"
-				--host-resolver-rules="MAP * ~NOTFOUND , EXCLUDE torproxy"
+				--proxy-server "socks5://torproxy:9050"
+				--host-resolver-rules "MAP * ~NOTFOUND , EXCLUDE torproxy"
 			)
 
-			if [[ "$@" == "" ]]; then
+			if [[ "${*}" == "" ]]; then
 				application_args+=(
 					https://check.torproject.org/api/ip
 				)
@@ -636,30 +641,31 @@ chromium(){
 			container_home="${HOME}"
 			use_host_user=false
 			extra_docker_args+=(
-				-v ${HOME}/.chromium/cache:${container_home}/.cache
-				-v ${HOME}/.chromium/config:${container_home}/.config
-				-v ${HOME}/.chromium/pki:${container_home}/.pki
-				-v ${HOME}/.local:${container_home}/.local
-				-v ${HOME}/.chromium/gnome:${container_home}/.gnome
-				-v ${HOME}/Downloads:${container_home}/Downloads
-				-v ${HOME}/Pictures:${container_home}/Pictures
-				-v ${HOME}/Torrents:${container_home}/Torrents
+				-v "${HOME}/.chromium/cache:${container_home}/.cache"
+				-v "${HOME}/.chromium/config:${container_home}/.config"
+				-v "${HOME}/.chromium/pki:${container_home}/.pki"
+				-v "${HOME}/.local:${container_home}/.local"
+				-v "${HOME}/.chromium/gnome:${container_home}/.gnome"
+				-v "${HOME}/Downloads:${container_home}/Downloads"
+				-v "${HOME}/Pictures:${container_home}/Pictures"
+				-v "${HOME}/Torrents:${container_home}/Torrents"
 			)
 			application_args+=(
-				--user-data-dir="${HOME}/.config/chromium"
+				"--user-data-dir=${HOME}/.config/chromium"
 			)
 			;;
 	esac
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local args_hash
+	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	container_name="${container_name}-${args_hash}"
 	unset args
 	application_args+=(
-		"$@"
+		"${@}"
 	)
 
-	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
-		mkdir -p ${HOME}/seccomp
-		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
+	if [ ! -f "${HOME}/seccomp/chrome.json" ]; then
+		mkdir -p "${HOME}/seccomp"
+		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O "${HOME}/seccomp/chrome.json"
 	fi
 
 	docker_run
@@ -673,11 +679,12 @@ consul(){
 	local extra_networks=()
 	local container_ip
 	local container_hostname
-	local encrypt_key="$(docker run --rm ${image_name} keygen)"
+	local encrypt_key
+	encrypt_key="$(docker run --rm "${image_name}" keygen)"
 	local extra_docker_args=(
 		-v "${HOME}/.consul:/consul/config"
 		-v /var/run/docker.sock:/var/run/docker.sock:ro
-		-e GOMAXPROCS=2
+		-e "GOMAXPROCS=2"
 	)
 	local application_args=(
 		agent
@@ -688,18 +695,19 @@ consul(){
 		-datacenter szynal
 		-bind 0.0.0.0
 		-client 0.0.0.0
-		"$@"
+		"${@}"
 	)
 	# check if we passed args and if consul is running
-	local state=$(docker inspect --format "{{.State.Running}}" ${container_name} 2>/dev/null)
+	local state
+	state=$(docker inspect --format "{{.State.Running}}" "${container_name}" 2>/dev/null)
 	if [[ "${state}" == "true" ]] && [[ "$*" != "" ]]; then
-		docker exec -it ${container_name} consul "$@"
+		docker exec -it "${container_name}" consul "${@}"
 		return 0
 	fi
 
 	docker_run
 	if is_valid_ip "${container_ip}"; then
-		hostess add ${container_name} ${container_ip}
+		hostess add "${container_name}" "${container_ip}"
 	fi
 	browser-exec "http://${container_name}:8500"
 }
@@ -716,7 +724,7 @@ dive(){
 		-v /var/run/docker.sock:/var/run/docker.sock
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -739,7 +747,7 @@ firefox-browser(){
 	local extra_docker_args=(
 		--cpuset-cpus 0
 		--memory 3gb
-		--shm-size=2g
+		--shm-size 2g
 		--device /dev/dri
 		--device /dev/usb
 		--device /dev/bus/usb
@@ -760,7 +768,7 @@ firefox-browser(){
 				-private-window
 			)
 
-			if [[ "$@" == "" ]]; then
+			if [[ "${*}" == "" ]]; then
 				application_args+=(
 					https://www.privateinternetaccess.com/
 			)
@@ -770,22 +778,23 @@ firefox-browser(){
 			container_home="${HOME}"
 			extra_docker_args+=(
 				-v /etc/passwd:/etc/passwd:ro
-				-u $(id -u):$(id -g)
-				-v ${HOME}/.firefox/cache:${container_home}/.cache
-				-v ${HOME}/.firefox/mozilla:${container_home}/.mozilla
-				-v ${HOME}/Downloads:${container_home}/Downloads
-				-v ${HOME}/Pictures:${container_home}/Pictures
-				-v ${HOME}/Torrents:${container_home}/Torrents
+				-u "$(id -u):$(id -g)"
+				-v "${HOME}/.firefox/cache:${container_home}/.cache"
+				-v "${HOME}/.firefox/mozilla:${container_home}/.mozilla"
+				-v "${HOME}/Downloads:${container_home}/Downloads"
+				-v "${HOME}/Pictures:${container_home}/Pictures"
+				-v "${HOME}/Torrents:${container_home}/Torrents"
 			)
 			application_args+=(
 			)
 			;;
 	esac
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local args_hash
+	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	container_name="${container_name}-${args_hash}"
 	unset args
 	application_args+=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -806,7 +815,7 @@ gcloud(){
 		-v /var/run/docker.sock:/var/run/docker.sock
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -825,7 +834,7 @@ gimp(){
 		-v "${HOME}/Pictures:${container_home}/Pictures"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -846,7 +855,7 @@ gitsome(){
 		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -862,7 +871,7 @@ hollywood(){
 	local container_hostname
 	local extra_docker_args=()
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -878,10 +887,10 @@ hostess(){
 	local container_hostname
 	local extra_docker_args=(
 		-v /etc/hosts:/tmp/hosts:rw
-		-e HOSTESS_PATH=/tmp/hosts
+		-e "HOSTESS_PATH=/tmp/hosts"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -899,7 +908,7 @@ htop(){
 		--pid host
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -919,16 +928,19 @@ httpie(){
 		--log-driver none
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
 }
 imagemin(){
-	local image_path=$(realpath "$1")
-	local directory=$(dirname "${image_path}")
+	local image_path
+	image_path=$(realpath "$1")
+	local directory
+	directory=$(dirname "${image_path}")
 	local container_home="/root"
-	local image_name=$(basename "${image_path}")
+	local image_name
+	image_name=$(basename "${image_path}")
 	local extension="${image_name##*.}"
 	local filename="${image_name%.*}"
 	local container_name="imagemin"
@@ -950,7 +962,8 @@ imagemin(){
 }
 alias john=john_the_ripper
 john_the_ripper(){
-	local file=$(realpath "$1")
+	local file
+	file=$(realpath "$1")
 	local container_name="john"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john:latest"
@@ -963,7 +976,7 @@ john_the_ripper(){
 		-v "${file}:${container_home}/$(basename "${file}")"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -985,7 +998,7 @@ kernel_builder(){
 		--entrypoint 'build_kernel'
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1010,7 +1023,7 @@ keepassxc(){
 		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1030,7 +1043,7 @@ kvm(){
 		--privileged
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	# modprobe the module
@@ -1053,7 +1066,7 @@ libreoffice(){
 		-v "${HOME}/Documents:${container_home}/Documents"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1070,7 +1083,7 @@ lynx(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1087,7 +1100,7 @@ masscan(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1107,7 +1120,7 @@ midnight_commander(){
 		--workdir "${PWD}"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1127,7 +1140,7 @@ neoman(){
 		--device /dev/usb
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1147,7 +1160,7 @@ nes(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"/games/${game}.rom" "$@"
+		"/games/${game}.rom" "${@}"
 	)
 
 	docker_run
@@ -1165,7 +1178,7 @@ netcat(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1187,7 +1200,7 @@ nginx(){
 
 	docker_run
 	if is_valid_ip "${container_ip}"; then
-		hostess add ${1} ${container_ip}
+		hostess add "${1}" "${container_ip}"
 	fi
 }
 nmap(){
@@ -1202,7 +1215,7 @@ nmap(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1218,7 +1231,7 @@ notify_osd(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1245,7 +1258,7 @@ now(){
 		--log-driver none
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1268,12 +1281,12 @@ opensnitch(){
 		-v "/run/user/$(id -u):/run/user/$(id -u)"
 		-e DBUS_SESSION_BUS_ADDRESS
 		-v /tmp:/tmp
-		-u $(id -u):$(id -g)
+		-u "$(id -u):$(id -g)"
 		-v /etc/passwd:/etc/passwd:ro
 		-v /etc/group:/etc/group:ro
-		-e HOME=${container_home}
+		-e "HOME=${container_home}"
 		-w "${container_home}"
-		--security-opt seccomp=unconfined
+		--security-opt "seccomp=unconfined"
 	)
 	local application_args=(
 	)
@@ -1321,7 +1334,7 @@ opensnitchd(){
 		-v /tmp:/tmp
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1344,24 +1357,24 @@ osquery(){
 	)
 	local application_args=(
 		--verbose
-		--enroll_secret_env=OSQUERY_ENROLL_SECRET
-		--docker_socket=/var/run/docker.sock
-		--host_identifier=hostname
-		--tls_hostname="${OSQUERY_DOMAIN}"
-		--enroll_tls_endpoint=/api/v1/osquery/enroll
-		--config_plugin=tls
-		--config_tls_endpoint=/api/v1/osquery/config
-		--config_tls_refresh=10
-		--disable_distributed=false
-		--distributed_plugin=tls
-		--distributed_interval=10
-		--distributed_tls_max_attempts=3
-		--distributed_tls_read_endpoint=/api/v1/osquery/distributed/read
-		--distributed_tls_write_endpoint=/api/v1/osquery/distributed/write
-		--logger_plugin=tls
-		--logger_tls_endpoint=/api/v1/osquery/log
-		--logger_tls_period=10
-		"$@"
+		--enroll_secret_env OSQUERY_ENROLL_SECRET
+		--docker_socket /var/run/docker.sock
+		--host_identifier hostname
+		--tls_hostname "${OSQUERY_DOMAIN}"
+		--enroll_tls_endpoint /api/v1/osquery/enroll
+		--config_plugin tls
+		--config_tls_endpoint /api/v1/osquery/config
+		--config_tls_refresh 10
+		--disable_distributed false
+		--distributed_plugin tls
+		--distributed_interval 10
+		--distributed_tls_max_attempts 3
+		--distributed_tls_read_endpoint /api/v1/osquery/distributed/read
+		--distributed_tls_write_endpoint /api/v1/osquery/distributed/write
+		--logger_plugin tls
+		--logger_tls_endpoint /api/v1/osquery/log
+		--logger_tls_period 10
+		"${@}"
 	)
 
 	docker_run
@@ -1411,17 +1424,17 @@ pia-vpn(){
 			;;
 	esac
 
-	del_stopped ${name_prefix}pia-vpn
+	del_stopped "${name_prefix}pia-vpn"
 
 	docker run --rm -d \
-		--network ${network} \
-		--cap-add=NET_ADMIN \
-		--device=/dev/net/tun \
+		--network "${network}" \
+		--cap-add NET_ADMIN \
+		--device /dev/net/tun \
 		--dns 209.222.18.222 --dns 209.222.18.218 \
 		-e REGION="${region}" \
-		-e USERNAME="$(head -n 1 ${HOME}/pia/login)" \
-		-e PASSWORD="$(tail -n 1 ${HOME}/pia/login)" \
-		--name ${name_prefix}pia-vpn \
+		-e USERNAME="$(head -n 1 "${HOME}/pia/login")" \
+		-e PASSWORD="$(tail -n 1 "${HOME}/pia/login")" \
+		--name "${name_prefix}pia-vpn" \
 		colinhebert/pia-openvpn
 }
 pivman(){
@@ -1439,7 +1452,7 @@ pivman(){
 		--device /dev/usb
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1456,10 +1469,10 @@ pms(){
 	local container_hostname
 	local extra_docker_args=(
 		-v "${HOME}/.mpd/socket:/var/run/mpd/socket" \
-		-e MPD_HOST=/var/run/mpd/socket \
+		-e "MPD_HOST=/var/run/mpd/socket" \
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1476,7 +1489,7 @@ pond(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1493,13 +1506,13 @@ privoxy(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
 
 	if is_valid_ip "${container_ip}"; then
-		hostess add ${container_name} ${container_ip}
+		hostess add "${container_name}" "${container_ip}"
 	fi
 }
 pulseaudio(){
@@ -1516,16 +1529,16 @@ pulseaudio(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
 
-	echo ${container_ip}
+	echo "${container_ip}"
 	if is_valid_ip "${container_ip}"; then
-		hostess add ${container_name} ${container_ip}
+		hostess add "${container_name}" "${container_ip}"
 	fi
-	export PULSE_SERVER=${container_name}
+	export PULSE_SERVER="${container_name}"
 }
 registrator(){
 	local container_name="registrator"
@@ -1540,7 +1553,7 @@ registrator(){
 		-v /var/run/docker.sock:/tmp/docker.sock:ro
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1559,7 +1572,7 @@ remmina(){
 		-v "${HOME}/.remmina:${container_home}/.remmina"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1598,7 +1611,7 @@ s3cmd(){
 		-e AWS_SECRET_KEY="${DOCKER_AWS_ACCESS_SECRET}" \
 		-v "$(pwd):/root/s3cmd-workspace" \
 		--name s3cmd \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/s3cmd "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/s3cmd "${@}"
 }
 scudcloud(){
 	del_stopped scudcloud
@@ -1634,7 +1647,7 @@ shorewall(){
 		--cap-add NET_ADMIN \
 		--privileged \
 		--name shorewall \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/shorewall "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/shorewall "${@}"
 }
 alias signal=signal-messenger
 signal-messenger(){
@@ -1648,11 +1661,11 @@ signal-messenger(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.signal/config:${container_home}/.config
-		-v ${HOME}/.signal/cache:${container_home}/.cache
+		-v "${HOME}/.signal/config:${container_home}/.config"
+		-v "${HOME}/.signal/cache:${container_home}/.cache"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1669,11 +1682,11 @@ signal-messenger-beta(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.signal/config:${container_home}/.config
-		-v ${HOME}/.signal/cache:${container_home}/.cache
+		-v "${HOME}/.signal/config:${container_home}/.config"
+		-v "${HOME}/.signal/cache:${container_home}/.cache"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -1704,9 +1717,9 @@ slack(){
 		--network trusted \
 		-e PULSE_SERVER=pulseaudio \
 		-v "${HOME}/.slack:/root/.config/Slack" \
-		--ipc="host" \
+		--ipc "host" \
 		--name slack \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/slack "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/slack "${@}"
 }
 spotify(){
 	local container_name="spotify"
@@ -1719,11 +1732,11 @@ spotify(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.spotify/config:${container_home}/.config/spotify
-		-v ${HOME}/.spotify/cache:${container_home}/.cache/spotify
+		-v "${HOME}/.spotify/config:${container_home}/.config/spotify"
+		-v "${HOME}/.spotify/cache:${container_home}/.cache/spotify"
 	)
 	local application_args=(
-			"$@"
+			"${@}"
 	)
 
 	docker_run
@@ -1739,11 +1752,11 @@ spotifyd(){
 	local container_hostname
 	local extra_docker_args=(
 		-p 1234:1234
-		-v ${HOME}/.spotifyd/config:${container_home}/.config/spotifyd
-		-v ${HOME}/.spotifyd/cache:${container_home}/.cache/spotifyd
+		-v "${HOME}/.spotifyd/config:${container_home}/.config/spotifyd"
+		-v "${HOME}/.spotifyd/cache:${container_home}/.cache/spotifyd"
 	)
 	local application_args=(
-			"$@"
+			"${@}"
 	)
 
 	docker_run
@@ -1755,7 +1768,7 @@ ssh2john(){
 	docker run --rm -it \
 		-v "${file}:/root/$(basename "${file}")" \
 		--entrypoint ssh2john \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/john "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/john "${@}"
 }
 sshb0t(){
 	del_stopped sshb0t
@@ -1796,19 +1809,19 @@ t(){
 	docker run -t --rm \
 		-v "${HOME}/.trc:/root/.trc" \
 		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/t "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/t "${@}"
 }
 tarsnap(){
 	docker run --rm -it \
 		-v "${HOME}/.tarsnaprc:/root/.tarsnaprc" \
 		-v "${HOME}/.tarsnap:/root/.tarsnap" \
 		-v "${HOME}:/root/workdir" \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/tarsnap "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/tarsnap "${@}"
 }
 telnet(){
 	docker run --rm -it \
 		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/telnet "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/telnet "${@}"
 }
 termboy(){
 	del_stopped termboy
@@ -1828,7 +1841,7 @@ terraform(){
 		--log-driver none \
 		-e GOOGLE_APPLICATION_CREDENTIALS \
 		-e SSH_AUTH_SOCK \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/terraform "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/terraform "${@}"
 }
 tor(){
 	del_stopped tor
@@ -1885,19 +1898,19 @@ torproxy(){
 	local extra_docker_args=(
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
 
 	if is_valid_ip "${container_ip}"; then
-		hostess add ${container_name} ${container_ip}
+		hostess add "${container_name}" "${container_ip}"
 	fi
 }
 traceroute(){
 	docker run --rm -it \
 		--network host \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/traceroute "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/traceroute "${@}"
 }
 transmission(){
 	del_stopped transmission
@@ -1922,7 +1935,7 @@ travis(){
 		-v "$(pwd):/usr/src/repo:ro" \
 		--workdir /usr/src/repo \
 		--log-driver none \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/travis "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/travis "${@}"
 }
 virsh(){
 	relies_on kvm
@@ -1932,7 +1945,7 @@ virsh(){
 		-v /run/libvirt:/var/run/libvirt \
 		--log-driver none \
 		--network container:kvm \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/libvirt-client "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/libvirt-client "${@}"
 }
 alias virt-viewer="virt_viewer"
 virt_viewer(){
@@ -1946,7 +1959,7 @@ virt_viewer(){
 		--group-add audio \
 		--log-driver none \
 		--network container:kvm \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/virt-viewer "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/virt-viewer "${@}"
 }
 vivaldi(){
 	relies_on pulseaudio
@@ -1956,11 +1969,13 @@ vivaldi(){
 		shift
 	fi
 
-	local extra_vivaldi_args=( ${@} )
+	local extra_vivaldi_args=( "${@}" )
 	local extra_docker_args=()
 	local name_suffix=
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
-	local display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' ${network})
+	local args_hash
+	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local display_ip
+	display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
 
 	local network="trusted"
 	local extra_networks=()
@@ -1982,14 +1997,14 @@ vivaldi(){
 			)
 			;;
 		*)
-			relies_on_networks ${network}
+			relies_on_networks "${network}"
 			extra_docker_args+=(
-				-v ${HOME}/.vivaldi/cache:/home/vivaldi/.cache
-				-v ${HOME}/.vivaldi/config:/home/vivaldi/.config
-				-v ${HOME}/.vivaldi/pki:/home/vivaldi/.pki
-				-v ${HOME}/Downloads:/home/vivaldi/Downloads
-				-v ${HOME}/Pictures:/home/vivaldi/Pictures
-				-v ${HOME}/Torrents:/home/vivaldi/Torrents
+				-v "${HOME}/.vivaldi/cache:/home/vivaldi/.cache"
+				-v "${HOME}/.vivaldi/config:/home/vivaldi/.config"
+				-v "${HOME}/.vivaldi/pki:/home/vivaldi/.pki"
+				-v "${HOME}/Downloads:/home/vivaldi/Downloads"
+				-v "${HOME}/Pictures:/home/vivaldi/Pictures"
+				-v "${HOME}/Torrents:/home/vivaldi/Torrents"
 			)
 			extra_vivaldi_args+=(
 				-new-window
@@ -1997,32 +2012,33 @@ vivaldi(){
 			;;
 	esac
 
-	del_stopped vivaldi${name_suffix}-${args_hash}
+	del_stopped "vivaldi${name_suffix}-${args_hash}"
 	relies_on pulseaudio
 
-	if [ ! -f ${HOME}/seccomp/chrome.json ]; then
-		mkdir -p ${HOME}/seccomp
-		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O ${HOME}/seccomp/chrome.json
+	if [ ! -f "${HOME}/seccomp/chrome.json" ]; then
+		mkdir -p "${HOME}/seccomp"
+		wget https://raw.githubusercontent.com/jfrazelle/dotfiles/master/etc/docker/seccomp/chrome.json -O "${HOME}/seccomp/chrome.json"
 	fi
 
 	docker run --rm -d \
-		--network ${network} \
+		--network "${network}" \
 		--memory 4gb \
-		--shm-size=2g \
+		--shm-size 2g \
 		-h "$(hostname)" \
 		-v /etc/localtime:/etc/localtime:ro \
-		-e DISPLAY="${display_ip}${DISPLAY}" \
+		-e "DISPLAY=${display_ip}${DISPLAY}" \
 		-e GDK_SCALE \
 		-e GDK_DPI_SCALE \
-		-e PULSE_SERVER="pulseaudio" \
-		--security-opt seccomp:${HOME}/seccomp/chrome.json \
-		${extra_docker_args[@]} \
-		--name vivaldi${name_suffix}-${args_hash} \
-		${MY_DOCKER_REPO_PREFIX}/vivaldi \
-			${extra_vivaldi_args[@]}
+		-e "PULSE_SERVER=pulseaudio" \
+		--security-opt "seccomp:${HOME}/seccomp/chrome.json" \
+		"${extra_docker_args[@]}" \
+		--name "vivaldi${name_suffix}-${args_hash}" \
+		"${MY_DOCKER_REPO_PREFIX}/vivaldi" \
+			"${extra_vivaldi_args[@]}"
 }
 vscode(){
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local args_hash
+	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscode-${args_hash}"
 	local container_home="/home/vscode"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/vscode:latest"
@@ -2033,20 +2049,21 @@ vscode(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.ssh:${container_home}/.ssh:ro
-		-v ${HOME}/.gitconfig:${container_home}/.gitconfig
-		-v ${HOME}/.ms-vscode/config:${container_home}/.config
-		-v ${HOME}/.ms-vscode/vscode:${container_home}/.vscode
-		-v ${HOME}/development:${HOME}/development
+		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
+		-v "${HOME}/.gitconfig:${container_home}/.gitconfig"
+		-v "${HOME}/.ms-vscode/config:${container_home}/.config"
+		-v "${HOME}/.ms-vscode/vscode:${container_home}/.vscode"
+		-v "${HOME}/development:${HOME}/development"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
 }
 vscodium(){
-	local args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
+	local args_hash
+	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscodium-${args_hash}"
 	local container_home="/home/vscodium"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/vscodium:latest"
@@ -2057,15 +2074,15 @@ vscodium(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
-		-v ${HOME}/.ssh:${container_home}/.ssh:ro
-		-v ${HOME}/.gitconfig:${container_home}/.gitconfig
-		-v ${HOME}/.vscodium/config:${container_home}/.config
-		-v ${HOME}/.vscodium/vscode-oss:${container_home}/.vscode-oss
-		-v ${HOME}/development:${container_home}/development
-		-v ${HOME}/development:${HOME}/development
+		-v "${HOME}/.ssh:${container_home}/.ssh:ro"
+		-v "${HOME}/.gitconfig:${container_home}/.gitconfig"
+		-v "${HOME}/.vscodium/config:${container_home}/.config"
+		-v "${HOME}/.vscodium/vscode-oss:${container_home}/.vscode-oss"
+		-v "${HOME}/development:${container_home}/development"
+		-v "${HOME}/development:${HOME}/development"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -2085,7 +2102,7 @@ vlc(){
 		-v "${HOME}/Videos:${container_home}/Videos"
 	)
 	local application_args=(
-		"$@"
+		"${@}"
 	)
 
 	docker_run
@@ -2115,7 +2132,7 @@ wg(){
 		--cap-add NET_ADMIN \
 		--network host \
 		--name wg \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/wg "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/wg "${@}"
 }
 wireshark(){
 	del_stopped wireshark
@@ -2133,7 +2150,7 @@ wrk(){
 	docker run --rm -it \
 		--log-driver none \
 		--name wrk \
-		${JESSFRAZ_DOCKER_REPO_PREFIX}/wrk "$@"
+		${JESSFRAZ_DOCKER_REPO_PREFIX}/wrk "${@}"
 }
 ykman(){
 	del_stopped ykpersonalize
