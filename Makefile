@@ -1,5 +1,5 @@
 .PHONY: all
-all: bin dotfiles etc ## Installs the bin and etc directory files and the dotfiles.
+all: bin config dotfiles etc gnupg ## Installs the bin and etc directory files and the dotfiles.
 
 .PHONY: bin
 bin: ## Installs the bin directory files.
@@ -9,27 +9,30 @@ bin: ## Installs the bin directory files.
 		sudo ln -sf $$file /usr/local/bin/$$f; \
 	done
 
+.PHONY: config
+config: ## Installs the .config directory.
+	# add aliases for .config directory
+	mkdir -p $(HOME)/.config;
+	for file in $(shell find $(CURDIR)/.config -name "*"); do \
+		f=$$(basename $$file); \
+		ln -sfn $$file $(HOME)/.config/$$f; \
+	done; \
+	ln -snf $(CURDIR)/.config/i3 $(HOME)/.config/sway;
+
 .PHONY: dotfiles
 dotfiles: ## Installs the dotfiles.
 	# add aliases for dotfiles
-	for file in $(shell find $(CURDIR) -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".git" -not -name ".*.swp" -not -name ".gnupg"); do \
+	for file in $(shell find $(CURDIR) -type f -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".*.swp"); do \
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/$$f; \
 	done; \
-	gpg --list-keys || true;
-	ln -sfn $(CURDIR)/.gnupg/gpg.conf $(HOME)/.gnupg/gpg.conf;
-	ln -sfn $(CURDIR)/.gnupg/gpg-agent.conf $(HOME)/.gnupg/gpg-agent.conf;
 	ln -fn $(CURDIR)/gitignore $(HOME)/.gitignore;
 	git update-index --skip-worktree $(CURDIR)/.gitconfig;
-	mkdir -p $(HOME)/.config;
-	ln -snf $(CURDIR)/.i3 $(HOME)/.config/sway;
 	mkdir -p $(HOME)/.local/share;
-	ln -snf $(CURDIR)/.fonts $(HOME)/.local/share/fonts;
-	ln -snf $(CURDIR)/.bash_profile $(HOME)/.profile;
+	# ln -snf $(CURDIR)/.fonts $(HOME)/.local/share/fonts;
 	if [ -f /usr/local/bin/pinentry ]; then \
 		sudo ln -snf /usr/bin/pinentry /usr/local/bin/pinentry; \
 	fi;
-	mkdir -p $(HOME)/Pictures;
 
 .PHONY: etc
 etc: ## Installs the etc directory files.
@@ -42,6 +45,16 @@ etc: ## Installs the etc directory files.
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
 	sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+.PHONY: gnupg
+gnupg: ## Installs the .gnupg directory.
+	# add aliases for .gnupg directory
+	mkdir -p $(HOME)/.gnupg;
+	gpg --list-keys || true;
+	for file in $(shell find $(CURDIR)/.gnupg -name "*"); do \
+		f=$$(basename $$file); \
+		ln -sfn $$file $(HOME)/.gnupg/$$f; \
+	done; \
 
 .PHONY: test
 test: shellcheck ## Runs all the tests on the files in the repository.
