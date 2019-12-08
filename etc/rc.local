@@ -11,5 +11,7 @@
 #
 # By default this script does nothing.
 
-powertop --auto-tune
+command -v powertop > /dev/null && {
+    powertop --auto-tune
+}
 exit 0
