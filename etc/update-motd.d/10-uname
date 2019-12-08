@@ -1,2 +1,2 @@
 #!/bin/sh
-uname -snrvm
+uname -nrvm
