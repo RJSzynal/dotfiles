@@ -1,10 +1,10 @@
 .PHONY: all
-all: bin config dotfiles etc gnupg ## Installs the bin and etc directory files and the dotfiles.
+all: bin config dotfiles etc gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
 
 .PHONY: bin
 bin: ## Installs the bin directory files.
 	# add aliases for things in bin
-	for file in $(shell find $(CURDIR)/bin -type f -not -name "*-backlight" -not -name ".*.swp"); do \
+	for file in $(shell find $(CURDIR)/bin -type f -maxdepth 1 -mindepth 1 -not -name "*-backlight" -not -name ".*.swp"); do \
 		f=$$(basename $$file); \
 		sudo ln -sf $$file /usr/local/bin/$$f; \
 	done
@@ -13,7 +13,7 @@ bin: ## Installs the bin directory files.
 config: ## Installs the .config directory.
 	# add aliases for .config directory
 	mkdir -p $(HOME)/.config;
-	for file in $(shell find $(CURDIR)/.config -name "*"); do \
+	for file in $(shell find $(CURDIR)/.config -maxdepth 1 -mindepth 1 -not -name ".*.swp"); do \
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/.config/$$f; \
 	done; \
@@ -37,7 +37,7 @@ dotfiles: ## Installs the dotfiles.
 .PHONY: etc
 etc: ## Installs the etc directory files.
 	sudo mkdir -p /etc/docker/seccomp
-	for file in $(shell find $(CURDIR)/etc -type f -not -name ".*.swp"); do \
+	for file in $(shell find $(CURDIR)/etc -type f -maxdepth 1 -mindepth 1 -not -name ".*.swp"); do \
 		f=$$(echo $$file | sed -e 's|$(CURDIR)||'); \
 		sudo mkdir -p $$(dirname $$f); \
 		sudo ln -f $$file $$f; \
@@ -51,7 +51,7 @@ gnupg: ## Installs the .gnupg directory.
 	# add aliases for .gnupg directory
 	mkdir -p $(HOME)/.gnupg;
 	gpg --list-keys || true;
-	for file in $(shell find $(CURDIR)/.gnupg -name "*"); do \
+	for file in $(shell find $(CURDIR)/.gnupg -maxdepth 1 -mindepth 1); do \
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/.gnupg/$$f; \
 	done; \
