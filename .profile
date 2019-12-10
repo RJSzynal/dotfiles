@@ -38,11 +38,11 @@ command -v xset > /dev/null && {
 ## Video sync
 (
 	# Wait for the remote machine to be available
-	until ping -c1 pi2.szynal.co.uk >/dev/null 2>&1
+	until ping -c1 pi4.szynal.co.uk >/dev/null 2>&1
 		do sleep 1
 	done
-	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi2.szynal.co.uk:/home/pi/torrent/download/ /home/robert/Videos/
-	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi2.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
+	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/ /home/robert/Videos/
+	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
 ) &
 
 ## Keepass
