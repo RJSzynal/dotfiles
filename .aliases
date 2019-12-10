@@ -138,3 +138,5 @@ alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> P
 # Webapps
 alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
 alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
+alias dotfiles="i3-msg 'workspace 6'; codium development/src/github.com/rjszynal/dotfiles"
+alias dockerfiles="i3-msg 'workspace 6'; codium development/src/github.com/rjszynal/dockerfiles"
