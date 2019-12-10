@@ -215,4 +215,5 @@ workspace 1 output DVI-I-0
 # Startup applications
 exec_always --no-startup-id feh --bg-fill /home/robert/Pictures/Wallpapers/disney_me_lidia.jpg
 exec --no-startup-id i3-msg 'workspace 1; exec firefox'
-exec --no-startup-id i3-msg 'workspace 9; exec i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
+exec --no-startup-id i3-msg 'workspace 9; move workspace to output right'
+exec --no-startup-id i3-msg 'exec i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
