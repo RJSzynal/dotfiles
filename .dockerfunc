@@ -21,7 +21,11 @@ generate_docker_args(){
 		none) ;;
 		host)
 			display_ip="127.0.0.1"
-			audio_ip="127.0.0.1"
+			if is_valid_ip "${PULSE_SERVER}"; then
+				audio_ip=${PULSE_SERVER}
+			else
+				audio_ip="127.0.0.1"
+			fi
 			container_ip="127.0.0.1"
 			container_hostname="$(hostname)"
 			;;
@@ -29,7 +33,11 @@ generate_docker_args(){
 			# shellcheck disable=SC2068
 			relies_on_networks ${extra_networks[@]}
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
+			if is_valid_ip "${PULSE_SERVER}"; then
+				audio_ip=$(docker inspect pulseaudio --format="{{.NetworkSettings.Networks.${network}.IPAddress}}")
+			else
+				audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
+			fi
 			common_docker_args+=(
 				--hostname "${container_hostname}"
 			)
@@ -38,7 +46,11 @@ generate_docker_args(){
 			relies_on pia-vpn
 			network="container:pia-vpn"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			if is_valid_ip "${PULSE_SERVER}"; then
+				audio_ip=$(docker inspect pulseaudio --format='{{.NetworkSettings.Networks.untrusted.IPAddress}}')
+			else
+				audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			fi
 			set_container_hostname pia-vpn
 			set_container_ip untrusted pia-vpn
 			;;
@@ -46,7 +58,11 @@ generate_docker_args(){
 			relies_on torproxy
 			network="container:torproxy"
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			if is_valid_ip "${PULSE_SERVER}"; then
+				audio_ip=$(docker inspect pulseaudio --format='{{.NetworkSettings.Networks.untrusted.IPAddress}}')
+			else
+				audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' untrusted)
+			fi
 			set_container_hostname torproxy
 			set_container_ip untrusted torproxy
 			;;
@@ -54,7 +70,11 @@ generate_docker_args(){
 			# shellcheck disable=SC2068
 			relies_on_networks ${network} ${extra_networks[@]}
 			display_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
-			audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
+			if is_valid_ip "${PULSE_SERVER}"; then
+				audio_ip=$(docker inspect pulseaudio --format="{{.NetworkSettings.Networks.${network}.IPAddress}}")
+			else
+				audio_ip=$(docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' "${network}")
+			fi
 			common_docker_args+=(
 				--hostname "${container_hostname}"
 			)
