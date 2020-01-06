@@ -325,7 +325,7 @@ nginx_config(){
 	docker restart nginx
 
 	# add host to /etc/hosts
-	hostess add "$server" 127.0.0.1
+	add_to_hosts "$server" 127.0.0.1
 
 	# open browser
 	browser-exec "http://${server}"
@@ -351,6 +351,13 @@ is_valid_ip(){
 		stat=$?
 	fi
 	return $stat
+}
+add_to_hosts(){
+	if is_valid_ip "${2}"; then
+		hostess add "${1}" "${2}"
+	else
+		echo "${1} container IP \"${container_ip}\" is not valid"
+	fi
 }
 
 #
@@ -435,9 +442,7 @@ cadvisor(){
 	)
 
 	docker_run
-	if is_valid_ip "${container_ip}"; then
-		hostess add "${container_name}" "${container_ip}"
-	fi
+	add_to_hosts "${container_name}" "${container_ip}"
 	browser-exec "http://${container_name}:8080"
 }
 chrome(){
@@ -706,9 +711,7 @@ consul(){
 	fi
 
 	docker_run
-	if is_valid_ip "${container_ip}"; then
-		hostess add "${container_name}" "${container_ip}"
-	fi
+	add_to_hosts "${container_name}" "${container_ip}"
 	browser-exec "http://${container_name}:8500"
 }
 dive(){
@@ -1199,9 +1202,7 @@ nginx(){
 	)
 
 	docker_run
-	if is_valid_ip "${container_ip}"; then
-		hostess add "${1}" "${container_ip}"
-	fi
+	add_to_hosts "${1}" "${container_ip}"
 }
 nmap(){
 	local container_name="nmap"
@@ -1511,9 +1512,7 @@ privoxy(){
 
 	docker_run
 
-	if is_valid_ip "${container_ip}"; then
-		hostess add "${container_name}" "${container_ip}"
-	fi
+	add_to_hosts "${container_name}" "${container_ip}"
 }
 pulseaudio(){
 	local container_name="pulseaudio"
@@ -1534,10 +1533,7 @@ pulseaudio(){
 
 	docker_run
 
-	echo "${container_ip}"
-	if is_valid_ip "${container_ip}"; then
-		hostess add "${container_name}" "${container_ip}"
-	fi
+	add_to_hosts "${container_name}" "${container_ip}"
 	export PULSE_SERVER="${container_name}"
 }
 registrator(){
@@ -1903,9 +1899,7 @@ torproxy(){
 
 	docker_run
 
-	if is_valid_ip "${container_ip}"; then
-		hostess add "${container_name}" "${container_ip}"
-	fi
+	add_to_hosts "${container_name}" "${container_ip}"
 }
 traceroute(){
 	docker run --rm -it \
@@ -1926,7 +1920,7 @@ transmission(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/transmission
 
 
-	hostess add transmission "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' transmission)"
+	add_to_hosts transmission "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' transmission)"
 	browser-exec "http://transmission:9091"
 }
 travis(){
