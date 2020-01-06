@@ -140,3 +140,4 @@ alias youtube="i3-msg 'workspace 3'; /bin/bash -c 'source /home/robert/.dockerfu
 alias netflix="i3-msg 'workspace 4'; /bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
 alias dotfiles="i3-msg 'workspace 6'; codium development/src/github.com/rjszynal/dotfiles"
 alias dockerfiles="i3-msg 'workspace 6'; codium development/src/github.com/rjszynal/dockerfiles"
+alias sd="shutdown now"
