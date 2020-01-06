@@ -271,7 +271,7 @@ docker_run(){
 	fi
 }
 del_stopped(){
-	local name=$1
+	local name=${1}
 	local force=${2:-false}
 	local exists
 	exists=$(docker ps -a --format "{{.Names}}" --filter "name=${name}" | wc -l)
@@ -319,8 +319,8 @@ relies_on_networks(){
 }
 # creates an nginx config for a local route
 nginx_config(){
-	server=$1
-	route=$2
+	server=${1}
+	route=${2}
 
 	cat >"${HOME}/.nginx/conf.d/${server}.conf" <<-EOF
 	upstream ${server} { server ${route}; }
@@ -345,7 +345,7 @@ nginx_config(){
 	docker restart nginx
 
 	# add host to /etc/hosts
-	add_to_hosts "$server" 127.0.0.1
+	add_to_hosts "${server}" 127.0.0.1
 
 	# open browser
 	browser-exec "http://${server}"
@@ -370,7 +370,7 @@ is_valid_ip(){
 			&& ${oct3} -le 255 && ${oct4} -le 255 ]]
 		stat=$?
 	fi
-	return $stat
+	return ${stat}
 }
 add_to_hosts(){
 	if is_valid_ip "${2}"; then
@@ -467,13 +467,13 @@ cadvisor(){
 }
 chrome(){
 	local build=
-	if [[ "$1" == "beta" ]]; then
-		build="-$1"
+	if [[ "${1}" == "beta" ]]; then
+		build="-${1}"
 		shift
 	fi
 	local run_type=
-	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
-		run_type="$1"
+	if [[ "${1}" == "secure" ]] || [[ "${1}" == "tor" ]]; then
+		run_type="${1}"
 		shift
 	fi
 	local container_name="chrome${build}"
@@ -585,8 +585,8 @@ chrome(){
 }
 chromium(){
 	local run_type=
-	if [[ "$1" == "secure" ]] || [[ "$1" == "tor" ]]; then
-		run_type="$1"
+	if [[ "${1}" == "secure" ]] || [[ "${1}" == "tor" ]]; then
+		run_type="${1}"
 		shift
 	fi
 	local container_name="chromium"
@@ -754,8 +754,8 @@ dive(){
 }
 firefox-browser(){
 	local run_type=
-	if [[ "$1" == "secure" ]]; then
-		run_type="$1"
+	if [[ "${1}" == "secure" ]]; then
+		run_type="${1}"
 		shift
 	fi
 	local container_name="firefox"
@@ -959,7 +959,7 @@ httpie(){
 }
 imagemin(){
 	local image_path
-	image_path=$(realpath "$1")
+	image_path=$(realpath "${1}")
 	local directory
 	directory=$(dirname "${image_path}")
 	local container_home="/root"
@@ -987,7 +987,7 @@ imagemin(){
 alias john=john_the_ripper
 john_the_ripper(){
 	local file
-	file=$(realpath "$1")
+	file=$(realpath "${1}")
 	local container_name="john"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/john:latest"
@@ -1170,7 +1170,7 @@ neoman(){
 	docker_run
 }
 nes(){
-	local game=$1
+	local game=${1}
 	shift
 	local container_name="nes"
 	local container_home="/root"
@@ -1262,7 +1262,7 @@ alias notify-send=notify_send
 notify_send(){
 	relies_on notify_osd
 	local args=${*:2}
-	docker exec -i notify_osd notify-send "$1" "${args}"
+	docker exec -i notify_osd notify-send "${1}" "${args}"
 }
 now(){
 	local container_name="now"
@@ -1780,7 +1780,7 @@ spotifyd(){
 }
 ssh2john(){
 	local file
-	file=$(realpath "$1")
+	file=$(realpath "${1}")
 
 	docker run --rm -it \
 		-v "${file}:/root/$(basename "${file}")" \
@@ -1842,7 +1842,7 @@ telnet(){
 }
 termboy(){
 	del_stopped termboy
-	local game=$1
+	local game=${1}
 
 	docker run --rm -it \
 		--device /dev/snd \
@@ -1979,8 +1979,8 @@ virt_viewer(){
 vivaldi(){
 	relies_on pulseaudio
 	local run_type=
-	if [[ "$1" == "secure" ]]; then
-		run_type="$1"
+	if [[ "${1}" == "secure" ]]; then
+		run_type="${1}"
 		shift
 	fi
 
