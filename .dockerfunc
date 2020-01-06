@@ -883,6 +883,7 @@ hostess(){
 	local container_name="hostess"
 	local container_home="/root"
 	local image_name="ondrejmo/hostess:latest"
+	local restart_policy="no"
 	local attach_tty=true
 	local network="trusted"
 	local extra_networks=()
