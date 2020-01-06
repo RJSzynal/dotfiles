@@ -334,7 +334,7 @@ alias browser-exec=browser_exec
 browser_exec(){
 	xdg-open "${@}"
 }
-function is_valid_ip(){
+is_valid_ip(){
 	local  ip=${1}
 	local  stat=1
 
