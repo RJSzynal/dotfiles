@@ -31,7 +31,6 @@ fi
 ## Disable screen blanking/screensaver
 command -v xset > /dev/null && {
 	xset s off
-	xset -dpms
 	xset s noblank
 }
 
@@ -68,13 +67,13 @@ command -v xset > /dev/null && {
 ) &
 
 ## Firefox
-	(
-		# Wait for the internet connection to be operational
-		until ping -c1 www.google.com >/dev/null 2>&1
-			do sleep 1
-		done
+(
+	# Wait for the internet connection to be operational
+	until ping -c1 www.google.com >/dev/null 2>&1
+		do sleep 1
+	done
 	exec firefox
-	) &
+) &
 
 ## Spotifyd
 dockerfunc spotifyd
