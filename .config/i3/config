@@ -198,6 +198,10 @@ bar {
         position top
 }
 
+# Assign Workspaces
+assign [class="Firefox-esr"] $wsWeb
+assign [class="keepassxc"] $wsKeepass
+
 # spotify: no border
 for_window [class="^Spotify$"] border none
 for_window [class="^Spotify Premium$"] border none
