@@ -36,8 +36,7 @@ command -v xset > /dev/null && {
 }
 
 ## Containerised PulseAudio
-#bash -c "source /home/robert/.dockerfunc; pulseaudio"
-#export PULSE_SERVER=$(docker inspect --format '{{.NetworkSettings.Networks.trusted.IPAddress}}' pulseaudio)
+#dockerfunc pulseaudio
 
 ## Video sync
 (
@@ -77,4 +76,4 @@ if [ "${XDG_CURRENT_DESKTOP}" != "i3" ]; then
 fi
 
 ## Spotifyd
-bash -c "source /home/robert/.dockerfunc; relies_on pulseaudio; spotifyd" &
+dockerfunc spotifyd
