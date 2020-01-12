@@ -112,7 +112,7 @@ done
 alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
 
 # Lock the screen (when going AFK)
-alias afk="fancy-i3lock -uti ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png"
+alias afk='fancy-i3lock -uti ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
 
 # vhosts
 alias hosts='sudo vim /etc/hosts'
@@ -136,15 +136,8 @@ alias pubkey="more ~/.ssh/personal.pub | xclip -selection clipboard | echo '=> P
 alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> Private key copied to pasteboard.'"
 
 # Webapps
-if [ "${XDG_CURRENT_DESKTOP}" != "i3" ]; then
-	alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
-	alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
-	alias dotfiles="codium development/src/github.com/rjszynal/dotfiles"
-	alias dockerfiles="codium development/src/github.com/rjszynal/dockerfiles"
-else
-	alias youtube="i3-msg 'workspace 3'; /bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
-	alias netflix="i3-msg 'workspace 4'; /bin/bash -c 'source /home/robert/.dockerfunc; chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
-	alias dotfiles="i3-msg 'workspace 5'; codium development/src/github.com/rjszynal/dotfiles"
-	alias dockerfiles="i3-msg 'workspace 5'; codium development/src/github.com/rjszynal/dockerfiles"
-fi
-alias sd="shutdown now"
+alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
+alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
+alias dotfiles='codium development/src/github.com/rjszynal/dotfiles'
+alias dockerfiles='codium development/src/github.com/rjszynal/dockerfiles'
+alias sd='shutdown now'

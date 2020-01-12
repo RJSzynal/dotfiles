@@ -80,7 +80,7 @@ bindsym $mod+f fullscreen toggle
 # change container layout (stacked, tabbed, toggle split)
 bindsym $mod+s layout stacking
 bindsym $mod+w layout tabbed
-#bindsym $mod+e layout toggle split
+bindsym $mod+t layout toggle split
 
 # toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
@@ -101,10 +101,10 @@ set $monitorRight DP-0
 # We use variables to avoid repeating the names in multiple places.
 set $wsWeb "1 web"
 set $wsTerm "2 term"
-set $ws3 "3 youtube"
-set $ws4 "4 netflix"
-set $ws5 "5 code"
-set $ws6 "6"
+set $wsYoutube "3 youtube"
+set $wsNetflix "4 netflix"
+set $wsCode "5 code"
+set $wsMusic "6 music"
 set $ws7 "7"
 set $ws8 "8"
 set $wsKeepass "9 keepass"
@@ -113,10 +113,10 @@ set $ws10 "10"
 # switch to workspace
 bindsym $mod+1 workspace $wsWeb
 bindsym $mod+2 workspace $wsTerm
-bindsym $mod+3 workspace $ws3
-bindsym $mod+4 workspace $ws4
-bindsym $mod+5 workspace $ws5
-bindsym $mod+6 workspace $ws6
+bindsym $mod+3 workspace $wsYoutube; exec /bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'
+bindsym $mod+4 workspace $wsNetflix; exec /bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'
+bindsym $mod+5 workspace $wsCode
+bindsym $mod+6 workspace $wsMusic
 bindsym $mod+7 workspace $ws7
 bindsym $mod+8 workspace $ws8
 bindsym $mod+9 workspace $wsKeepass
@@ -125,10 +125,10 @@ bindsym $mod+0 workspace $ws10
 # move focused container to workspace
 bindsym $mod+Shift+1 move container to workspace $wsWeb
 bindsym $mod+Shift+2 move container to workspace $wsTerm
-bindsym $mod+Shift+3 move container to workspace $ws3
-bindsym $mod+Shift+4 move container to workspace $ws4
-bindsym $mod+Shift+5 move container to workspace $ws5
-bindsym $mod+Shift+6 move container to workspace $ws6
+bindsym $mod+Shift+3 move container to workspace $wsYoutube
+bindsym $mod+Shift+4 move container to workspace $wsNetflix
+bindsym $mod+Shift+5 move container to workspace $wsCode
+bindsym $mod+Shift+6 move container to workspace $wsMusic
 bindsym $mod+Shift+7 move container to workspace $ws7
 bindsym $mod+Shift+8 move container to workspace $ws8
 bindsym $mod+Shift+9 move container to workspace $wsKeepass
@@ -201,18 +201,36 @@ bar {
         position top
 }
 
-# Assign Workspaces
+## Application preferences
+# Firefox
 assign [class="Firefox-esr"] $wsWeb
-assign [class="keepassxc"] $wsKeepass
 
-# spotify: no border
-for_window [class="^Spotify$"] border none
-for_window [class="^Spotify Premium$"] border none
+# Youtube
+assign [instance="crx_adnlfjpnmidfimlkaohpidplnoimahfh"] $wsYoutube
+assign [instance="crx_adnlfjpnmidfimlkaohpidplnoimahfh"] border none
+for_window [title="Profile error occurred"] floating enable
+#class="Google-chrome"
+
+# Netflix
+assign [instance="crx_eppojlglocelodeimnohnlnionkobfln"] $wsNetflix
+assign [instance="crx_eppojlglocelodeimnohnlnionkobfln"] border none
+#class="Google-chrome"
+
+# VSCod{e,ium}
+assign [class="VSCod"] $wsCode
+for_window [class="VSCod"] layout tabbed
+for_window [class="VSCod"] border none
+
+# Spotify
+assign [class="Spotify"] $wsMusic
+for_window [class="Spotify"] border none
+
+# Keepass
+assign [class="keepassxc"] $wsKeepass
 
 # Float specific applications
 for_window [class="Gnome-calculator"] floating enable
 for_window [class="Nautilus"] floating enable
-#for_window [class="vlc"] floating enable
 
 # Bind workspaces to specific monitors
 workspace $wsWeb output $monitorLeft
