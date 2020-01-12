@@ -1027,7 +1027,7 @@ kernel_builder(){
 
 	docker_run
 }
-keepassxc(){
+keepassxc-docker(){
 	local container_name="keepassxc"
 	local container_home="/home/keepassxc"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc:latest"
@@ -1738,7 +1738,7 @@ slack(){
 		--name slack \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/slack "${@}"
 }
-spotify(){
+spotify-ui(){
 	local container_name="spotify"
 	local container_home="/home/spotify"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/spotify-client:latest"
