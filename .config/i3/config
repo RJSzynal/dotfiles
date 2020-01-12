@@ -94,6 +94,9 @@ bindsym $mod+a focus parent
 # focus the child container
 #bindsym $mod+d focus child
 
+set $monitorLeft DVI-I-1
+set $monitorRight DP-0
+
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
 set $wsWeb "1 web"
@@ -219,11 +222,7 @@ workspace $wsTerm output $monitorRight
 focus_follows_mouse no
 mouse_warping none
 
-# Always put workspace 1 on the left screen
-workspace 1 output DVI-I-0
-
 # Startup applications
 exec_always --no-startup-id feh --bg-fill /home/robert/Pictures/Wallpapers/disney_me_lidia.jpg
-exec --no-startup-id i3-msg 'workspace 1; exec firefox'
-exec --no-startup-id i3-msg 'workspace 9; move workspace to output right'
-exec --no-startup-id i3-msg 'exec i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
+exec --no-startup-id i3-msg 'workspace $wsTerm; exec i3-sensible-terminal'
+exec --no-startup-id i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
