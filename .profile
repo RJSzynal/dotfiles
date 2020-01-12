@@ -48,7 +48,7 @@ command -v xset > /dev/null && {
 	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
 ) &
 
-## Keepass
+# Google drive mount
 (
 	# Wait for the internet connection to be operational
 	until ping -c1 www.google.com >/dev/null 2>&1
@@ -56,24 +56,25 @@ command -v xset > /dev/null && {
 	done
 	mount | grep "/home/robert/googledrive-home" >/dev/null || /usr/bin/google-drive-ocamlfuse -o allow_root "/home/robert/googledrive-home"
 	#mount | grep "/home/robert/googledrive-work" >/dev/null || /usr/bin/google-drive-ocamlfuse -label work "/home/robert/googledrive-work"
+) &
 
+## Keepass
+(
 	# Wait for the google drive mount to be available
 	until [ -f /home/robert/googledrive-home/backup/keepass/home.kdbx ]
 		do sleep 1
 	done
-	/usr/bin/keepassxc &
+	exec keepassxc
 ) &
 
 ## Firefox
-if [ "${XDG_CURRENT_DESKTOP}" != "i3" ]; then
 	(
 		# Wait for the internet connection to be operational
 		until ping -c1 www.google.com >/dev/null 2>&1
 			do sleep 1
 		done
-		firefox
+	exec firefox
 	) &
-fi
 
 ## Spotifyd
 dockerfunc spotifyd
