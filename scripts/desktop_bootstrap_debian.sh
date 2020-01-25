@@ -143,6 +143,7 @@ apt-get install -y \
 	jq \
 	neovim \
 	rsync \
+	silversearcher-ag \
 	software-properties-common \
 	unzip \
 	wget
