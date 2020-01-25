@@ -1,0 +1,29 @@
+[Unit]
+Description=WEB Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="WEB_NAME=webexperiments"
+Environment="WEB_IMAGE=php:7.1-apache"
+Environment="LOCAL_USER=pi"
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=/usr/bin/docker pull ${WEB_IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${WEB_NAME}
+ExecStart=/usr/bin/docker run --rm --name ${WEB_NAME} \
+        -h ${WEB_NAME} \
+        -l traefik.enable=true \
+        -l traefik.http.routers.${WEB_NAME}.rule=Host(\"web.szynal.co.uk\") \
+        -l traefik.http.routers.${WEB_NAME}.entrypoints=websecure \
+        -l traefik.http.routers.${WEB_NAME}.tls=true \
+        -l traefik.http.routers.${WEB_NAME}.tls.certresolver=szynalcoukchallenge \
+        -v /etc/localtime:/etc/localtime:ro \
+	-v /home/${LOCAL_USER}/webexperiments:/var/www/html \
+        ${WEB_IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${WEB_NAME}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,34 @@
+[Unit]
+Description=Pi-hole Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="PIHOLE_IMAGE=pihole/pihole:latest"
+Environment="PIHOLE_NAME=pihole"
+Environment="IP4=192.168.1.140"
+Environment="IP6=fd9c:8004:3164:0:8ae7:3007:9274:387"
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=/usr/bin/docker pull ${PIHOLE_IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${PIHOLE_NAME}
+ExecStart=/usr/bin/docker run --rm --name ${PIHOLE_NAME} \
+	-p 53:53/tcp -p 53:53/udp \
+	-p 80 \
+	-e ServerIP=${IP4} \
+#	-e ServerIPv6=${IP6} \
+	-e VIRTUAL_HOST=${PIHOLE_NAME}.pi4.szynal.co.uk \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${PIHOLE_NAME}.rule=Host(\"pi.hole\") \
+	-l traefik.http.routers.${PIHOLE_NAME}.entrypoints=web \
+	-v /etc/localtime:/etc/localtime:ro \
+	-v /root/.pihole/etc/pihole/:/etc/pihole/ \
+	-v /root/.pihole/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
+	--dns=127.0.0.1 --dns=192.168.1.1 \
+	${PIHOLE_IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${PIHOLE_NAME}
+
+[Install]
+WantedBy=multi-user.target

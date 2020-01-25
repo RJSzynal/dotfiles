@@ -1,0 +1,33 @@
+[Unit]
+Description=Traefik Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+Environment="PROXY_IMAGE=traefik:latest"
+Environment="PROXY_NAME=traefik"
+ExecStartPre=/usr/bin/docker pull ${PROXY_IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${PROXY_NAME}
+ExecStart=/usr/bin/docker run --rm --name ${PROXY_NAME} \
+	-h ${PROXY_NAME} \
+	-p 80:80 \
+	-p 443:443 \
+	-p 8080:8080 \
+	-v /root/.traefik/letsencrypt:/letsencrypt \
+	-v /var/run/docker.sock:/var/run/docker.sock:ro \
+	${PROXY_IMAGE} \
+#	--log.level=DEBUG \
+	--api.insecure=true \
+	--providers.docker=true \
+	--providers.docker.exposedbydefault=false \
+	--entrypoints.web.address=:80 \
+	--entrypoints.web.redirect.entrypoint=websecure \
+	--entrypoints.websecure.address=:443 \
+	--certificatesresolvers.szynalcoukchallenge.acme.tlschallenge=true \
+	--certificatesresolvers.szynalcoukchallenge.acme.email=robert@szynal.co.uk \
+	--certificatesresolvers.szynalcoukchallenge.acme.storage=/letsencrypt/szynal.co.uk.json
+
+[Install]
+WantedBy=multi-user.target

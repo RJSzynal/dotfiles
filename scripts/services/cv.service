@@ -1,0 +1,29 @@
+[Unit]
+Description=CV Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="CV_NAME=cv"
+Environment="CV_IMAGE=kyma/docker-nginx:latest"
+Environment="LOCAL_USER=pi"
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=/usr/bin/docker pull ${CV_IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${CV_NAME}
+ExecStart=/usr/bin/docker run --rm --name ${CV_NAME} \
+	-h ${CV_NAME} \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${CV_NAME}.rule=Host(\"szynal.co.uk\") || Host(\"robert.szynal.co.uk\") \
+	-l traefik.http.routers.${CV_NAME}.entrypoints=websecure \
+	-l traefik.http.routers.${CV_NAME}.tls=true \
+	-l traefik.http.routers.${CV_NAME}.tls.certresolver=szynalcoukchallenge \
+	-v /etc/localtime:/etc/localtime:ro \
+	-v /home/${LOCAL_USER}/cv/public:/var/www \
+	${CV_IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${CV_NAME}
+
+[Install]
+WantedBy=multi-user.target
