@@ -1,6 +1,10 @@
 .PHONY: all
 all: bin config dotfiles etc gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
 
+.PHONY: desktop
+desktop: all ## Bootstrap a new desktop install
+	sudo scripts/desktop_bootstrap_debian.sh
+
 .PHONY: bin
 bin: ## Installs the bin directory files.
 	# add aliases for things in bin
