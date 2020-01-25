@@ -243,4 +243,4 @@ mouse_warping none
 # Startup applications
 exec_always --no-startup-id feh --bg-fill /home/robert/Pictures/Wallpapers/disney_me_lidia.jpg
 exec --no-startup-id i3-msg 'workspace $wsTerm; exec i3-sensible-terminal'
-exec --no-startup-id i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
+exec --no-startup-id i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png
