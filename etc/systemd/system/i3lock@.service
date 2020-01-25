@@ -9,7 +9,7 @@ Before=suspend.target
 User=%I
 Type=forking
 Environment=DISPLAY=:0
-ExecStart=/usr/bin/i3lock -c 111111
+ExecStart=/usr/bin/i3lock -ui /home/robert/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png
 
 [Install]
 WantedBy=suspend.target
