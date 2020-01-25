@@ -31,7 +31,13 @@ alias g="git"
 alias h="history"
 # alias gc=". /usr/local/bin/gitdate && git commit -v "
 alias gc="git commit"
-alias gp="git push"
+alias gch="git checkout"
+alias gf="git fetch"
+alias gp="git pull"
+alias gpu="git push"
+alias gd="git diff"
+alias gs="git status"
+alias gb="git branch"
 
 # Detect which `ls` flavor is in use
 if ls --color > /dev/null 2>&1; then # GNU `ls`
@@ -134,6 +140,9 @@ alias pubkey="more ~/.ssh/personal.pub | xclip -selection clipboard | echo '=> P
 
 # Pipe my private key to my clipboard.
 alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> Private key copied to pasteboard.'"
+
+# Use Neovim
+alias vi=nvim
 
 # Webapps
 alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
