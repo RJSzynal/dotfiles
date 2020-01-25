@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if (( $EUID = 0 )); then
+if [ "$EUID" -eq 0 ]; then
     echo "Please do not run as root"
     exit
 fi
@@ -14,7 +14,7 @@ nightly_backup_cmd=('#!/bin/sh')
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 echo "${PUBLIC_KEY}" >> ~/.ssh/authorized_keys
-chown ${USERNAME}: ~/.ssh/authorized_keys
+chown "${USERNAME}": ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 
 ## Ensure everything is up to date and install some general packages
@@ -35,16 +35,16 @@ ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.exports
 
 # Set up yum-cron
 sudo sed -i -e '/^apply_updates =/ s/no/yes/' \
-	-e '/^email_to =/ s/root/${EMAIL}/' \
+	-e "/^email_to =/ s/root/${EMAIL}/" \
 	-e '/^emit_via =/ s/stdio/email/' /etc/yum/yum-cron.conf
 sudo systemctl restart yum-cron
 sudo systemctl enable yum-cron
 
-read -n1 -p "Is this server running disk services? Y/n: " disk_services
+read -rn1 -p "Is this server running disk services? Y/n: " disk_services
 if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	# Set up smartd
 	sudo sed -i '/^DEVICESCAN/ s/^/#/' /etc/smartmontools/smartd.conf
-	echo 'DEVICESCAN -H -m ${EMAIL} -M test -M diminishing -M exec /usr/libexec/smartmontools/smartdnotify -n standby,48,q' | sudo tee -a /etc/smartmontools/smartd.conf
+	echo "DEVICESCAN -H -m ${EMAIL} -M test -M diminishing -M exec /usr/libexec/smartmontools/smartdnotify -n standby,48,q" | sudo tee -a /etc/smartmontools/smartd.conf
 	sudo systemctl restart smartd
 	
 	## ZFS set up
@@ -78,12 +78,12 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	sudo systemctl enable zfs.target
 	
 	# ZFS Creation
-	read -p "What is the server name? (for naming the file share): " share_name
+	read -rp "What is the server name? (for naming the file share): " share_name
 	lsblk
-	read -p "Which devices should be in the raid? e.g. sdb sdc sdd sde: " raid_drives
-	sudo zpool import ${share_name} || sudo zpool create -f ${share_name} mirror ${raid_drives}
-	read -p "Where should the share be mounted locally? e.g. /mnt/${share_name}: " share_mount_dir
-	sudo zfs set mountpoint=${share_mount_dir} ${share_name}
+	read -rp "Which devices should be in the raid? e.g. sdb sdc sdd sde: " -a raid_drives
+	sudo zpool import "${share_name}" || sudo zpool create -f "${share_name}" mirror "${raid_drives[@]}"
+	read -rp "Where should the share be mounted locally? e.g. /mnt/${share_name}: " share_mount_dir
+	sudo zfs set mountpoint="${share_mount_dir}" "${share_name}"
 	
 	# Healthchecks
 	sudo bash -c "cat > /root/zfs_check.sh" <<-SCRIPT
@@ -93,14 +93,7 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		msgsubj="Filesystem issues on \$(hostname)"
 	
 		# Check zpool status
-		pools=( \$( /usr/sbin/zpool list -H -o name ) )
-		for pool in \${pools}
-		do
-		    pool_status=\$( /usr/sbin/zpool list -H -o health \${pool} )
-		    if [ "\${pool_status}" != "ONLINE" ]; then
-		        echo "Problems with ZFS\$( /usr/sbin/zpool status \${pool} )" | mail -s "\${msgsubj}" \${emailto}
-		    fi
-		done
+		pools=( \$( /usr/sbin/zpool list -H -o name ) )raid_drives
 	
 		exit 0
 	SCRIPT
@@ -137,8 +130,8 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	sudo yum install -y nfs-utils
 	echo "${share_mount_dir} *(rw,sync,no_root_squash,fsid=0)" | sudo tee -a /etc/exports
 	sudo groupadd storage-share-rw
-	sudo chown nfsnobody:storage-share-rw ${share_mount_dir}
-	sudo chmod 755 ${share_mount_dir}
+	sudo chown nfsnobody:storage-share-rw "${share_mount_dir}"
+	sudo chmod 755 "${share_mount_dir}"
 	sudo systemctl enable rpcbind
 	sudo systemctl enable nfs
 	sudo systemctl enable nfs-lock
@@ -177,21 +170,21 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	SAMBAUSERS
 	echo "Please set the password for connecting to the samba shares"
 	sudo smbpasswd -a root
-	sudo chcon -t samba_share_t ${share_mount_dir}
-	sudo usermod -aG storage-share-rw ${USERNAME}
+	sudo chcon -t samba_share_t "${share_mount_dir}"
+	sudo usermod -aG storage-share-rw "${USERNAME}"
 	sudo systemctl enable smb.service
 	sudo systemctl enable nmb.service
 	sudo firewall-cmd --permanent --zone=public --add-service=samba
 	sudo firewall-cmd --reload
 	sudo systemctl start smb.service
 	sudo systemctl start nmb.service
-}
+fi
 
 
 ## Mount remote shares
-read -p "What is the remote share host name? e.g. nordelle.szynal.co.uk: " remote_hostname
-read -p "What is the remote share location? e.g. /mnt/storage: " remote_share_dir
-read -p "Where should the remote share be mounted locally? e.g. ${remote_share_dir}: " remote_share_local_mount_dir
+read -rp "What is the remote share host name? e.g. nordelle.szynal.co.uk: " remote_hostname
+read -rp "What is the remote share location? e.g. /mnt/storage: " remote_share_dir
+read -rp "Where should the remote share be mounted locally? e.g. ${remote_share_dir}: " remote_share_local_mount_dir
 #sudo mkdir -p ${remote_share_local_mount_dir}
 #echo "${remote_hostname}:${remote_share_dir}    ${remote_share_local_mount_dir}   nfs    defaults,noauto 0 0" | sudo tee -a /etc/fstab
 #sudo mount ${remote_share_local_mount_dir}
@@ -380,9 +373,9 @@ else
 fi
 SCRIPT
 sudo chmod +x /usr/bin/godaddy-ddns-updater
-read -p "What is the domain name to update with godaddy? storage.szynal.co.uk: " web_domain
+read -rp "What is the domain name to update with godaddy? storage.szynal.co.uk: " web_domain
 (crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk ${web_domain%.szynal.co.uk} 1800 > /dev/null") | crontab -
-read -p "Is this the root domain?: " is_root_domain
+read -rp "Is this the root domain?: " is_root_domain
 if [ "${is_root_domain}" = "Y" ] || [ "${is_root_domain}" = "y" ]; then
 	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk @ 1800 > /dev/null") | crontab -
 	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk "*" 1800 > /dev/null") | crontab -
@@ -394,42 +387,42 @@ sudo yum install -y \
 	device-mapper-persistent-data \
 	lvm2
 curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker ${USERNAME}
+sudo usermod -aG docker "${USERNAME}"
 
 
 services_location="${remote_share_local_mount_dir}/torrent/configs/docker-server"
 ## Traefik set up
-sudo cp ${services_location}/traefik.service /etc/systemd/system/
+sudo cp "${services_location}/traefik.service" /etc/systemd/system/
 sudo systemctl enable traefik
 sudo systemctl start traefik
 
 ## Web services set up
-read -n1 -p "Is this server running the web services? Y/n: " web_services
+read -rn1 -p "Is this server running the web services? Y/n: " web_services
 if [ "${web_services}" = "Y" ] || [ "${web_services}" = "y" ] ; then
 	# Start the CV page
-	sudo cp ${services_location}/cv.service /etc/systemd/system/
+	sudo cp "${services_location}/cv.service" /etc/systemd/system/
 	sudo systemctl enable cv
 	sudo systemctl start cv
 
 	# Start the web experiments site
-	#sudo cp ${services_location}/web.service /etc/systemd/system/
+	#sudo cp "${services_location}/web.service" /etc/systemd/system/
 	#sudo systemctl enable web
 	#sudo systemctl start web
 
 fi
 
 ## Torrent services set up
-read -n1 -p "Is this server running the torrent services? Y/n: " torrent_services
+read -rn1 -p "Is this server running the torrent services? Y/n: " torrent_services
 if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 	# Add the torrent service
 	sudo yum install -y unar
-	sudo cp ${services_location}/torrent.service /etc/systemd/system/
+	sudo cp "${services_location}/torrent.service" /etc/systemd/system/
 	# Keep the torrent stuff on the SSD so the main drives can stay off most of the time
-	mkdir /home/${USERNAME}/torrent
+	mkdir "/home/${USERNAME}/torrent"
 	if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
-		rsync -av ${share_mount_dir}/torrent /home/${USERNAME}/
+		rsync -av "${share_mount_dir}/torrent" "/home/${USERNAME}/"
 	else
-		rsync -av ${remote_hostname}:${remote_share_dir}/torrent /home/${USERNAME}/
+		rsync -av "${remote_hostname}:${remote_share_dir}/torrent" "/home/${USERNAME}/"
 	fi
 	# Start the torrent service
 	sudo systemctl enable torrent
@@ -462,11 +455,11 @@ if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 		    mail -s 'Disk Space Alert' \${EMAIL}
 		fi
 SCRIPT
-	sudo chmod +x /home/${USERNAME}/home_space_check.sh
+	sudo chmod +x "/home/${USERNAME}/home_space_check.sh"
 	(crontab -l ; echo "0 * * * * /home/${USERNAME}/home_space_check.sh") | crontab -
 fi
 
-if [[ "${share_name}" == 'storage' ]]
+if [[ "${share_name}" == 'storage' ]]; then
 	nightly_backup_cmd+=(
 		"rsync -av --delete --exclude='redirect' ${share_mount_dir}/ ${remote_hostname}:${remote_share_dir}/"
 		"rsync -av --delete ${remote_hostname}:${remote_share_dir}/redirect ${share_mount_dir}/"

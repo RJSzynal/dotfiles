@@ -34,7 +34,7 @@ fi
 install_zsh() {
 	apt-get install -y --no-install-recommends zsh
 	# Install zsh theme
-	git clone https://github.com/bhilburn/powerlevel9k.git ${HOME}/.oh-my-zsh/custom/themes/powerlevel9k
+	git clone https://github.com/bhilburn/powerlevel9k.git "${HOME}/.oh-my-zsh/custom/themes/powerlevel9k"
 }
 
 install_oh_my_zsh() {
@@ -70,16 +70,16 @@ install_docker() {
 	apt-get install -y --no-install-recommends docker-ce
 	systemctl enable docker
 	systemctl start docker
-	usermod -aG docker ${TARGET_USER}
+	usermod -aG docker "${TARGET_USER}"
 	echo 'kernel.unprivileged_userns_clone=1' > /etc/sysctl.d/00-local-userns.conf
 	service procps restart
 }
 
 install_google_drive() {
-	mkdir /home/${TARGET_USER}/googledrive-home
-	#mkdir /home/${TARGET_USER}/googledrive-work
-	chown ${TARGET_USER}: /home/${TARGET_USER}/googledrive-home
-	#chown ${TARGET_USER}: /home/${TARGET_USER}/googledrive-work
+	mkdir "/home/${TARGET_USER}/googledrive-home"
+	#mkdir "/home/${TARGET_USER}/googledrive-work"
+	chown "${TARGET_USER}": "/home/${TARGET_USER}/googledrive-home"
+	#chown "${TARGET_USER}": "/home/${TARGET_USER}/googledrive-work"
 
 	apt-get install -y \
 		--no-install-recommends \
@@ -94,22 +94,22 @@ install_google_drive() {
 	apt-get install -y --no-install-recommends google-drive-ocamlfuse
 	sed -i '/#user_allow_other/ s/^#//' /etc/fuse.conf
 
-	google-drive-ocamlfuse /home/${TARGET_USER}/googledrive-home
-	#google-drive-ocamlfuse -label work /home/${TARGET_USER}/googledrive-work
+	google-drive-ocamlfuse "/home/${TARGET_USER}/googledrive-home"
+	#google-drive-ocamlfuse -label work "/home/${TARGET_USER}/googledrive-work"
 }
 
 install_lmms() {
 	download_url=$(curl --silent "https://api.github.com/repos/LMMS/lmms/releases/latest" | grep -Po '"browser_download_url": "\K.*?(?=")' | grep linux)
-	wget ${download_url} -o ${HOME}/Downloads/lmms.AppImage
-	chown ${TARGET_USER}: ${HOME}/Downloads/lmms.AppImage
-	cat > ${HOME}/lmms.sh <<-EOF
+	wget "${download_url}" -o "${HOME}/Downloads/lmms.AppImage"
+	chown "${TARGET_USER}": "${HOME}/Downloads/lmms.AppImage"
+	cat > "${HOME}/lmms.sh" <<-EOF
 		#!/bin/bash
 
 		for directory in 'samples' 'soundfonts' 'lmms/projects'; do
 			rsync -av --delete ${STORAGE_DIR}/music/\${directory} \${HOME}/lmms/
 		done
 
-		QT_SCALE_FACTOR=1.2 \${HOME}/Downloads/lmms.AppImage
+		QT_SCALE_FACTOR=1.2 "\${HOME}/Downloads/lmms.AppImage"
 
 		rsync -av --delete \${HOME}/lmms/projects ${STORAGE_DIR}/music/lmms/
 		for directory in 'samples' 'soundfonts'; do
@@ -171,9 +171,9 @@ install_spotify
 install_lmms
 
 # Set up dev repos
-for repo in ( dotfiles dockerfiles ); do
+for repo in dotfiles dockerfiles; do
 	if [[ ! -d "${HOME}/development/github.com/rjszynal/${repo}" ]]; then
-		git clone https://github.com/RJSzynal/${repo}.git ${HOME}/development/github.com/rjszynal/${repo}/
+		git clone https://github.com/RJSzynal/${repo}.git "${HOME}/development/github.com/rjszynal/${repo}/"
 	fi
 	if ! git --git-dir="${HOME}/development/github.com/rjszynal/${repo}/.git" remote -v | grep bitbucket; then 
 		git --git-dir="${HOME}/development/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
