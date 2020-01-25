@@ -17,24 +17,30 @@
 set -o pipefail
 
 browser_exec(){
-	# check if chrome container is running
-	chrome_state=$(docker inspect --format "{{.State.Running}}" chrome 2>/dev/null)
-	if [[ "$chrome_state" == "true" ]]; then
-		docker exec -i chrome /usr/bin/google-chrome --user-data-dir=/data "$@" 2>/dev/null
+	# check if chromium container is running
+	chromium_state=$(docker inspect --format "{{.State.Running}}" chromium 2>/dev/null)
+	if [[ "$chromium_state" == "true" ]]; then
+		docker exec -i chromium /usr/bin/google-chromium --user-data-dir=/data "$@" 2>/dev/null
 	else
 		# check if firefox container is running
 		firefox_state=$(docker inspect --format "{{.State.Running}}" firefox 2>/dev/null)
 		if [[ "$firefox_state" == "true" ]]; then
 			docker exec -i firefox /usr/bin/firefox "$@" 2>/dev/null
 		else
-			# maybe we are running in runc
-			chrome_pid=$(pgrep -f "chrome --user-data" | head -n 1 2>/dev/null)
-			if [[ -n "$chrome_pid" ]]; then
-				# nsenter the chrome runc container
-				sudo nsenter -t "$chrome_pid" --pid --user --net --uts --mount --ipc /usr/bin/google-chrome --user-data-dir=/data "$@" 2>/dev/null
+			# check if chrome container is running
+			chrome_state=$(docker inspect --format "{{.State.Running}}" chrome 2>/dev/null)
+			if [[ "$chrome_state" == "true" ]]; then
+				docker exec -i chrome /usr/bin/google-chrome --user-data-dir=/data "$@" 2>/dev/null
 			else
-				# neither are currently running so lets try xdg-open
-				xdg-open "$@"
+				# maybe we are running in runc
+				chrome_pid=$(pgrep -f "chrome --user-data" | head -n 1 2>/dev/null)
+				if [[ -n "$chrome_pid" ]]; then
+					# nsenter the chrome runc container
+					sudo nsenter -t "$chrome_pid" --pid --user --net --uts --mount --ipc /usr/bin/google-chrome --user-data-dir=/data "$@" 2>/dev/null
+				else
+					# none are currently running so lets try xdg-open
+					xdg-open "$@"
+				fi
 			fi
 		fi
 	fi
