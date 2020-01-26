@@ -48,7 +48,7 @@ etc: ## Installs the etc directory files.
 	done
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
-	sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+	# sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
 .PHONY: gnupg
 gnupg: ## Installs the .gnupg directory.
