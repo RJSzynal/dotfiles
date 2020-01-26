@@ -87,7 +87,7 @@ URxvt.secondaryWheel:   1
 !! scrollbar
 *scrollBar:             false
 
-URxvt*termName:         rxvt
+URxvt*termName:         rxvt-unicode-256color
 
 !! clickable urls
 URxvt.perl-ext-common:      default,matcher,selection-to-clipboard,clipboard
