@@ -18,8 +18,8 @@ let g:netrw_banner = 0         " Disable top banner
 let g:netrw_browse_split = 4   " Open files in previous window
 let g:netrw_altv = 1           " Open in previous window to right
 let g:netrw_winsize = 25       " Width 25% of window
-#augroup ProjectDrawer          " Open when Vim opens
-#  autocmd!
-#  autocmd VimEnter * :Vexplore
-#augroup END
+"augroup ProjectDrawer          " Open when Vim opens
+"  autocmd!
+"  autocmd VimEnter * :Vexplore
+"augroup END
 
