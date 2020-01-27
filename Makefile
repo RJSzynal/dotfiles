@@ -30,7 +30,7 @@ dotfiles: ## Installs the dotfiles.
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/$$f; \
 	done; \
-	ln -fn $(CURDIR)/gitignore $(HOME)/.gitignore;
+	ln -snf $(CURDIR)/gitignore $(HOME)/.gitignore;
 	git update-index --skip-worktree $(CURDIR)/.gitconfig;
 	mkdir -p $(HOME)/.local/share;
 	ln -snf $(CURDIR)/.fonts $(HOME)/.local/share/fonts;
