@@ -854,6 +854,7 @@ gimp(){
 	local container_ip
 	local container_hostname
 	local extra_docker_args=(
+		-v "${HOME}/.gimp:${container_home}/.config/GIMP"
 		-v "${HOME}/Pictures:${container_home}/Pictures"
 	)
 	local application_args=(
