@@ -152,3 +152,5 @@ alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile
 alias dotfiles='codium development/src/github.com/rjszynal/dotfiles'
 alias dockerfiles='codium development/src/github.com/rjszynal/dockerfiles'
 alias sd='shutdown now'
+alias get_videos='bash -c "rsync -a --protect-args --prune-empty-dirs --include=\"*.mkv\" --include=\"*.mp4\" --exclude=\"*\" nordelle.szynal.co.uk:/home/robert/torrent/download/ /home/robert/Videos/; rsync -a --protect-args --prune-empty-dirs --include=\"*.mkv\" --include=\"*.mp4\" --exclude=\"*\" nordelle.szynal.co.uk:/home/robert/torrent/download/*/ /home/robert/Videos/"'
+
