@@ -2,6 +2,7 @@
 
 # Make vim the default editor
 export EDITOR=/usr/bin/nvim
+export TERMINAL="gnome-terminal"
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 # Larger bash history (allow 32³ entries; default is 500)
