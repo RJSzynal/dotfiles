@@ -1767,6 +1767,7 @@ spotifyd(){
 	local extra_networks=()
 	local container_ip
 	local container_hostname
+	local restart_policy="unless-stopped"
 	local extra_docker_args=(
 		-p 1234:1234
 		-v "${HOME}/.spotifyd/config:${container_home}/.config/spotifyd"
