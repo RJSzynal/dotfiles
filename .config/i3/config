@@ -103,9 +103,9 @@ set $wsWeb "1 web"
 set $wsTerm "2 term"
 set $wsYoutube "3 youtube"
 set $wsNetflix "4 netflix"
-set $wsCode "5 code"
-set $wsMusic "6 music"
-set $ws7 "7"
+set $wsDisney "5 disney+"
+set $wsCode "6 code"
+set $wsMusic "7 music"
 set $ws8 "8"
 set $wsKeepass "9 keepass"
 set $ws10 "10"
@@ -115,9 +115,9 @@ bindsym $mod+1 workspace $wsWeb
 bindsym $mod+2 workspace $wsTerm
 bindsym $mod+3 workspace $wsYoutube; exec /bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'
 bindsym $mod+4 workspace $wsNetflix; exec /bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'
-bindsym $mod+5 workspace $wsCode
-bindsym $mod+6 workspace $wsMusic
-bindsym $mod+7 workspace $ws7
+bindsym $mod+5 workspace $wsDisney; exec /bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app=https://www.disneyplus.com/en-gb/'
+bindsym $mod+6 workspace $wsCode
+bindsym $mod+7 workspace $wsMusic; exec /bin/bash -c "if ! pgrep -f '/usr/bin/spotify ' &>/dev/null && then /usr/bin/spotify && fi"
 bindsym $mod+8 workspace $ws8
 bindsym $mod+9 workspace $wsKeepass
 bindsym $mod+0 workspace $ws10
@@ -127,9 +127,9 @@ bindsym $mod+Shift+1 move container to workspace $wsWeb
 bindsym $mod+Shift+2 move container to workspace $wsTerm
 bindsym $mod+Shift+3 move container to workspace $wsYoutube
 bindsym $mod+Shift+4 move container to workspace $wsNetflix
-bindsym $mod+Shift+5 move container to workspace $wsCode
-bindsym $mod+Shift+6 move container to workspace $wsMusic
-bindsym $mod+Shift+7 move container to workspace $ws7
+bindsym $mod+Shift+5 move container to workspace $wsDisney
+bindsym $mod+Shift+6 move container to workspace $wsCode
+bindsym $mod+Shift+7 move container to workspace $wsMusic
 bindsym $mod+Shift+8 move container to workspace $ws8
 bindsym $mod+Shift+9 move container to workspace $wsKeepass
 bindsym $mod+Shift+0 move container to workspace $ws10
@@ -214,6 +214,11 @@ for_window [title="Profile error occurred"] floating enable
 # Netflix
 assign [instance="crx_eppojlglocelodeimnohnlnionkobfln"] $wsNetflix
 assign [instance="crx_eppojlglocelodeimnohnlnionkobfln"] border none
+#class="Google-chrome"
+
+# Disney+
+assign [instance="www.disneyplus.com__en-gb"] $wsDisney
+assign [instance="www.disneyplus.com__en-gb"] border none
 #class="Google-chrome"
 
 # VSCod{e,ium}
