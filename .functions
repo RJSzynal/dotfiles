@@ -3,8 +3,18 @@
 play () {
 	local workspace=${2:-3}
 	i3-msg "workspace ${workspace}
-	exec vlc --fullscreen \"${1}\""
-	unset workspace
+		exec vlc --fullscreen \"${1}\""
+	if [ -n "$ZSH_VERSION" ]; then
+		if read -q '?Would you like to delete the video? Y/n: '; then
+			rm -f "${1}"
+		fi
+	elif [ -n "$BASH_VERSION" ]; then
+		read -n 1 -p 'Would you like to delete the video? Y/n: ' delete
+		if [ "${delete}" = 'y' ] || [ "${delete}" = 'Y' ]; then
+			rm -f "${1}"
+		fi
+	fi
+	unset workspace delete
 }
 
 # Simple calculator
