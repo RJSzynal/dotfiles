@@ -50,7 +50,7 @@ command -v xset > /dev/null && {
 # Google drive mount
 (
 	# Wait for the internet connection to be operational
-	until ping -c1 www.google.com >/dev/null 2>&1
+	until ping -c1 google.com >/dev/null 2>&1
 		do sleep 1
 	done
 	mount | grep "/home/robert/googledrive-home" >/dev/null || /usr/bin/google-drive-ocamlfuse -o allow_root "/home/robert/googledrive-home"
@@ -69,7 +69,7 @@ command -v xset > /dev/null && {
 ## Firefox
 (
 	# Wait for the internet connection to be operational
-	until ping -c1 www.google.com >/dev/null 2>&1
+	until ping -c1 google.com >/dev/null 2>&1
 		do sleep 1
 	done
 	exec firefox
