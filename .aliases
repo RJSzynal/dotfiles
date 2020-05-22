@@ -149,6 +149,7 @@ alias vi=nvim
 # Webapps
 alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
 alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
+alias disney="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app=https://www.disneyplus.com/en-gb/'"
 alias dotfiles='codium development/src/github.com/rjszynal/dotfiles'
 alias dockerfiles='codium development/src/github.com/rjszynal/dockerfiles'
 alias sd='shutdown now'
