@@ -2,8 +2,12 @@
 
 play () {
 	local workspace=${2:-3}
-	i3-msg "workspace ${workspace}
-		exec vlc --fullscreen \"${1}\""
+	if [ "${XDG_CURRENT_DESKTOP}" == "i3" ]; then
+		i3-msg "workspace ${workspace}
+			exec vlc --fullscreen \"${1}\""
+	else
+		vlc --fullscreen "${1}"
+	fi
 	if [ -n "$ZSH_VERSION" ]; then
 		if read -q '?Would you like to delete the video? Y/n: '; then
 			rm -f "${1}"
