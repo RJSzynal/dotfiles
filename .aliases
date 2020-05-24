@@ -120,7 +120,7 @@ done
 alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
 
 # Lock the screen (when going AFK)
-alias afk='fancy-i3lock -uti ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
+alias afk='i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png'
 
 # vhosts
 alias hosts='sudo vim /etc/hosts'
