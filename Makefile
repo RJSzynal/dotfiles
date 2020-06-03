@@ -1,3 +1,5 @@
+CHASSIS := $(shell sudo dmidecode --string chassis-type)
+
 .PHONY: all
 all: bin config dotfiles etc gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
 
@@ -40,12 +42,27 @@ dotfiles: ## Installs the dotfiles.
 
 .PHONY: etc
 etc: ## Installs the etc directory files.
-	sudo mkdir -p /etc/docker/seccomp
-	for file in $(shell find $(CURDIR)/etc -type f -not -name ".*.swp"); do \
+	@echo ==linking common files==
+	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -not -name "*.desktop" -not -name "*.laptop" -not -name ".*.swp"); do \
 		f=$$(echo $$file | sed -e 's|$(CURDIR)||'); \
 		sudo mkdir -p $$(dirname $$f); \
 		sudo ln -f $$file $$f; \
 	done
+ifeq (${CHASSIS}, Desktop)
+	@echo ==linking desktop files==
+	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -name "*.desktop" -not -name ".*.swp"); do \
+		f=$$(echo $$file | sed -e 's|$(CURDIR)||' -e 's|.desktop||'); \
+		sudo mkdir -p $$(dirname $$f); \
+		sudo ln -f $$file $$f; \
+	done
+else
+	@echo ==linking laptop files==
+	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -name "*.laptop" -not -name ".*.swp"); do \
+		f=$$(echo $$file | sed -e 's|$(CURDIR)||' -e 's|.laptop||'); \
+		sudo mkdir -p $$(dirname $$f); \
+		sudo ln -f $$file $$f; \
+	done
+endif
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
 	# sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
