@@ -65,26 +65,28 @@ globalkeys = gears.table.join(
     -- Screenshots
     awful.key({                     }, "Print", function () awful.util.spawn_with_shell("maim -u ~/Pictures/screenshot_$(date +%F_%T).png")            end,
               {description = "screenshot fullscreen to file", group = "launcher"}),
-    awful.key({             "Alt_L" }, "Print", function () awful.util.spawn_with_shell("maim -ust 9999999 ~/Pictures/screenshot_$(date +%F_%T).png")  end,
+    awful.key({            altmodkey }, "Print", function () awful.util.spawn_with_shell("maim -ust 9999999 ~/Pictures/screenshot_$(date +%F_%T).png")  end,
               {description = "screenshot window to file", group = "launcher"}),
     awful.key({             "Shift" }, "Print", function () awful.util.spawn_with_shell("maim -us ~/Pictures/screenshot_$(date +%F_%T).png")           end,
               {description = "screenshot selection to file", group = "launcher"}),
     awful.key({ "Control"           }, "Print", function () awful.util.spawn_with_shell("maim -u | xclip -selection clipboard -t image/png")           end,
               {description = "screenshot fullscreen to clipboard", group = "launcher"}),
-    awful.key({ "Control" , "Alt_L" }, "Print", function () awful.util.spawn_with_shell("maim -ust 9999999 | xclip -selection clipboard -t image/png") end,
+    awful.key({ "Control", altmodkey }, "Print", function () awful.util.spawn_with_shell("maim -ust 9999999 | xclip -selection clipboard -t image/png") end,
               {description = "screenshot window to clipboard", group = "launcher"}),
     awful.key({ "Control" , "Shift" }, "Print", function () awful.util.spawn_with_shell("maim -us | xclip -selection clipboard -t image/png")          end,
               {description = "screenshot selection to clipboard", group = "launcher"}),
 
     -- Application shortcuts
-    awful.key({ modkey,            }, "Return", function () awful.spawn(terminal)               end,
+    awful.key({ modkey               }, "Return", function () awful.spawn(terminal) end,
               {description = "open a terminal", group = "launcher"}),
-    awful.key({ "Control", "Alt_L" }, "t",      function () awful.spawn(terminal)               end,
+    awful.key({ "Control", altmodkey }, "t",      function () awful.spawn(terminal) end,
               {description = "open a terminal", group = "launcher"}),
-    awful.key({ modkey, "Shift"    }, "r",      awesome.restart,
+    awful.key({ modkey               }, "e", function () awful.spawn(thunar)      end,
+              {description = "open a terminal", group = "launcher"}),
+    awful.key({ modkey, "Shift"      }, "r",      awesome.restart,
               {description = "reload awesome", group = "awesome"}),
 
-    awful.key({ modkey, "Control"  }, "n",
+    awful.key({ modkey, "Control"    }, "n",
               function ()
                   local c = awful.client.restore()
                   -- Focus restored client
