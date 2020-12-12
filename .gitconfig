@@ -193,3 +193,5 @@
 
 [commit]
 	gpgsign = true
+[pager]
+	branch = false
