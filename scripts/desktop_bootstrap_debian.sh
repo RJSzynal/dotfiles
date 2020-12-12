@@ -52,7 +52,7 @@ install_zsh() {
 install_oh_my_zsh() {
 	install_zsh
 	wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -qO /tmp/oh-my-zsh_install.sh
-	RUNZSH=no sh /tmp/oh-my-zsh_install.sh
+	KEEP_ZSHRC=yes RUNZSH=no sh /tmp/oh-my-zsh_install.sh
 	rm -f /tmp/oh-my-zsh_install.sh
 	# Install zsh theme
 	git clone https://github.com/bhilburn/powerlevel9k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel9k"
