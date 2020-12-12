@@ -55,7 +55,8 @@ install_oh_my_zsh() {
 	KEEP_ZSHRC=yes RUNZSH=no sh /tmp/oh-my-zsh_install.sh
 	rm -f /tmp/oh-my-zsh_install.sh
 	# Install zsh theme
-	git clone https://github.com/bhilburn/powerlevel9k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel9k"
+	git clone --depth=1 https://github.com/bhilburn/powerlevel9k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel9k"
+	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel10k"
 }
 
 install_autofs() {
