@@ -1,7 +1,13 @@
 #!/bin/sh
 
 # go path
-export GOPATH="${HOME}/.go"
+export GOPATH="${HOME}/development"
+
+# Chef
+[ -d "/opt/chefdk/embedded/bin" ] && export PATH=${PATH}:/opt/chefdk/embedded/bin
+
+# Istio
+[ -d "${HOME}/.istioctl/bin" ] && export PATH=${PATH}:${HOME}/.istioctl/bin
 
 # update path
 export PATH=/usr/local/bin:${PATH}:/sbin
