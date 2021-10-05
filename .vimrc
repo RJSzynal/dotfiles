@@ -22,4 +22,6 @@ let g:netrw_winsize = 25       " Width 25% of window
 "  autocmd!
 "  autocmd VimEnter * :Vexplore
 "augroup END
+syntax on
+colorscheme monokai
 
