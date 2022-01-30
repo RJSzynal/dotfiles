@@ -33,6 +33,9 @@ git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.dockerfunc
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.exports
 
+git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/rjszynal/dotfiles/
+(crontab -l; echo '0 4 * * Mon bash -c "cd /home/robert/development/src/github.com/rjszynal/dockerfiles && git pull && make"') | crontab -
+
 # Set up yum-cron
 sudo sed -i -e '/^apply_updates =/ s/no/yes/' \
 	-e "/^email_to =/ s/root/${EMAIL}/" \
@@ -46,28 +49,12 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	sudo sed -i '/^DEVICESCAN/ s/^/#/' /etc/smartmontools/smartd.conf
 	echo "DEVICESCAN -H -m ${EMAIL} -M test -M diminishing -M exec /usr/libexec/smartmontools/smartdnotify -n standby,48,q" | sudo tee -a /etc/smartmontools/smartd.conf
 	sudo systemctl restart smartd
-	
+
 	## ZFS set up
 	# Install
 	#sudo yum install -y http://download.zfsonlinux.org/epel/zfs-release.el7_5.noarch.rpm
 	#gpg --quiet --with-fingerprint /etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux
-	sudo bash -c "cat > /etc/yum.repos.d/zfs.repo" <<-"EOF"
-		[zfs]
-		name=ZFS on Linux for EL7 - dkms
-		baseurl=http://download.zfsonlinux.org/epel/7.5/$basearch/
-		enabled=1
-		metadata_expire=7d
-		gpgcheck=1
-		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux
-	
-		[zfs-kmod]
-		name=ZFS on Linux for EL7 - kmod
-		baseurl=http://download.zfsonlinux.org/epel/7.5/kmod/$basearch/
-		enabled=0
-		metadata_expire=7d
-		gpgcheck=1
-		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux
-	EOF
+	sudo yum install https://zfsonlinux.org/epel/zfs-release.el7_9.noarch.rpm
 	sudo yum install -y epel-release
 	sudo yum install -y \
 		kernel-devel \
@@ -76,7 +63,7 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		smartmontools \
 	sudo /sbin/modprobe zfs
 	sudo systemctl enable zfs.target
-	
+
 	# ZFS Creation
 	read -rp "What is the server name? (for naming the file share): " share_name
 	lsblk
@@ -84,24 +71,27 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	sudo zpool import "${share_name}" || sudo zpool create -f "${share_name}" mirror "${raid_drives[@]}"
 	read -rp "Where should the share be mounted locally? e.g. /mnt/${share_name}: " share_mount_dir
 	sudo zfs set mountpoint="${share_mount_dir}" "${share_name}"
-	
+
 	# Healthchecks
 	sudo bash -c "cat > /root/zfs_check.sh" <<-SCRIPT
 		#!/bin/sh
-	
+
 		emailto="${EMAIL}"
 		msgsubj="Filesystem issues on \$(hostname)"
-	
+
 		# Check zpool status
 		pools=( \$( /usr/sbin/zpool list -H -o name ) )raid_drives
-	
+
 		exit 0
 	SCRIPT
 	sudo chmod +x /root/zfs_check.sh
 	(sudo crontab -l ; echo "*/15 * * * * /root/zfs_check.sh") | sudo crontab -
+	(sudo crontab -l ; echo "0 5 1 * * /usr/sbin/zpool scrub nordelle") | sudo crontab -
 	
 	# Reduce time spent spun up
-	sudo bash -c "cat >> /etc/rc.d/rc.local" <<-"RCLOCAL"
+	sudo bash -c "cat > /root/set_disk_spindown.sh" <<-"SCRIPT"
+		#!/bin/bash
+
 		# This value will spin down the ZFS share disks after the following times:
 		# 60 = 5 minutes
 		# 120 = 10 minutes
@@ -112,20 +102,20 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		# 244 = 2 hours
 		SPINDOWN_IDLE_TIME=60
 		APM_LEVEL=255
-		drives=( sdb sdc sdd sde )
-	
-		touch /var/lock/subsys/local
+		drives=($(lsblk | grep 2.7T | grep disk | cut -d' ' -f1 | paste -sd ' ' -))
+
 		for drive in "${drives[@]}"; do
-		    ( /usr/sbin/hdparm -S ${SPINDOWN_IDLE_TIME} /dev/${drive}
-		        /usr/sbin/hdparm -B ${APM_LEVEL} /dev/${drive} ) &
+		  ( /usr/sbin/hdparm -S ${SPINDOWN_IDLE_TIME} /dev/${drive}
+		    /usr/sbin/hdparm -B ${APM_LEVEL} /dev/${drive}
+		    /usr/sbin/hdparm -y /dev/${drive} ) &
 		done
 		wait
-	RCLOCAL
-	sudo chmod +x /etc/rc.d/rc.local
+	SCRIPT
+	sudo chmod +x /root/set_disk_spindown.sh
 	# BUG: The hdparm settings are reset sometimes so this is a hack to set them again daily
-	nightly_backup_cmd+=( '/etc/rc.d/rc.local' )
-	
-	
+	nightly_backup_cmd+=( '/root/set_disk_spindown.sh' )
+
+
 	## Set up the NFS share
 	sudo yum install -y nfs-utils
 	echo "${share_mount_dir} *(rw,sync,no_root_squash,fsid=0)" | sudo tee -a /etc/exports
@@ -444,16 +434,18 @@ if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 	#systemctl restart nfs
 
 	# Keep an eye on home directory space usage
-	sudo bash -c "cat >> /home/${USERNAME}/home_space_check.sh" <<- SCRIPT
+	sudo bash -c "cat > /home/${USERNAME}/home_space_check.sh" <<- SCRIPT
 		#!/bin/bash
 		THRESHOLD=95
 		EMAIL="${EMAIL}"
 
-		current=\$(df /home | grep /home | awk '{ print $\5}' | sed 's/%//g')
-		if [ "\${current}" -gt "\${THRESHOLD}" ] ; then
-		    echo "Home partition remaining free space is critically low. Used: \${current}%" | \
-		    mail -s 'Disk Space Alert' \${EMAIL}
-		fi
+		for partition in /home / ; do
+		    current=\$(df \${partition} | tail -n1 | awk '{ print \$5}' | sed 's/%//g')
+		    if [ "\${current}" -gt "\${THRESHOLD}" ] ; then
+		        echo "\${partition} partition remaining free space is critically low. Used: \${current}%" | \
+		        mail -s 'Disk Space Alert' \${EMAIL}
+		    fi
+		done
 SCRIPT
 	sudo chmod +x "/home/${USERNAME}/home_space_check.sh"
 	(crontab -l ; echo "0 * * * * /home/${USERNAME}/home_space_check.sh") | crontab -
@@ -466,17 +458,13 @@ if [[ "${share_name}" == 'storage' ]]; then
 	)
 fi
 
-if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
+if [ "${disk_services}" = 'Y' ] || [ "${disk_services}" = 'y' ] ; then
 	nightly_backup_cmd+=(
-		"hdparm -y /dev/sdb"
-		"hdparm -y /dev/sdc"
-		"hdparm -y /dev/sdd"
-		"hdparm -y /dev/sde"
+		'/root/set_disk_spindown.sh'
 	)
 fi
-printf "%s\n" "${nightly_backup_cmd[@]}" > nightly_backup.sh
+sudo printf "%s\n" "${nightly_backup_cmd[@]}" > nightly_backup.sh
 chmod +x nightly_backup.sh
 sudo mv nightly_backup.sh /root/nightly_backup.sh
-sudo chown root: /root/nightly_backup.sh
-(sudo crontab -l ; echo "0 1 * * * /root/nightly_backup.sh") | sudo crontab -
-
+(sudo crontab -l ; echo '0 1 * * * /root/nightly_backup.sh') | sudo crontab -
+(sudo crontab -l ; echo '*/10 * * * * speedtest --format=csv >> /var/log/speedtest/speedtest.log') | sudo crontab -

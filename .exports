@@ -21,6 +21,7 @@ export HISTIGNORE="[ \t]*:*secure*:sudp*:sudop*"
 
 # Prefer real English and use UTF-8
 export LANG="en_GB.UTF-8"
+export LANGUAGE="en_GB.UTF-8"
 export LC_ALL="en_GB.UTF-8"
 
 # Don’t clear the screen after quitting a manual page

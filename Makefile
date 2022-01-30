@@ -7,6 +7,10 @@ all: bin config dotfiles etc gnupg ## Installs the bin, config, etc and gnupg di
 desktop: all ## Bootstrap a new desktop install
 	sudo scripts/desktop_bootstrap_debian.sh
 
+.PHONY: wsl
+wsl: all ## Bootstrap a new WSL install
+	sudo scripts/wsl_bootstrap_debian.sh
+
 .PHONY: bin
 bin: ## Installs the bin directory files.
 	# add aliases for things in bin
@@ -55,6 +59,10 @@ ifeq (${CHASSIS}, Desktop)
 		sudo mkdir -p $$(dirname $$f); \
 		sudo ln -f $$file $$f; \
 	done
+	systemctl --user daemon-reload || true
+	sudo systemctl daemon-reload
+	# sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+else (${CHASSIS},)
 else
 	@echo ==linking laptop files==
 	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -name "*.laptop" -not -name ".*.swp"); do \
@@ -62,10 +70,10 @@ else
 		sudo mkdir -p $$(dirname $$f); \
 		sudo ln -f $$file $$f; \
 	done
-endif
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
 	# sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+endif
 
 .PHONY: gnupg
 gnupg: ## Installs the .gnupg directory.
