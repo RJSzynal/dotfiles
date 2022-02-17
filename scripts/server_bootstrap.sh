@@ -27,6 +27,9 @@ sudo yum install -y \
 	vim \
 	yum-cron
 
+# Only keep 2 kernels
+sudo sed -i '/^installonly_limit=/ s/5/2/' /etc/yum.conf
+
 # Set up user account
 git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/rjszynal/dotfiles/
 (crontab -l; echo '0 4 * * * git --git-dir=~/development/src/github.com/rjszynal/dotfiles/.git --work-tree=~/development/src/github.com/rjszynal/dotfiles pull') | crontab -
@@ -60,7 +63,7 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		kernel-devel \
 		zfs \
 		hdparm \
-		smartmontools \
+		smartmontools
 	sudo /sbin/modprobe zfs
 	sudo systemctl enable zfs.target
 
