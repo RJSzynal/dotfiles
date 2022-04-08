@@ -87,7 +87,7 @@ alias sudo='sudo '
 alias week='date +%V'
 
 # Stopwatch
-alias timer='echo 'Timer started. Stop with Ctrl-D.' && date && time cat && date'
+alias timer='echo "Timer started. Stop with Ctrl-D." && date && time cat && date'
 
 # IP addresses
 alias pubip='dig +short myip.opendns.com @resolver1.opendns.com'
