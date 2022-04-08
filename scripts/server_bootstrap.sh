@@ -92,7 +92,14 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		msgsubj="Filesystem issues on \$(hostname)"
 
 		# Check zpool status
-		pools=( \$( /usr/sbin/zpool list -H -o name ) )raid_drives
+		pools=( \$( /usr/sbin/zpool list -H -o name ) )
+		for pool in \${pools}
+		do
+		    pool_status=\$( /usr/sbin/zpool list -H -o health \${pool} )
+		    if [ "\${pool_status}" != "ONLINE" ]; then
+		        echo "Problems with ZFS \$( /usr/sbin/zpool status \${pool} )" | mail -s "\${msgsubj}" \${emailto}
+		    fi
+		done
 
 		exit 0
 	SCRIPT
