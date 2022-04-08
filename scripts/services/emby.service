@@ -8,26 +8,26 @@ Requires=traefik.service
 [Service]
 Environment="EMBY_NAME=emby"
 Environment="EMBY_IMAGE=emby/embyserver:latest"
-Environment="LOCAL_USER=pi"
+Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
 ExecStartPre=/usr/bin/docker pull ${EMBY_IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${EMBY_NAME}
-ExecStart=/usr/bin/docker run --rm --name ${EMBY_NAME} \
-        -h ${EMBY_NAME} \
+ExecStart=/usr/bin/docker run --rm -t --name ${EMBY_NAME} \
+	-h ${EMBY_NAME} \
 	-p 7359:7359/udp \
 	-p 1900:1900/udp \
 	-e EDGE=1 \
-        -l traefik.enable=true \
-        -l traefik.port=8096 \
-        -l traefik.http.routers.${EMBY_NAME}.rule=Host(\"emby.szynal.co.uk\") \
-        -l traefik.http.routers.${EMBY_NAME}.entrypoints=websecure \
-        -l traefik.http.routers.${EMBY_NAME}.tls=true \
-        -l traefik.http.routers.${EMBY_NAME}.tls.certresolver=szynalcoukchallenge \
-        -v /etc/localtime:/etc/localtime:ro \
+	-l traefik.enable=true \
+	-l traefik.port=8096 \
+	-l traefik.http.routers.${EMBY_NAME}.rule=Host(\"emby.szynal.co.uk\") \
+	-l traefik.http.routers.${EMBY_NAME}.entrypoints=websecure \
+	-l traefik.http.routers.${EMBY_NAME}.tls=true \
+	-l traefik.http.routers.${EMBY_NAME}.tls.certresolver=szynalcoukchallenge \
+	-v /etc/localtime:/etc/localtime:ro \
 	-v /srv/emby/data:/config \
 	-v /mnt/storage:/mnt/storage \
-        ${EMBY_IMAGE}
+	${EMBY_IMAGE}
 ExecStop=-/usr/bin/docker rm -fv ${EMBY_NAME}
 
 [Install]

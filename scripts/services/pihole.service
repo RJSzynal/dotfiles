@@ -14,7 +14,7 @@ TimeoutStartSec=0
 Restart=always
 ExecStartPre=/usr/bin/docker pull ${PIHOLE_IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${PIHOLE_NAME}
-ExecStart=/usr/bin/docker run --rm --name ${PIHOLE_NAME} \
+ExecStart=/usr/bin/docker run --rm -t --name ${PIHOLE_NAME} \
 	-p 53:53/tcp -p 53:53/udp \
 	-p 80 \
 	-e ServerIP=${IP4} \
