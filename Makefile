@@ -1,17 +1,16 @@
 CHASSIS := $(shell sudo dmidecode --string chassis-type)
 
-.PHONY: all
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
 all: bin config dotfiles etc gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
 
-.PHONY: desktop
 desktop: all ## Bootstrap a new desktop install
 	sudo scripts/desktop_bootstrap_debian.sh
 
-.PHONY: wsl
 wsl: all ## Bootstrap a new WSL install
 	sudo scripts/wsl_bootstrap_debian.sh
 
-.PHONY: bin
 bin: ## Installs the bin directory files.
 	# add aliases for things in bin
 	for file in $(shell find $(CURDIR)/bin -maxdepth 1 -mindepth 1 -type f -not -name "*-backlight" -not -name ".*.swp"); do \
@@ -19,7 +18,6 @@ bin: ## Installs the bin directory files.
 		sudo ln -sf $$file /usr/local/bin/$$f; \
 	done
 
-.PHONY: config
 config: ## Installs the .config directory.
 	# add aliases for .config directory
 	mkdir -p $(HOME)/.config;
@@ -29,7 +27,6 @@ config: ## Installs the .config directory.
 	done; \
 	ln -snf $(CURDIR)/.config/i3 $(HOME)/.config/sway;
 
-.PHONY: dotfiles
 dotfiles: ## Installs the dotfiles.
 	# add aliases for dotfiles
 	for file in $(shell find $(CURDIR) -maxdepth 1 -mindepth 1 -type f -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".*.swp"); do \
@@ -44,7 +41,6 @@ dotfiles: ## Installs the dotfiles.
 		sudo ln -snf /usr/bin/pinentry /usr/local/bin/pinentry; \
 	fi;
 
-.PHONY: etc
 etc: ## Installs the etc directory files.
 	@echo ==linking common files==
 	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -not -name "*.desktop" -not -name "*.laptop" -not -name ".*.swp"); do \
@@ -75,7 +71,6 @@ else
 	# sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 endif
 
-.PHONY: gnupg
 gnupg: ## Installs the .gnupg directory.
 	# add aliases for .gnupg directory
 	mkdir -p $(HOME)/.gnupg;
@@ -85,7 +80,6 @@ gnupg: ## Installs the .gnupg directory.
 		ln -sfn $$file $(HOME)/.gnupg/$$f; \
 	done; \
 
-.PHONY: test
 test: shellcheck ## Runs all the tests on the files in the repository.
 
 # if this session isn't interactive, then we don't want to allocate a
@@ -96,7 +90,6 @@ ifeq ($(INTERACTIVE), 1)
 	DOCKER_FLAGS += -t
 endif
 
-.PHONY: shellcheck
 shellcheck: ## Runs the shellcheck tests on the scripts.
 	docker run --rm -i $(DOCKER_FLAGS) \
 		--name df-shellcheck \
@@ -104,6 +97,4 @@ shellcheck: ## Runs the shellcheck tests on the scripts.
 		--workdir /usr/src \
 		r.j3ss.co/shellcheck ./test.sh
 
-.PHONY: help
-help:
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+.PHONY: all desktop wsl bin config dotfiles etc gnupg test shellcheck help
