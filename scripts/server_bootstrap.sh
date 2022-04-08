@@ -24,7 +24,7 @@ sudo yum install -y \
 	git \
 	tmux \
 	unrar \
-	vim \
+	neovim \
 	yum-cron
 
 # Only keep 2 kernels
@@ -35,6 +35,19 @@ git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/
 (crontab -l; echo '0 4 * * * git --git-dir=~/development/src/github.com/rjszynal/dotfiles/.git --work-tree=~/development/src/github.com/rjszynal/dotfiles pull') | crontab -
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.dockerfunc
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.exports
+ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.aliases
+
+cat >> ${HOME}/.bashrc <<-"BASHRC"
+	for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports}; do
+	    if [[ -r "$file" ]] && [[ -f "$file" ]]; then
+	        # shellcheck source=/dev/null
+	        source "$file"
+	    fi
+	done
+	unset file
+BASHRC
+
+git clone https://github.com/RJSzynal/dockerfiles.git ~/development/src/github.com/rjszynal/dockerfiles/
 (crontab -l; echo '0 4 * * Mon bash -c "cd /home/robert/development/src/github.com/rjszynal/dockerfiles && git pull && make"') | crontab -
 
 # Set up yum-cron
