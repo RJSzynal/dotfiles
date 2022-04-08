@@ -35,8 +35,6 @@ git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/
 (crontab -l; echo '0 4 * * * git --git-dir=~/development/src/github.com/rjszynal/dotfiles/.git --work-tree=~/development/src/github.com/rjszynal/dotfiles pull') | crontab -
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.dockerfunc
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.exports
-
-git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/rjszynal/dotfiles/
 (crontab -l; echo '0 4 * * Mon bash -c "cd /home/robert/development/src/github.com/rjszynal/dockerfiles && git pull && make"') | crontab -
 
 # Set up yum-cron
@@ -55,12 +53,10 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 
 	## ZFS set up
 	# Install
-	#sudo yum install -y http://download.zfsonlinux.org/epel/zfs-release.el7_5.noarch.rpm
-	#gpg --quiet --with-fingerprint /etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux
-	sudo yum install https://zfsonlinux.org/epel/zfs-release.el7_9.noarch.rpm
+	sudo yum install -y https://zfsonlinux.org/epel/zfs-release.el7_9.noarch.rpm
 	sudo yum install -y epel-release
+	sudo yum install -y kernel-devel-$(uname -r) 
 	sudo yum install -y \
-		kernel-devel \
 		zfs \
 		hdparm \
 		smartmontools
@@ -115,8 +111,6 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		wait
 	SCRIPT
 	sudo chmod +x /root/set_disk_spindown.sh
-	# BUG: The hdparm settings are reset sometimes so this is a hack to set them again daily
-	nightly_backup_cmd+=( '/root/set_disk_spindown.sh' )
 
 
 	## Set up the NFS share
@@ -176,7 +170,7 @@ fi
 
 ## Mount remote shares
 read -rp "What is the remote share host name? e.g. nordelle.szynal.co.uk: " remote_hostname
-read -rp "What is the remote share location? e.g. /mnt/storage: " remote_share_dir
+read -rp "What is the remote share location? e.g. /mnt/stoneholme: " remote_share_dir
 read -rp "Where should the remote share be mounted locally? e.g. ${remote_share_dir}: " remote_share_local_mount_dir
 #sudo mkdir -p ${remote_share_local_mount_dir}
 #echo "${remote_hostname}:${remote_share_dir}    ${remote_share_local_mount_dir}   nfs    defaults,noauto 0 0" | sudo tee -a /etc/fstab
@@ -366,7 +360,7 @@ else
 fi
 SCRIPT
 sudo chmod +x /usr/bin/godaddy-ddns-updater
-read -rp "What is the domain name to update with godaddy? storage.szynal.co.uk: " web_domain
+read -rp "What is the domain name to update with godaddy? stoneholme.szynal.co.uk: " web_domain
 (crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk ${web_domain%.szynal.co.uk} 1800 > /dev/null") | crontab -
 read -rp "Is this the root domain?: " is_root_domain
 if [ "${is_root_domain}" = "Y" ] || [ "${is_root_domain}" = "y" ]; then
@@ -383,7 +377,7 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker "${USERNAME}"
 
 
-services_location="${remote_share_local_mount_dir}/torrent/configs/docker-server"
+services_location="${HOME}/development/src/github.com/rjszynal/dotfiles/scripts/services"
 ## Traefik set up
 sudo cp "${services_location}/traefik.service" /etc/systemd/system/
 sudo systemctl enable traefik
@@ -445,7 +439,7 @@ if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 		for partition in /home / ; do
 		    current=\$(df \${partition} | tail -n1 | awk '{ print \$5}' | sed 's/%//g')
 		    if [ "\${current}" -gt "\${THRESHOLD}" ] ; then
-		        echo "\${partition} partition remaining free space is critically low. Used: \${current}%" | \
+		        echo "\${partition} partition remaining free space is critically low. Used: \${current}%" | \\
 		        mail -s 'Disk Space Alert' \${EMAIL}
 		    fi
 		done
@@ -454,7 +448,7 @@ SCRIPT
 	(crontab -l ; echo "0 * * * * /home/${USERNAME}/home_space_check.sh") | crontab -
 fi
 
-if [[ "${share_name}" == 'storage' ]]; then
+if [[ "${share_name}" == 'stoneholme' ]]; then
 	nightly_backup_cmd+=(
 		"rsync -av --delete --exclude='redirect' ${share_mount_dir}/ ${remote_hostname}:${remote_share_dir}/"
 		"rsync -av --delete ${remote_hostname}:${remote_share_dir}/redirect ${share_mount_dir}/"
@@ -462,6 +456,7 @@ if [[ "${share_name}" == 'storage' ]]; then
 fi
 
 if [ "${disk_services}" = 'Y' ] || [ "${disk_services}" = 'y' ] ; then
+	# BUG: The hdparm settings are reset sometimes so this is a hack to set them again daily
 	nightly_backup_cmd+=(
 		'/root/set_disk_spindown.sh'
 	)
