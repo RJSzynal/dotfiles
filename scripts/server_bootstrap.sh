@@ -23,7 +23,7 @@ sudo yum install -y \
 	curl \
 	git \
 	tmux \
-	unrar \
+	unar \
 	neovim \
 	yum-cron
 
@@ -434,7 +434,7 @@ if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 	# Start the torrent service
 	sudo systemctl enable torrent
 	sudo systemctl start torrent
-	docker pull rjszynal/flexget:latest
+	sudo docker pull rjszynal/flexget:latest
 	(crontab -l ; echo "*/10 * * * * docker run --name flexget --rm -v /home/${USERNAME}/torrent/configs/flexget:/home/flexget/.flexget --net container:transmission rjszynal/flexget:latest") | crontab -
 	if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		nightly_backup_cmd+=(
