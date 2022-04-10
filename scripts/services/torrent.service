@@ -17,12 +17,13 @@ ExecStart=/usr/bin/docker run --rm -t --name ${TORRENT_NAME} \
 	-h ${TORRENT_NAME} \
 	--cap-add=NET_ADMIN --device=/dev/net/tun \
 	--dns 8.8.8.8 --dns 8.8.4.4 \
-	-p 9091 \
+	-p 9091:9091 \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${TORRENT_NAME}.rule=Host(\"szynal.co.uk\")&&PathPrefix(\"/transmission\") \
 	-l traefik.http.routers.${TORRENT_NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${TORRENT_NAME}.tls=true \
 	-l traefik.http.routers.${TORRENT_NAME}.tls.certresolver=szynalcoukchallenge \
+	-l traefik.http.services.transmission.loadbalancer.server.port=9091 \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /home/${LOCAL_USER}/torrent:/data \
 	--env-file /home/${LOCAL_USER}/torrent/configs/${TORRENT_NAME}/DockerEnv \
