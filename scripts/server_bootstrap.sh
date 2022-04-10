@@ -381,11 +381,11 @@ fi
 SCRIPT
 sudo chmod +x /usr/bin/godaddy-ddns-updater
 read -rp "What is the domain name to update with godaddy? stoneholme.szynal.co.uk: " web_domain
-(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk ${web_domain%.szynal.co.uk} 1800 > /dev/null") | crontab -
+(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk ${web_domain%.szynal.co.uk} 1800 > /dev/null") | crontab -
 read -rp "Is this the root domain?: " is_root_domain
 if [ "${is_root_domain}" = "Y" ] || [ "${is_root_domain}" = "y" ]; then
-	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk @ 1800 > /dev/null") | crontab -
-	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/godaddy/.creds szynal.co.uk "*" 1800 > /dev/null") | crontab -
+	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk @ 1800 > /dev/null") | crontab -
+	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk "*" 1800 > /dev/null") | crontab -
 fi
 
 # Install Docker
