@@ -399,7 +399,7 @@ sudo usermod -aG docker "${USERNAME}"
 
 services_location="${HOME}/development/src/github.com/rjszynal/dotfiles/scripts/services"
 ## Traefik set up
-sudo cp "${services_location}/traefik.service" /etc/systemd/system/
+sudo ln -sfn "${services_location}/traefik.service" /etc/systemd/system/
 sudo systemctl enable traefik
 sudo systemctl start traefik
 
@@ -407,12 +407,12 @@ sudo systemctl start traefik
 read -rn1 -p "Is this server running the web services? Y/n: " web_services
 if [ "${web_services}" = "Y" ] || [ "${web_services}" = "y" ] ; then
 	# Start the CV page
-	sudo cp "${services_location}/cv.service" /etc/systemd/system/
+	sudo ln -sfn "${services_location}/cv.service" /etc/systemd/system/
 	sudo systemctl enable cv
 	sudo systemctl start cv
 
 	# Start the web experiments site
-	#sudo cp "${services_location}/web.service" /etc/systemd/system/
+	#sudo ln -sfn "${services_location}/web.service" /etc/systemd/system/
 	#sudo systemctl enable web
 	#sudo systemctl start web
 
@@ -423,7 +423,7 @@ read -rn1 -p "Is this server running the torrent services? Y/n: " torrent_servic
 if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 	# Add the torrent service
 	sudo yum install -y unar
-	sudo cp "${services_location}/torrent.service" /etc/systemd/system/
+	sudo ln -sfn "${services_location}/torrent.service" /etc/systemd/system/
 	# Keep the torrent stuff on the SSD so the main drives can stay off most of the time
 	mkdir "/home/${USERNAME}/torrent"
 	if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
