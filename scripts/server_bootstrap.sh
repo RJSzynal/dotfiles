@@ -161,6 +161,7 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		    workgroup = WORKGROUP
 		    server string = Samba Server %v
 		    netbios name = $(hostname -s)
+		    server signing = auto
 		    security = user
 		    passdb backend = tdbsam
 		    username map = /etc/samba/smbusers
@@ -179,12 +180,10 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	sudo smbpasswd -a root
 	sudo chcon -t samba_share_t "${share_mount_dir}"
 	sudo usermod -aG storage-share-rw "${USERNAME}"
-	sudo systemctl enable smb.service
-	sudo systemctl enable nmb.service
+	sudo systemctl enable smb nmb
 	sudo firewall-cmd --permanent --zone=public --add-service=samba
 	sudo firewall-cmd --reload
-	sudo systemctl start smb.service
-	sudo systemctl start nmb.service
+	sudo systemctl start smb nmb
 fi
 
 
@@ -475,6 +474,21 @@ if [[ "${share_name}" == 'stoneholme' ]]; then
 	)
 fi
 
+read -rn1 -p "Is this server running print services? Y/n: " print_services
+if [ "${print_services}" = "Y" ] || [ "${print_services}" = "y" ] ; then
+	read -rn1 -p "What is the current printer IP address? Y/n: " print_ip
+	sudo yum install -y cups
+	sudo sed -i 's/^Listen localhost:631$/Port 631/' /etc/cups/cupsd.conf
+	echo "ServerAlias $(hostname).szynal.co.uk" | sudo tee -a /etc/cups/cupsd.conf
+	sudo cupsctl --remote-admin --remote-any --share-printers --user-cancel-any
+	sudo firewall-cmd --permanent --zone=public --add-service=ipp
+	sudo firewall-cmd --reload
+	sudo cp ${HOME}/development/src/github.com/rjszynal/dotfiles/scripts/print_driver/canonts8300.ppd /usr/share/cups/model/
+	sudo lpadmin -Ep Canon-TS8300 -D 'Canon TS8300' -m canonts8300.ppd -v ipp://${print_ip}:631/ipp
+	sudo systemctl enable cups
+	sudo systemctl start cups
+fi
+
 if [ "${disk_services}" = 'Y' ] || [ "${disk_services}" = 'y' ] ; then
 	# BUG: The hdparm settings are reset sometimes so this is a hack to set them again daily
 	nightly_backup_cmd+=(
@@ -483,6 +497,7 @@ if [ "${disk_services}" = 'Y' ] || [ "${disk_services}" = 'y' ] ; then
 fi
 sudo printf "%s\n" "${nightly_backup_cmd[@]}" > nightly_backup.sh
 chmod +x nightly_backup.sh
+chown root: nightly_backup.sh
 sudo mv nightly_backup.sh /root/nightly_backup.sh
 (sudo crontab -l ; echo '0 1 * * * /root/nightly_backup.sh') | sudo crontab -
 (sudo crontab -l ; echo '*/10 * * * * speedtest --format=csv >> /var/log/speedtest/speedtest.log') | sudo crontab -
