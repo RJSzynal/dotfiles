@@ -439,12 +439,12 @@ if [ "${torrent_services}" = "Y" ] || [ "${torrent_services}" = "y" ] ; then
 	if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		nightly_backup_cmd+=(
 			"rsync -av --delete --exclude='download' --exclude='watch' /home/${USERNAME}/torrent ${share_mount_dir}/"
-			"chown -R ${USERNAME}: ${share_mount_dir}/torrent"
+			"chown -R ${USERNAME}:storage-share-rw ${share_mount_dir}/torrent"
 		)
 	else
 		nightly_backup_cmd+=(
 			"rsync -av --delete --exclude='download' --exclude='watch' /home/${USERNAME}/torrent ${remote_hostname}:${remote_share_dir}/"
-			"chown -R ${USERNAME}: ${remote_hostname}:${remote_share_dir}/torrent"
+			"chown -R ${USERNAME}:storage-share-rw ${remote_hostname}:${remote_share_dir}/torrent"
 		)
 	fi
 	#echo "/home/${USERNAME}/torrent *(rw,sync,no_root_squash)" | sudo tee -a /etc/exports
