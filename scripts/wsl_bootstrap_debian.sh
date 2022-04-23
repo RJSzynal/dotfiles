@@ -213,6 +213,7 @@ for repo in dotfiles dockerfiles; do
 	fi
 	if ! git --git-dir="/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/.git" remote -v | grep bitbucket; then 
 		git --git-dir="/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
+		git --git-dir="/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@github.com:RJSzynal/${repo}.git
 	fi
 done
 

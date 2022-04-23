@@ -208,6 +208,7 @@ apt-get install -y \
 	wget
 install_docker
 install_google_drive
+install_oh_my_zsh
 
 # Window manager
 install_awesome
