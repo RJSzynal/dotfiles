@@ -31,7 +31,9 @@ sudo yum install -y \
 sudo sed -i '/^installonly_limit=/ s/5/2/' /etc/yum.conf
 
 # Set up user account
-git clone https://github.com/RJSzynal/dotfiles.git ~/development/src/github.com/rjszynal/dotfiles/
+git clone git@github.com:RJSzynal/dotfiles.git ~/development/src/github.com/rjszynal/dotfiles/
+git --git-dir="/home/${USERNAME}/development/src/github.com/rjszynal/dotfiles/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/dotfiles.git
+git --git-dir="/home/${USERNAME}/development/src/github.com/rjszynal/dotfiles/.git" remote set-url --add --push origin git@github.com:RJSzynal/dotfiles.git
 (crontab -l; echo '0 4 * * * git --git-dir=~/development/src/github.com/rjszynal/dotfiles/.git --work-tree=~/development/src/github.com/rjszynal/dotfiles pull') | crontab -
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.dockerfunc
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.exports
@@ -47,7 +49,9 @@ cat >> ${HOME}/.bashrc <<-"BASHRC"
 	unset file
 BASHRC
 
-git clone https://github.com/RJSzynal/dockerfiles.git ~/development/src/github.com/rjszynal/dockerfiles/
+git clone git@github.com:RJSzynal/dockerfiles.git ~/development/src/github.com/rjszynal/dockerfiles/
+git --git-dir="/home/${USERNAME}/development/src/github.com/rjszynal/dockerfiles/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/dockerfiles.git
+git --git-dir="/home/${USERNAME}/development/src/github.com/rjszynal/dockerfiles/.git" remote set-url --add --push origin git@github.com:RJSzynal/dockerfiles.git
 (crontab -l; echo '0 4 * * Mon bash -c "cd /home/robert/development/src/github.com/rjszynal/dockerfiles && git pull && make"') | crontab -
 
 # Set up yum-cron
@@ -137,7 +141,7 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 	sudo yum install -y nfs-utils
 	echo "${share_mount_dir} *(rw,sync,no_root_squash,fsid=0)" | sudo tee -a /etc/exports
 	sudo groupadd storage-share-rw
-	sudo chown nfsnobody:storage-share-rw "${share_mount_dir}"
+	sudo chown ${USERNAME}:storage-share-rw "${share_mount_dir}"
 	sudo chmod 755 "${share_mount_dir}"
 	sudo systemctl enable rpcbind
 	sudo systemctl enable nfs
@@ -173,12 +177,16 @@ if [ "${disk_services}" = "Y" ] || [ "${disk_services}" = "y" ] ; then
 		    guest ok = no
 		    read only = no
 	SAMBA
-	sudo bash -c "cat > /etc/samba/smbusers" <<-"SAMBAUSERS"
-		root = root administrator
+	sudo bash -c "cat > /etc/samba/smbusers" <<-SAMBAUSERS
+		root = root administrator Administrator
+		${USERNAME} = ${USERNAME}
 	SAMBAUSERS
-	echo "Please set the password for connecting to the samba shares"
+	echo "Please set the password for connecting to the samba shares as root"
 	sudo smbpasswd -a root
+	echo "Please set the password for connecting to the samba shares as ${USERNAME}"
+	sudo smbpasswd -a  ${USERNAME}
 	sudo chcon -t samba_share_t "${share_mount_dir}"
+	sudo usermod -aG storage-share-rw root
 	sudo usermod -aG storage-share-rw "${USERNAME}"
 	sudo systemctl enable smb nmb
 	sudo firewall-cmd --permanent --zone=public --add-service=samba
