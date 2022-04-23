@@ -229,13 +229,13 @@ install_spotify
 
 # Set up dev repos
 for repo in dotfiles dockerfiles; do
-	if [[ ! -d "/home/${TARGET_USER}/development/github.com/rjszynal/${repo}" ]]; then
-		mkdir -p "/home/${TARGET_USER}/development/github.com/rjszynal/"
-		git clone https://github.com/RJSzynal/${repo}.git "/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/"
+	if [[ ! -d "/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}" ]]; then
+		mkdir -p "/home/${TARGET_USER}/development/src/github.com/rjszynal/"
+		git clone git@github.com:RJSzynal/${repo}.git "/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/"
 	fi
-	if ! git --git-dir="/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/.git" remote -v | grep bitbucket; then 
-		git --git-dir="/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
-		git --git-dir="/home/${TARGET_USER}/development/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@github.com:RJSzynal/${repo}.git
+	if ! git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote -v | grep bitbucket; then
+		git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
+		git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@github.com:RJSzynal/${repo}.git
 	fi
 done
 
