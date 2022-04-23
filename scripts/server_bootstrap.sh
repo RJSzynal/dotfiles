@@ -484,7 +484,7 @@ if [ "${print_services}" = "Y" ] || [ "${print_services}" = "y" ] ; then
 	sudo firewall-cmd --permanent --zone=public --add-service=ipp
 	sudo firewall-cmd --reload
 	sudo cp ${HOME}/development/src/github.com/rjszynal/dotfiles/scripts/print_driver/canonts8300.ppd /usr/share/cups/model/
-	sudo lpadmin -Ep Canon-TS8300 -D 'Canon TS8300' -m canonts8300.ppd -v ipp://${print_ip}:631/ipp
+	sudo lpadmin -Ep Canon-TS8300 -D 'Canon TS8300 series Ver.5.90' -m canonts8300.ppd -v lpd://${print_ip}/BINARY_P1
 	sudo systemctl enable cups
 	sudo systemctl start cups
 fi
