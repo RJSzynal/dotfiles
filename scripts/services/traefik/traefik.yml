@@ -1,0 +1,31 @@
+api: true
+
+log:
+    level: DEBUG
+
+providers:
+    file:
+        directory: /etc/traefik
+    docker:
+        exposedbydefault: false
+
+entryPoints:
+    web:
+        address: ":80"
+        http:
+            redirections:
+                entryPoint:
+                    to: websecure
+    websecure:
+        address: ":443"
+        http:
+            tls:
+                certResolver: szynalcoukchallenge
+
+certificatesresolvers:
+    szynalcoukchallenge:
+        acme:
+            tlschallenge: true
+            email: robert@szynal.co.uk
+            storage: /etc/traefik/letsencrypt/szynal.co.uk.json
+

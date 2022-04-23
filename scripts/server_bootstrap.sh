@@ -399,6 +399,10 @@ sudo usermod -aG docker "${USERNAME}"
 services_location="${HOME}/development/src/github.com/rjszynal/dotfiles/scripts/services"
 ## Traefik set up
 sudo ln -sfn "${services_location}/traefik.service" /etc/systemd/system/
+sudo mkdir /root/.traefik
+sudo cp "${services_location}/traefik/traefik.yml" /root/.traefik/
+sudo cp "${services_location}/traefik/middlewares.yml" /root/.traefik/
+sudo cp "${services_location}/traefik/dashboard.yml" /root/.traefik/
 sudo systemctl enable traefik
 sudo systemctl start traefik
 

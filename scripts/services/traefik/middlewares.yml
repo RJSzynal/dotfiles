@@ -1,0 +1,12 @@
+http:
+    middlewares:
+        internal-only:
+            ipwhitelist:
+                sourceRange:
+                    - 192.168.1.0/24
+                    - 127.0.0.1/32
+        dashboard_stripprefix:
+            stripprefix:
+                prefixes:
+                    - /dashboard
+

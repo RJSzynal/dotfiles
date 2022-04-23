@@ -15,18 +15,9 @@ ExecStart=/usr/bin/docker run --rm -t --name ${PROXY_NAME} \
 	-p 80:80 \
 	-p 443:443 \
 	-p 8080:8080 \
-	-v /root/.traefik/letsencrypt:/letsencrypt \
+	-v /root/.traefik:/etc/traefik \
 	-v /var/run/docker.sock:/var/run/docker.sock:ro \
-	${PROXY_IMAGE} \
-	--api.insecure=true \
-	--providers.docker=true \
-	--providers.docker.exposedbydefault=false \
-	--entrypoints.web.address=:80 \
-	--entrypoints.web.http.redirections.entryPoint.to=websecure \
-	--entrypoints.websecure.address=:443 \
-	--certificatesresolvers.szynalcoukchallenge.acme.tlschallenge=true \
-	--certificatesresolvers.szynalcoukchallenge.acme.email=robert@szynal.co.uk \
-	--certificatesresolvers.szynalcoukchallenge.acme.storage=/letsencrypt/szynal.co.uk.json
+	${PROXY_IMAGE}
 
 [Install]
 WantedBy=multi-user.target
