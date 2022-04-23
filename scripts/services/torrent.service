@@ -23,7 +23,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${TORRENT_NAME} \
 	-l traefik.http.routers.${TORRENT_NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${TORRENT_NAME}.tls=true \
 	-l traefik.http.routers.${TORRENT_NAME}.tls.certresolver=szynalcoukchallenge \
-	-l traefik.http.routers.${TORRENT_NAME}.middlewares=internal-only \
+	-l traefik.http.routers.${TORRENT_NAME}.middlewares=internal-only@file \
 	-l traefik.http.services.transmission.loadbalancer.server.port=9091 \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /home/${LOCAL_USER}/torrent:/data \

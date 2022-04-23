@@ -24,6 +24,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${EMBY_NAME} \
 	-l traefik.http.routers.${EMBY_NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${EMBY_NAME}.tls=true \
 	-l traefik.http.routers.${EMBY_NAME}.tls.certresolver=szynalcoukchallenge \
+	-l traefik.http.routers.${EMBY_NAME}.middlewares=internal-only@file \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /srv/emby/data:/config \
 	-v /mnt/storage:/mnt/storage \
