@@ -19,4 +19,9 @@ http:
             service: api@internal
             middlewares:
                 - internal-only
+    middlewares:
+        dashboard_stripprefix:
+            stripprefix:
+                prefixes:
+                    - /dashboard
 
