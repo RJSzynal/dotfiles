@@ -1,4 +1,4 @@
-api: {}
+api: true
 
 log:
     level: DEBUG
