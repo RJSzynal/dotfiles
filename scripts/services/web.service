@@ -16,12 +16,12 @@ ExecStartPre=-/usr/bin/docker rm -fv ${WEB_NAME}
 ExecStart=/usr/bin/docker run --rm -t --name ${WEB_NAME} \
 	-h ${WEB_NAME} \
 	-l traefik.enable=true \
-	-l traefik.http.routers.${WEB_NAME}.rule=Host(\"web.szynal.co.uk\") \
+	-l traefik.http.routers.${WEB_NAME}.rule=Host(\"szynal.co.uk\")&&PathPrefix(\"/web\") \
 	-l traefik.http.routers.${WEB_NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${WEB_NAME}.tls=true \
 	-l traefik.http.routers.${WEB_NAME}.tls.certresolver=szynalcoukchallenge \
 	-v /etc/localtime:/etc/localtime:ro \
-	-v /home/${LOCAL_USER}/webexperiments:/var/www/html \
+	-v /home/${LOCAL_USER}/webexperiments:/var/www/html/web \
 	${WEB_IMAGE}
 ExecStop=-/usr/bin/docker rm -fv ${WEB_NAME}
 
