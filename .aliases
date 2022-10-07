@@ -38,6 +38,7 @@ alias gf='git fetch'
 alias gp='git pull'
 alias gpu='git push'
 alias gpus='git push --set-upstream origin HEAD'
+alias gpuf='git push --force'
 alias gd='git diff'
 alias gs='git status'
 alias gb='git branch'
@@ -46,6 +47,7 @@ alias gau='git add -u'
 
 # Container tool aliases
 alias dive='docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/bin/docker wagoodman/dive:latest'
+alias docker_ip="docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'"
 alias kustomize='docker run -it -v ${PWD}:/app bitlayer/kustomize:2.0.3'
 
 # Use Git’s colored diff when available
