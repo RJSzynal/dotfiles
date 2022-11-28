@@ -14,18 +14,17 @@ if [ -z "${TARGET_USER-}" ]; then
 	mapfile -t options < <(find /home/* -maxdepth 0 -printf "%f\\n" -type d)
 	# if there is only one option just use that user
 	if [ "${#options[@]}" -eq "1" ]; then
-		readonly TARGET_USER="${options[0]}"
+		TARGET_USER="${options[0]}"
 		echo "Using user account: ${TARGET_USER}"
-		# return
+	else
+		# iterate through the user options and print them
+		PS3='Which user account should be used? '
+
+		select opt in "${options[@]}"; do
+			TARGET_USER=$opt
+			break
+		done
 	fi
-
-	# iterate through the user options and print them
-	PS3='command -v user account should be used? '
-
-	select opt in "${options[@]}"; do
-		readonly TARGET_USER=$opt
-		break
-	done
 fi
 
 SERVICE_LIST=()
@@ -52,11 +51,11 @@ install_zsh() {
 install_oh_my_zsh() {
 	install_zsh
 	wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -qO /tmp/oh-my-zsh_install.sh
-	KEEP_ZSHRC=yes RUNZSH=no sh /tmp/oh-my-zsh_install.sh
+	KEEP_ZSHRC=yes RUNZSH=no sudo -u ${TARGET_USER} sh /tmp/oh-my-zsh_install.sh
 	rm -f /tmp/oh-my-zsh_install.sh
 	# Install zsh theme
-	git clone --depth=1 https://github.com/bhilburn/powerlevel9k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel9k"
-	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel10k"
+	sudo -u ${TARGET_USER} git clone --depth=1 https://github.com/bhilburn/powerlevel9k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel9k"
+	sudo -u ${TARGET_USER} git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${TARGET_USER}/.oh-my-zsh/custom/themes/powerlevel10k"
 }
 
 install_autofs() {
@@ -78,14 +77,12 @@ install_chrome() {
 install_docker() {
 	wget -qO - https://download.docker.com/linux/debian/gpg | apt-key add -
 	echo "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+	update-alternatives --set iptables /usr/sbin/iptables-legacy
 	apt-get update -y
-	apt-get install -y --no-install-recommends docker-ce
+	apt-get install -y --no-install-recommends docker-ce docker-compose-plugin
 	# systemctl enable docker
 	# systemctl start docker
 	usermod -aG docker "${TARGET_USER}"
-	# Run the Docker daemon as a non-root user
-	sysctl --system
-	modprobe overlay permit_mounts_in_userns=1
 }
 
 install_google_drive() {
@@ -194,26 +191,40 @@ apt-get install -y \
 	--no-install-recommends \
 	apt-transport-https \
 	ca-certificates \
+	curl \
+	dnsutils \
+	git \
 	gnupg2 \
 	jq \
+	make \
 	neovim \
 	rsync \
 	silversearcher-ag \
+	ssh \
 	software-properties-common \
+	tig \
 	unzip \
 	wget
 install_docker
 install_oh_my_zsh
 
+# Set up locale
+sed -i -e 's|^# \(en_GB.UTF-8\)|\1|' -e 's|^\(en_US.UTF-8\)|# \1|' /etc/locale.gen
+locale-gen
+
+# Set Neovim as global editor
+update-alternatives --set editor /usr/bin/nvim
+
 # Set up dev repos
+sudo -u ${TARGET_USER} git config --global pull.ff only
 for repo in dotfiles dockerfiles; do
 	if [[ ! -d "/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}" ]]; then
-		mkdir -p "/home/${TARGET_USER}/development/src/github.com/rjszynal/"
-		git clone git@github.com:RJSzynal/${repo}.git "/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/"
+		sudo -u ${TARGET_USER} mkdir -p "/home/${TARGET_USER}/development/src/github.com/rjszynal/"
+		sudo -u ${TARGET_USER} git clone git@github.com:RJSzynal/${repo}.git "/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/"
 	fi
-	if ! git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote -v | grep bitbucket; then
-		git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
-		git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@github.com:RJSzynal/${repo}.git
+	if ! sudo -u ${TARGET_USER} git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote -v | grep bitbucket; then
+		sudo -u ${TARGET_USER} git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
+		sudo -u ${TARGET_USER} git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@github.com:RJSzynal/${repo}.git
 	fi
 done
 
