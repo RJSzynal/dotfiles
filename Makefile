@@ -3,7 +3,7 @@ CHASSIS := $(shell sudo dmidecode --string chassis-type)
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-all: bin config dotfiles etc gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
+all: bin config dotfiles etc extra gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
 
 desktop: all ## Bootstrap a new desktop install
 	sudo scripts/desktop_bootstrap_debian.sh
@@ -27,12 +27,20 @@ config: ## Installs the .config directory.
 	done; \
 	ln -snf $(CURDIR)/.config/i3 $(HOME)/.config/sway;
 
+extra:
+	if [ -f $(CURDIR)/$$(hostname) ]; then \
+		for file in $(shell find $(CURDIR)/$$(hostname) -maxdepth 1 -mindepth 1 -type f); do \
+			f=$$(basename $$file); \
+			ln -sfn $$file $(HOME)/$$f; \
+		done; \
+	fi
+
 dotfiles: ## Installs the dotfiles.
 	# add aliases for dotfiles
 	for file in $(shell find $(CURDIR) -maxdepth 1 -mindepth 1 -type f -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".*.swp"); do \
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/$$f; \
-	done; \
+	done;
 	ln -snf $(CURDIR)/gitignore $(HOME)/.gitignore;
 	git update-index --skip-worktree $(CURDIR)/.gitconfig;
 	mkdir -p $(HOME)/.local/share;
@@ -58,7 +66,6 @@ ifeq (${CHASSIS}, Desktop)
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
 	# sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-else (${CHASSIS},)
 else
 	@echo ==linking laptop files==
 	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -name "*.laptop" -not -name ".*.swp"); do \
