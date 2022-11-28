@@ -8,7 +8,7 @@ export MY_DOCKER_REPO_PREFIX=rjszynal
 #
 # Helper Functions
 #
-generate_docker_args(){
+function generate_docker_args {
 	local display_ip=
 	local audio_ip=
 	docker_args=(
@@ -162,7 +162,7 @@ generate_docker_args(){
 	fi
 	docker_args+=( "${extra_docker_args[@]}" )
 }
-docker_run(){
+function docker_run {
 	case ${dockerfunc_debug:-3} in
 		Debug|debug|7)
 			debug_level=7
@@ -270,7 +270,7 @@ docker_run(){
 		fi
 	fi
 }
-del_stopped(){
+function del_stopped {
 	local name=${1}
 	local force=${2:-false}
 	local exists
@@ -289,18 +289,18 @@ del_stopped(){
 	fi
 }
 # Usage: set_container_ip [NETWORK NAME] [CONTAINER NAME]
-set_container_ip(){
+function set_container_ip {
 	local container_network_format="{{.NetworkSettings.Networks.${1}.IPAddress}}"
 	container_ip=$(docker inspect --format "${container_network_format}" "${2}" 2>/dev/null)
 }
-set_container_hostname(){
+function set_container_hostname {
 	local container_hostname_format="{{.Config.Hostname}}"
 	container_hostname=$(docker inspect --format "${container_hostname_format}" "${1}" 2>/dev/null)
 }
-rmctr(){
+function rmctr {
 	docker rm -f "${@}" 2>/dev/null || true
 }
-relies_on(){
+function relies_on {
 	for container in "${@}"; do
 		local state
 		state=$(docker inspect --format "{{.State.Running}}" "${container}" 2>/dev/null)
@@ -312,13 +312,13 @@ relies_on(){
 		fi
 	done
 }
-relies_on_networks(){
+function relies_on_networks {
 	for this_network in "${@}"; do
 		docker network create "${this_network}" 2>/dev/null || true
 	done
 }
 # creates an nginx config for a local route
-nginx_config(){
+function nginx_config {
 	server=${1}
 	route=${2}
 
@@ -351,10 +351,10 @@ nginx_config(){
 	browser-exec "http://${server}"
 }
 alias browser-exec=browser_exec
-browser_exec(){
+function browser_exec {
 	xdg-open "${@}"
 }
-is_valid_ip(){
+function is_valid_ip {
 	local  ip=${1}
 	local  stat=1
 
@@ -372,7 +372,7 @@ is_valid_ip(){
 	fi
 	return ${stat}
 }
-add_to_hosts(){
+function add_to_hosts {
 	if is_valid_ip "${2}"; then
 		hostess add "${1}" "${2}"
 	else
@@ -383,7 +383,7 @@ add_to_hosts(){
 #
 # Container Aliases
 #
-audacity(){
+function audacity {
 	local container_name="audacity"
 	local container_home="/home/audacity"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/audacity:latest"
@@ -400,7 +400,7 @@ audacity(){
 
 	docker_run
 }
-aws(){
+function aws {
 	local container_name="aws"
 	local container_home="/home/aws"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/awscli:latest"
@@ -421,7 +421,7 @@ aws(){
 
 	docker_run
 }
-az(){
+function az {
 	local container_name="az"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/azure-cli:latest"
@@ -441,7 +441,7 @@ az(){
 
 	docker_run
 }
-cadvisor(){
+function cadvisor {
 	local container_name="cadvisor"
 	local container_home="/root"
 	local image_name="google/cadvisor:latest"
@@ -465,7 +465,7 @@ cadvisor(){
 	add_to_hosts "${container_name}" "${container_ip}"
 	browser-exec "http://${container_name}:8080"
 }
-chrome(){
+function chrome {
 	local build=
 	if [[ "${1}" == "beta" ]]; then
 		build="-${1}"
@@ -583,7 +583,7 @@ chrome(){
 
 	docker_run
 }
-chromium(){
+function chromium {
 	local run_type=
 	if [[ "${1}" == "secure" ]] || [[ "${1}" == "tor" ]]; then
 		run_type="${1}"
@@ -695,7 +695,7 @@ chromium(){
 
 	docker_run
 }
-consul(){
+function consul {
 	local container_name="consul"
 	local container_home="/root"
 	local image_name="consul:latest"
@@ -734,7 +734,7 @@ consul(){
 	add_to_hosts "${container_name}" "${container_ip}"
 	browser-exec "http://${container_name}:8500"
 }
-dive(){
+function dive {
 	local container_name="dive"
 	local container_home="/root"
 	local image_name="wagoodman/dive:latest"
@@ -752,7 +752,7 @@ dive(){
 
 	docker_run
 }
-firefox-browser(){
+function firefox-browser {
 	local run_type=
 	if [[ "${1}" == "secure" ]]; then
 		run_type="${1}"
@@ -822,7 +822,7 @@ firefox-browser(){
 
 	docker_run
 }
-gcloud(){
+function gcloud {
 	local container_name="gcloud"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gcloud:latest"
@@ -843,7 +843,7 @@ gcloud(){
 
 	docker_run
 }
-gimp(){
+function gimp {
 	local container_name="gimp"
 	local container_home="/home/gimp"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gimp:latest"
@@ -863,7 +863,7 @@ gimp(){
 
 	docker_run
 }
-gitsome(){
+function gitsome {
 	local container_name="gitsome"
 	local container_home="/home/gitsome"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/gitsome:latest"
@@ -884,7 +884,7 @@ gitsome(){
 
 	docker_run
 }
-hollywood(){
+function hollywood {
 	local container_name="hollywood"
 	local container_home="/home/hollywood"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/hollywood:latest"
@@ -900,7 +900,7 @@ hollywood(){
 
 	docker_run
 }
-hostess(){
+function hostess {
 	local container_name="hostess"
 	local container_home="/root"
 	local image_name="ondrejmo/hostess:latest"
@@ -920,7 +920,7 @@ hostess(){
 
 	docker_run
 }
-htop(){
+function htop {
 	local container_name="htop"
 	local container_home="/home/htop"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/htop:latest"
@@ -939,7 +939,7 @@ htop(){
 	docker_run
 }
 alias http=httpie
-httpie(){
+function httpie {
 	local container_name="httpie"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/httpie:latest"
@@ -958,7 +958,7 @@ httpie(){
 
 	docker_run
 }
-imagemin(){
+function imagemin {
 	local image_path
 	image_path=$(realpath "${1}")
 	local directory
@@ -986,7 +986,7 @@ imagemin(){
 	docker_run
 }
 alias john=john_the_ripper
-john_the_ripper(){
+function john_the_ripper {
 	local file
 	file=$(realpath "${1}")
 	local container_name="john"
@@ -1007,7 +1007,7 @@ john_the_ripper(){
 	docker_run
 }
 alias build_kernel=kernel_builder
-kernel_builder(){
+function kernel_builder {
 	local container_name="kernel-builder"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kernel-builder:latest"
@@ -1028,7 +1028,7 @@ kernel_builder(){
 
 	docker_run
 }
-keepassxc-docker(){
+function keepassxc-docker {
 	local container_name="keepassxc"
 	local container_home="/home/keepassxc"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/keepassxc:latest"
@@ -1053,7 +1053,7 @@ keepassxc-docker(){
 
 	docker_run
 }
-kvm(){
+function kvm {
 	local container_name="kvm"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/kvm:latest"
@@ -1076,7 +1076,7 @@ kvm(){
 
 	docker_run
 }
-libreoffice(){
+function libreoffice {
 	local container_name="libreoffice"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/libreoffice:latest"
@@ -1096,7 +1096,7 @@ libreoffice(){
 
 	docker_run
 }
-lynx(){
+function lynx {
 	local container_name="lynx"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/lynx:latest"
@@ -1113,7 +1113,7 @@ lynx(){
 
 	docker_run
 }
-masscan(){
+function masscan {
 	local container_name="masscan"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/masscan:latest"
@@ -1131,7 +1131,7 @@ masscan(){
 	docker_run
 }
 alias mc=midnight_commander
-midnight_commander(){
+function midnight_commander {
 	local container_name="mc"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/mc:latest"
@@ -1150,7 +1150,7 @@ midnight_commander(){
 
 	docker_run
 }
-neoman(){
+function neoman {
 	local container_name="neoman"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/neoman:latest"
@@ -1170,7 +1170,7 @@ neoman(){
 
 	docker_run
 }
-nes(){
+function nes {
 	local game=${1}
 	shift
 	local container_name="nes"
@@ -1191,7 +1191,7 @@ nes(){
 	docker_run
 }
 alias nc=netcat
-netcat(){
+function netcat {
 	local container_name="netcat"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/netcat:latest"
@@ -1208,7 +1208,7 @@ netcat(){
 
 	docker_run
 }
-nginx(){
+function nginx {
 	local container_name="nginx-${1}"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nginx:latest"
@@ -1226,7 +1226,7 @@ nginx(){
 	docker_run
 	add_to_hosts "${1}" "${container_ip}"
 }
-nmap(){
+function nmap {
 	local container_name="nmap"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/nmap:latest"
@@ -1243,7 +1243,7 @@ nmap(){
 
 	docker_run
 }
-notify_osd(){
+function notify_osd {
 	local container_name="notify_osd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/notify-osd:latest"
@@ -1260,12 +1260,12 @@ notify_osd(){
 	docker_run
 }
 alias notify-send=notify_send
-notify_send(){
+function notify_send {
 	relies_on notify_osd
 	local args=${*:2}
 	docker exec -i notify_osd notify-send "${1}" "${args}"
 }
-now(){
+function now {
 	local container_name="now"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/now:latest"
@@ -1286,7 +1286,7 @@ now(){
 
 	docker_run
 }
-opensnitch(){
+function opensnitch {
 	relies_on opensnitchd
 	local container_name="opensnitch"
 	local container_home="${HOME}"
@@ -1316,7 +1316,7 @@ opensnitch(){
 
 	docker_run
 }
-opensnitch-old(){
+function opensnitch-old {
 	docker run --rm -it \
 		-v /etc/localtime:/etc/localtime:ro \
 		-e DISPLAY \
@@ -1339,7 +1339,7 @@ opensnitch-old(){
 		--name opensnitch \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitch
 }
-opensnitchd(){
+function opensnitchd {
 	local container_name="opensnitchd"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/opensnitchd:latest"
@@ -1362,7 +1362,7 @@ opensnitchd(){
 
 	docker_run
 }
-osquery(){
+function osquery {
 	local container_name="osquery"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/osquery:latest"
@@ -1402,7 +1402,7 @@ osquery(){
 
 	docker_run
 }
-pandoc(){
+function pandoc {
 	local file=${*: -1}
 	local lfile
 	lfile=$(readlink -m "$(pwd)/${file}")
@@ -1429,7 +1429,7 @@ pandoc(){
 
 	docker_run
 }
-pia-vpn(){
+function pia-vpn {
 	local region
 	local name_prefix=
 	local network="untrusted"
@@ -1460,7 +1460,7 @@ pia-vpn(){
 		--name "${name_prefix}pia-vpn" \
 		colinhebert/pia-openvpn
 }
-pivman(){
+function pivman {
 	local container_name="pivman"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pivman:latest"
@@ -1480,7 +1480,7 @@ pivman(){
 
 	docker_run
 }
-pms(){
+function pms {
 	relies_on mpd
 	local container_name="pms"
 	local container_home="/root"
@@ -1500,7 +1500,7 @@ pms(){
 
 	docker_run
 }
-pond(){
+function pond {
 	local container_name="pond"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pond:latest"
@@ -1517,7 +1517,7 @@ pond(){
 
 	docker_run
 }
-privoxy(){
+function privoxy {
 	relies_on torproxy
 	local container_name="privoxy"
 	local container_home="/root"
@@ -1536,7 +1536,7 @@ privoxy(){
 
 	add_to_hosts "${container_name}" "${container_ip}"
 }
-pulseaudio(){
+function pulseaudio {
 	local container_name="pulseaudio"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio:latest"
@@ -1558,7 +1558,7 @@ pulseaudio(){
 	add_to_hosts "${container_name}" "${container_ip}"
 	export PULSE_SERVER="${container_name}"
 }
-registrator(){
+function registrator {
 	local container_name="registrator"
 	local container_home="/root"
 	local image_name="gliderlabs/registrator:latest"
@@ -1576,7 +1576,7 @@ registrator(){
 
 	docker_run
 }
-remmina(){
+function remmina {
 	local container_name="remmina"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/remmina:latest"
@@ -1595,7 +1595,7 @@ remmina(){
 
 	docker_run
 }
-ricochet(){
+function ricochet {
 	del_stopped ricochet
 
 	docker run --rm -d \
@@ -1608,7 +1608,7 @@ ricochet(){
 		--name ricochet \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/ricochet
 }
-rstudio(){
+function rstudio {
 	del_stopped rstudio
 
 	docker run --rm -d \
@@ -1621,7 +1621,7 @@ rstudio(){
 		--name rstudio \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/rstudio
 }
-s3cmd(){
+function s3cmd {
 	del_stopped s3cmd
 
 	docker run --rm -it \
@@ -1631,7 +1631,7 @@ s3cmd(){
 		--name s3cmd \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/s3cmd "${@}"
 }
-scudcloud(){
+function scudcloud {
 	del_stopped scudcloud
 
 	docker run --rm -d \
@@ -1657,7 +1657,7 @@ scudcloud(){
 	# exit current shell
 	# exit 0
 }
-shorewall(){
+function shorewall {
 	del_stopped shorewall
 
 	docker run --rm -it \
@@ -1668,7 +1668,7 @@ shorewall(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/shorewall "${@}"
 }
 alias signal=signal-messenger
-signal-messenger(){
+function signal-messenger {
 	local container_name="signal-messenger"
 	local container_home="/home/signal"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:latest"
@@ -1689,7 +1689,7 @@ signal-messenger(){
 	docker_run
 }
 alias signal-beta=signal-messenger-beta
-signal-messenger-beta(){
+function signal-messenger-beta {
 	local container_name="signal-messenger-beta"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/signal-messenger:beta"
@@ -1709,7 +1709,7 @@ signal-messenger-beta(){
 
 	docker_run
 }
-skype(){
+function skype {
 	del_stopped skype
 	relies_on pulseaudio
 
@@ -1724,7 +1724,7 @@ skype(){
 		--name skype \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/skype
 }
-slack(){
+function slack {
 	del_stopped slack
 
 	docker run -d \
@@ -1739,7 +1739,7 @@ slack(){
 		--name slack \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/slack "${@}"
 }
-spotify-ui(){
+function spotify-ui {
 	local container_name="spotify"
 	local container_home="/home/spotify"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/spotify-client:latest"
@@ -1759,7 +1759,7 @@ spotify-ui(){
 
 	docker_run
 }
-spotifyd(){
+function spotifyd {
 	local container_name="spotifyd"
 	local container_home="/home/spotify"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/spotifyd:latest"
@@ -1780,7 +1780,7 @@ spotifyd(){
 
 	docker_run
 }
-ssh2john(){
+function ssh2john {
 	local file
 	file=$(realpath "${1}")
 
@@ -1789,7 +1789,7 @@ ssh2john(){
 		--entrypoint ssh2john \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/john "${@}"
 }
-sshb0t(){
+function sshb0t {
 	del_stopped sshb0t
 
 	if [[ ! -d "${HOME}/.ssh" ]]; then
@@ -1808,7 +1808,7 @@ sshb0t(){
 		r.j3ss.co/sshb0t \
 		--user "${GITHUB_USER}" --keyfile /root/.ssh/authorized_keys --once
 }
-steam(){
+function steam {
 	del_stopped steam
 	relies_on pulseaudio
 
@@ -1824,25 +1824,25 @@ steam(){
 		--name steam \
 		tianon/steam
 }
-t(){
+function t {
 	docker run -t --rm \
 		-v "${HOME}/.trc:/root/.trc" \
 		--log-driver none \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/t "${@}"
 }
-tarsnap(){
+function tarsnap {
 	docker run --rm -it \
 		-v "${HOME}/.tarsnaprc:/root/.tarsnaprc" \
 		-v "${HOME}/.tarsnap:/root/.tarsnap" \
 		-v "${HOME}:/root/workdir" \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/tarsnap "${@}"
 }
-telnet(){
+function telnet {
 	docker run --rm -it \
 		--log-driver none \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/telnet "${@}"
 }
-termboy(){
+function termboy {
 	del_stopped termboy
 	local game=${1}
 
@@ -1851,7 +1851,7 @@ termboy(){
 		--name termboy \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/nes "/games/${game}.rom"
 }
-terraform(){
+function terraform {
 	docker run --rm -it \
 		-v "${HOME}:${HOME}:ro" \
 		-v "$(pwd):/usr/src/repo" \
@@ -1862,7 +1862,7 @@ terraform(){
 		-e SSH_AUTH_SOCK \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/terraform "${@}"
 }
-tor(){
+function tor {
 	del_stopped tor
 
 	docker run --rm -d \
@@ -1876,7 +1876,7 @@ tor(){
 	# validate we are running through tor
 	browser-exec "https://check.torproject.org/"
 }
-torbrowser(){
+function torbrowser {
 	del_stopped torbrowser
 
 	docker run --rm -d \
@@ -1891,7 +1891,7 @@ torbrowser(){
 	# exit current shell
 	# exit 0
 }
-tormessenger(){
+function tormessenger {
 	del_stopped tormessenger
 
 	docker run --rm -d \
@@ -1906,7 +1906,7 @@ tormessenger(){
 	# exit current shell
 	# exit 0
 }
-torproxy(){
+function torproxy {
 	local container_name="torproxy"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/tor-proxy:latest"
@@ -1924,12 +1924,12 @@ torproxy(){
 
 	add_to_hosts "${container_name}" "${container_ip}"
 }
-traceroute(){
+function traceroute {
 	docker run --rm -it \
 		--network host \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/traceroute "${@}"
 }
-transmission(){
+function transmission {
 	del_stopped transmission
 
 	docker run --rm -d \
@@ -1946,7 +1946,7 @@ transmission(){
 	add_to_hosts transmission "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' transmission)"
 	browser-exec "http://transmission:9091"
 }
-travis(){
+function travis {
 	docker run --rm -it \
 		-v "${HOME}/.travis:/root/.travis" \
 		-v "$(pwd):/usr/src/repo:ro" \
@@ -1954,7 +1954,7 @@ travis(){
 		--log-driver none \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/travis "${@}"
 }
-virsh(){
+function virsh {
 	relies_on kvm
 
 	docker run --rm -it \
@@ -1965,7 +1965,7 @@ virsh(){
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/libvirt-client "${@}"
 }
 alias virt-viewer="virt_viewer"
-virt_viewer(){
+function virt_viewer {
 	relies_on kvm
 
 	docker run --rm -it \
@@ -1978,7 +1978,7 @@ virt_viewer(){
 		--network container:kvm \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/virt-viewer "${@}"
 }
-vivaldi(){
+function vivaldi {
 	relies_on pulseaudio
 	local run_type=
 	if [[ "${1}" == "secure" ]]; then
@@ -2053,7 +2053,7 @@ vivaldi(){
 		"${MY_DOCKER_REPO_PREFIX}/vivaldi" \
 			"${extra_vivaldi_args[@]}"
 }
-vscode(){
+function vscode {
 	local args_hash
 	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscode-${args_hash}"
@@ -2078,7 +2078,7 @@ vscode(){
 
 	docker_run
 }
-vscodium(){
+function vscodium {
 	local args_hash
 	args_hash=$(sha1sum <<<"${*}" | cut -c1-40)
 	local container_name="vscodium-${args_hash}"
@@ -2104,7 +2104,7 @@ vscodium(){
 
 	docker_run
 }
-vlc(){
+function vlc {
 	local container_name="vlc"
 	local container_home="/home/vlc"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc:latest"
@@ -2124,7 +2124,7 @@ vlc(){
 
 	docker_run
 }
-watchman(){
+function watchman {
 	del_stopped watchman
 
 	docker run --rm -d \
@@ -2133,7 +2133,7 @@ watchman(){
 		--name watchman \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/watchman --foreground
 }
-weeslack(){
+function weeslack {
 	del_stopped weeslack
 
 	docker run --rm -it \
@@ -2142,7 +2142,7 @@ weeslack(){
 		--name weeslack \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/wee-slack
 }
-wg(){
+function wg {
 	docker run -i --rm \
 		--log-driver none \
 		-v /tmp:/tmp \
@@ -2151,7 +2151,7 @@ wg(){
 		--name wg \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/wg "${@}"
 }
-wireshark(){
+function wireshark {
 	del_stopped wireshark
 
 	docker run --rm -d \
@@ -2163,13 +2163,13 @@ wireshark(){
 		--name wireshark \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/wireshark
 }
-wrk(){
+function wrk {
 	docker run --rm -it \
 		--log-driver none \
 		--name wrk \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/wrk "${@}"
 }
-ykman(){
+function ykman {
 	del_stopped ykpersonalize
 
 	docker run --rm -it \
@@ -2179,7 +2179,7 @@ ykman(){
 		--name ykman \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/ykman bash
 }
-ykpersonalize(){
+function ykpersonalize {
 	del_stopped ykpersonalize
 
 	docker run --rm -it \
@@ -2189,7 +2189,7 @@ ykpersonalize(){
 		--name ykpersonalize \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/ykpersonalize bash
 }
-yubico_piv_tool(){
+function yubico_piv_tool {
 	del_stopped yubico-piv-tool
 
 	docker run --rm -it \
