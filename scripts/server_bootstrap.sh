@@ -402,6 +402,7 @@ sudo yum install -y \
 	lvm2
 curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker "${USERNAME}"
+docker login
 
 
 services_location="${HOME}/development/src/github.com/rjszynal/dotfiles/scripts/services"
