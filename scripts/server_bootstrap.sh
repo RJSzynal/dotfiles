@@ -391,8 +391,8 @@ read -rp "What is the domain name to update with godaddy? stoneholme.szynal.co.u
 (crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk ${web_domain%.szynal.co.uk} 1800 > /dev/null") | crontab -
 read -rp "Is this the root domain?: " is_root_domain
 if [ "${is_root_domain}" = "Y" ] || [ "${is_root_domain}" = "y" ]; then
-	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk @ 1800 > /dev/null") | crontab -
-	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk "*" 1800 > /dev/null") | crontab -
+	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk '@' 1800 > /dev/null") | crontab -
+	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${USERNAME}/torrent/configs/godaddy/.creds szynal.co.uk '*' 1800 > /dev/null") | crontab -
 fi
 
 # Install Docker
@@ -423,10 +423,12 @@ if [ "${web_services}" = "Y" ] || [ "${web_services}" = "y" ] ; then
 	sudo systemctl start cv
 
 	# Start the web experiments site
-	#sudo ln -sfn "${services_location}/web.service" /etc/systemd/system/
-	#sudo systemctl enable web
-	#sudo systemctl start web
+	sudo ln -sfn "${services_location}/web.service" /etc/systemd/system/
+	sudo systemctl enable web
+	sudo systemctl start web
 
+	sudo firewall-cmd --permanent --zone=public --add-port=60443/tcp
+	sudo firewall-cmd --reload
 fi
 
 ## Torrent services set up
