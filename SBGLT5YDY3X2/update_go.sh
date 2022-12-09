@@ -6,7 +6,7 @@ if [ -n "${1}" ]; then
 fi
 
 until [ -n "${latest_file}" ]; do
-	latest_file=$(curl -s https://golang.org/dl/ | grep linux-amd64 | sed -n 's/.*>\(go[0-9.]*.linux-amd64.tar.gz\)<\/a>.*/\1/p' | head -n1)
+	latest_file=$(curl -s https://go.dev/dl/ | grep linux-amd64 | sed -n 's/.*>\(go[0-9.]*.linux-amd64.tar.gz\)<\/a>.*/\1/p' | head -n1)
 done
 current_version=$(/usr/local/go/bin/go version | cut -d' ' -f3)
 
