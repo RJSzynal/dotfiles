@@ -9,4 +9,8 @@ http:
             stripprefix:
                 prefixes:
                     - /dashboard
+        omada_stripprefix:
+            stripprefix:
+                prefixes:
+                    - /omada
 

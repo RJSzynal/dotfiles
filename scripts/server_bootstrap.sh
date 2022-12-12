@@ -415,6 +415,26 @@ sudo cp "${services_location}/traefik/dashboard.yml" /root/.traefik/
 sudo systemctl enable traefik
 sudo systemctl start traefik
 
+## Omada service set up
+read -rn1 -p "Is this server running the omada controller service? Y/n: " omada_services
+if [ "${omada_services}" = "Y" ] || [ "${omada_services}" = "y" ] ; then
+	# Start the Omada Controller
+	sudo ln -sfn "${services_location}/omada.service" /etc/systemd/system/
+	sudo systemctl enable omada
+	sudo systemctl start omada
+
+	sudo firewall-cmd --permanent --zone=public --add-port=8088/tcp
+	sudo firewall-cmd --permanent --zone=public --add-port=8043/tcp
+	sudo firewall-cmd --permanent --zone=public --add-port=8843/tcp
+	sudo firewall-cmd --permanent --zone=public --add-port=27001/udp
+	sudo firewall-cmd --permanent --zone=public --add-port=29810/udp
+	sudo firewall-cmd --permanent --zone=public --add-port=29811/tcp
+	sudo firewall-cmd --permanent --zone=public --add-port=29812/tcp
+	sudo firewall-cmd --permanent --zone=public --add-port=29813/tcp
+	sudo firewall-cmd --permanent --zone=public --add-port=29814/tcp
+	sudo firewall-cmd --reload
+fi
+
 ## Web services set up
 read -rn1 -p "Is this server running the web services? Y/n: " web_services
 if [ "${web_services}" = "Y" ] || [ "${web_services}" = "y" ] ; then
