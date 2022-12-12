@@ -7,7 +7,7 @@ Requires=traefik.service
 
 [Service]
 Environment="WEB_NAME=webexperiments"
-Environment="WEB_IMAGE=php:7.1-apache"
+Environment="WEB_IMAGE=php:8.1-apache"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
@@ -17,7 +17,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${WEB_NAME} \
 	-h ${WEB_NAME} \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${WEB_NAME}.rule=Host(\"szynal.co.uk\")&&PathPrefix(\"/web\") \
-	-l traefik.http.routers.${WEB_NAME}.entrypoints=websecure \
+	-l traefik.http.routers.${WEB_NAME}.entrypoints=websecure,websecure-external \
 	-l traefik.http.routers.${WEB_NAME}.tls=true \
 	-l traefik.http.routers.${WEB_NAME}.tls.certresolver=szynalcoukchallenge \
 	-v /etc/localtime:/etc/localtime:ro \
