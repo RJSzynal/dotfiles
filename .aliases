@@ -46,9 +46,9 @@ alias ga='git add'
 alias gau='git add -u'
 
 # Container tool aliases
-alias dive='docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/bin/docker wagoodman/dive:latest'
-alias docker_ip="docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'"
-alias kustomize='docker run -it -v ${PWD}:/app bitlayer/kustomize:2.0.3'
+alias dive='$(which docker) run --rm -it -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/bin/docker wagoodman/dive:latest'
+alias docker_ip="$(which docker) inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'"
+alias kustomize='$(which docker) run -it -v ${PWD}:/app bitlayer/kustomize:2.0.3'
 
 # Use Git’s colored diff when available
 if hash git &>/dev/null ; then
