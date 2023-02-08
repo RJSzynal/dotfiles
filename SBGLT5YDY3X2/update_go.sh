@@ -13,7 +13,7 @@ current_version=$(/usr/local/go/bin/go version | cut -d' ' -f3)
 if [ "${latest_file}" != "${current_version}.linux-amd64.tar.gz" ]; then
 	tmp_dir=$(mktemp -d)
 	cd ${tmp_dir}
-	wget https://golang.org/dl/${latest_file}
+	wget https://dl.google.com/go/${latest_file}
 	tar -C /usr/local -xzf ${latest_file}
 	cd /
 	rm -rf ${tmp_dir}

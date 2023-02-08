@@ -1,7 +1,8 @@
 #!/bin/sh
 
+adapter_name='WiFi'
 powershell_bin='/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe'
-powershell_cmd='get-netadapter -name "WiFi" | Get-DnsClientServerAddress | Select -ExpandProperty ServerAddresses'
+powershell_cmd="get-netadapter -name \"${adapter_name}\" | Get-DnsClientServerAddress | Select -ExpandProperty ServerAddresses"
 file_name=$(basename ${0})
 
 if [ "$(pgrep ${file_name} | grep -v ^$ | wc -l)" -gt 2 ] 
