@@ -13,4 +13,8 @@ http:
             stripprefix:
                 prefixes:
                     - /omada
+        folding_stripprefix:
+            stripprefix:
+                prefixes:
+                    - /folding
 

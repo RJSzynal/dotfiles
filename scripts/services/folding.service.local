@@ -1,0 +1,36 @@
+[Unit]
+Description=Folding@Home Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="NAME=folding"
+Environment="IMAGE=rjszynal/foldingathome:latest"
+Environment="WEB_PORT=7396"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm --name ${NAME} \
+	-h ${NAME} \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${NAME}-80.rule=Host(\"${NAME}.local\") \
+	-l traefik.http.routers.${NAME}-80.entrypoints=web \
+	-l traefik.http.routers.${NAME}-80.middlewares=${NAME}-auth@docker \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=${WEB_PORT} \
+	-l traefik.http.middlewares.${NAME}-auth.basicauth.users=rjszynal:$$apr1$$g81LF3Yz$$jlH7oMOCDR0wn7w64pBRe/ \
+	--gpus=all \
+	-v /root/.fah:/fah \
+	${IMAGE} \
+	--user=RJSzynal \
+	--team=236269 \
+	--priority=idle \
+	--power=full
+ExecStop=-docker exec ${NAME} FAHClient --send-command shutdown &; sleep 35; /usr/bin/docker rm -fv ${NAME}
+
+[Install]
+WantedBy=multi-user.target
+
