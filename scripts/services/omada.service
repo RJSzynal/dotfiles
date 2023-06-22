@@ -7,11 +7,12 @@ Requires=traefik.service
 
 [Service]
 Environment="OMADA_NAME=omada-controller"
-Environment="OMADA_IMAGE=mbentley/omada-controller:5.7"
+Environment="OMADA_IMAGE=mbentley/omada-controller:5.9"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
 ExecStartPre=/usr/bin/docker pull ${OMADA_IMAGE}
+ExecStartPre=-/usr/bin/docker stop -t 60 ${OMADA_NAME}
 ExecStartPre=-/usr/bin/docker rm -fv ${OMADA_NAME}
 ExecStart=/usr/bin/docker run --rm -t --name ${OMADA_NAME} \
 	-h ${OMADA_NAME} \
@@ -53,6 +54,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${OMADA_NAME} \
 	-v /root/.omada/logs:/opt/tplink/EAPController/logs \
 	-v /root/.omada/cert:/cert \
 	${OMADA_IMAGE}
+ExecStopPre=-/usr/bin/docker stop -t 60 ${OMADA_NAME}
 ExecStop=-/usr/bin/docker rm -fv ${OMADA_NAME}
 
 [Install]
