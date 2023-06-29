@@ -7,7 +7,7 @@ Requires=traefik.service
 
 [Service]
 Environment="NAME=folding"
-Environment="IMAGE=rjszynal/foldingathome:latest"
+Environment="IMAGE=foldingathome/fah-gpu:latest"
 Environment="WEB_PORT=7396"
 TimeoutStartSec=0
 TimeoutStopSec=40
@@ -19,9 +19,7 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${NAME}-80.rule=Host(\"${NAME}.local\") \
 	-l traefik.http.routers.${NAME}-80.entrypoints=web \
-	-l traefik.http.routers.${NAME}-80.middlewares=${NAME}-auth@docker \
 	-l traefik.http.services.${NAME}.loadbalancer.server.port=${WEB_PORT} \
-	-l traefik.http.middlewares.${NAME}-auth.basicauth.users=rjszynal:$$apr1$$g81LF3Yz$$jlH7oMOCDR0wn7w64pBRe/ \
 	--gpus=all \
 	-v /root/.fah:/fah \
 	${IMAGE} \
