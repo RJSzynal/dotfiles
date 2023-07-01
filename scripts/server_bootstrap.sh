@@ -534,5 +534,11 @@ sudo printf "%s\n" "${nightly_backup_cmd[@]}" > nightly_backup.sh
 chmod +x nightly_backup.sh
 chown root: nightly_backup.sh
 sudo mv nightly_backup.sh /root/nightly_backup.sh
+
+# Install Ookla Speedtest CLI
 (sudo crontab -l ; echo '0 1 * * * /root/nightly_backup.sh') | sudo crontab -
-(sudo crontab -l ; echo '*/10 * * * * speedtest --format=csv >> /var/log/speedtest/speedtest.log') | sudo crontab -
+
+# Install Ookla Speedtest CLI
+sudo yum install -y speedtest-cli
+sudo mkdir -p /var/log/speedtest
+(sudo crontab -l ; echo '*/10 * * * * /usr/bin/speedtest-cli --csv >> /var/log/speedtest/speedtest.log') | sudo crontab -
