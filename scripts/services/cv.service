@@ -7,7 +7,7 @@ Requires=traefik.service
 
 [Service]
 Environment="CV_NAME=cv"
-Environment="CV_IMAGE=kyma/docker-nginx:latest"
+Environment="CV_IMAGE=nginx:latest"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
@@ -21,7 +21,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${CV_NAME} \
 	-l traefik.http.routers.${CV_NAME}.tls=true \
 	-l traefik.http.routers.${CV_NAME}.tls.certresolver=szynalcoukchallenge \
 	-v /etc/localtime:/etc/localtime:ro \
-	-v /home/${LOCAL_USER}/cv/public:/var/www \
+	-v /home/${LOCAL_USER}/cv/public:/usr/share/nginx/html:ro \
 	${CV_IMAGE}
 ExecStop=-/usr/bin/docker rm -fv ${CV_NAME}
 
