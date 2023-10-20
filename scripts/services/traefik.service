@@ -14,7 +14,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${PROXY_NAME} \
 	-h ${PROXY_NAME} \
 	-p 80:80 \
 	-p 443:443 \
-	-p 60443:60443 \
+	-p 6443:6443 \
 	-p 8080:8080 \
 	-v /root/.traefik:/etc/traefik \
 	-v /var/run/docker.sock:/var/run/docker.sock:ro \

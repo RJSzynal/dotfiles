@@ -1,7 +1,10 @@
 api: true
 
 log:
-    level: DEBUG
+    level: INFO
+
+global:
+    sendAnonymousUsage: true
 
 providers:
     file:
@@ -17,6 +20,12 @@ entryPoints:
                 entryPoint:
                     to: websecure
     websecure:
+        address: ":6443"
+        http:
+            middleware:
+            tls:
+                certResolver: szynalcoukchallenge
+    websecure-external:
         address: ":443"
         http:
             tls:
@@ -25,7 +34,7 @@ entryPoints:
 certificatesresolvers:
     szynalcoukchallenge:
         acme:
-            tlschallenge: true
+            tlsChallenge: true
             email: robert@szynal.co.uk
             storage: /etc/traefik/letsencrypt/szynal.co.uk.json
 
