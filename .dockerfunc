@@ -985,6 +985,27 @@ function imagemin {
 
 	docker_run
 }
+alias jd=json_diff
+function json_diff {
+	local file
+	local container_name="jd"
+	local container_home="/root"
+	local image_name="josephburnett/jd:latest"
+	local attach_tty=true
+	local network="trusted"
+	local extra_networks=()
+	local container_ip
+	local container_hostname
+	local extra_docker_args=(
+		-v "${PWD}:${PWD}"
+		-w ${PWD}
+	)
+	local application_args=(
+		"${@}"
+	)
+
+	docker_run
+}
 alias john=john_the_ripper
 function john_the_ripper {
 	local file
