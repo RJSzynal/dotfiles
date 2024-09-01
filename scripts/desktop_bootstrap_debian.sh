@@ -36,27 +36,30 @@ source ./library_debian.sh
 # Base
 apt-get update -y
 apt-get install -y \
-	--no-install-recommends \
-	apt-transport-https \
-	ca-certificates \
-	curl \
-	dnsutils \
-	firmware-realtek \
-	git \
-	gnupg2 \
-	jq \
-	make \
-	neovim \
-	nvidia-driver \
-	rsync \
-	silversearcher-ag \
-	ssh \
-	software-properties-common \
-	thunar \
-	thunar-archive-plugin \
-	tig \
-	unzip \
-	wget
+		apt-transport-https \
+		ca-certificates \
+		curl \
+		dnsutils \
+		firmware-amd-graphics \
+		git \
+		gnupg2 \
+		jq \
+		libgl1-mesa-dri \
+		libglx-mesa0 \
+		make \
+		mesa-vulkan-drivers \
+		neovim \
+		rsync \
+		silversearcher-ag \
+		software-properties-common \
+		ssh \
+		thunar \
+		thunar-archive-plugin \
+		tig \
+		unzip \
+		wget \
+		xserver-xorg-video-amdgpu \
+	--no-install-recommends
 install_docker "${TARGET_USER}"
 install_google_drive "${TARGET_USER}"
 install_oh_my_zsh "${TARGET_USER}"
@@ -65,8 +68,8 @@ install_fonts "${TARGET_USER}"
 # Window manager
 install_awesome "${TARGET_USER}"
 apt-get install -y \
-	--no-install-recommends \
-	gnome-keyring
+		gnome-keyring \
+	--no-install-recommends
 
 # Set up locale
 sed -i -e 's|^# \(en_GB.UTF-8\)|\1|' -e 's|^\(en_US.UTF-8\)|# \1|' /etc/locale.gen
@@ -107,6 +110,8 @@ for service in ${SERVICE_LIST}; do
 	sudo systemctl enable ${service}
 	sudo systemctl start ${service}
 done
+
+(cd /home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles && make all)
 
 # Cleanup
 apt autoremove

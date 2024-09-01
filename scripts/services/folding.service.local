@@ -7,7 +7,7 @@ Requires=traefik.service
 
 [Service]
 Environment="NAME=folding"
-Environment="IMAGE=foldingathome/fah-gpu:latest"
+Environment="IMAGE=foldingathome/fah-gpu-amd:latest"
 Environment="WEB_PORT=7396"
 TimeoutStartSec=0
 TimeoutStopSec=40
