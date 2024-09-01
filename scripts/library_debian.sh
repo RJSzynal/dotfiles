@@ -34,7 +34,7 @@ install_autofs() {
 }
 
 install_chrome() {
-	sudo bash -c 'curl -s https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/chrome.gpg'
+	sudo bash -c 'curl -s https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor --yes -o /usr/share/keyrings/chrome.gpg'
 	echo "deb [signed-by=/usr/share/keyrings/chrome.gpg arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
 		> /etc/apt/sources.list.d/google-chrome.list
 	apt-get update -y
@@ -49,7 +49,7 @@ install_docker() {
 		jq --null-input '.features.buildkit = true' > /etc/docker/daemon.json
 	fi
 	# Setup APT repository
-	sudo bash -c 'curl -s https://download.docker.com/linux/debian/gpg | gpg --dearmor > /usr/share/keyrings/docker.gpg'
+	sudo bash -c 'curl -s https://download.docker.com/linux/debian/gpg | gpg --dearmor --yes -o /usr/share/keyrings/docker.gpg'
 	echo "deb [signed-by=/usr/share/keyrings/docker.gpg arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
 		> /etc/apt/sources.list.d/docker.list
 	# [ -z "$(uname -a | grep -i 'wsl')" ] || update-alternatives --set iptables /usr/sbin/iptables-legacy
@@ -119,7 +119,7 @@ install_lmms() {
 }
 
 install_spotify() {
-	sudo bash -c 'curl -s https://download.spotify.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/spotify.gpg'
+	sudo bash -c 'curl -s https://download.spotify.com/debian/pubkey.gpg | gpg --dearmor --yes -o /usr/share/keyrings/spotify.gpg'
 	echo 'deb [signed-by=/usr/share/keyrings/spotify.gpg arch=amd64] http://repository.spotify.com stable non-free' \
 		> /etc/apt/sources.list.d/spotify.list
 	apt-get update -y
@@ -127,7 +127,7 @@ install_spotify() {
 }
 
 install_vscodium() {
-	sudo bash -c 'curl -s https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor > /usr/share/keyrings/vscodium.gpg'
+	sudo bash -c 'curl -s https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor --yes -o /usr/share/keyrings/vscodium.gpg'
 	echo 'deb [signed-by=/usr/share/keyrings/vscodium.gpg arch=amd64] https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/repos/debs/ vscodium main' \
 		> /etc/apt/sources.list.d/vscodium.list
 	apt-get update -y
