@@ -6,7 +6,7 @@ help:
 all: bin config dotfiles etc extra gnupg ## Installs the bin, config, etc and gnupg directory files and the dotfiles.
 
 desktop: all ## Bootstrap a new desktop install
-	sudo scripts/desktop_bootstrap_debian.sh
+	(cd scripts && sudo bash desktop_bootstrap_debian.sh)
 
 wsl: all ## Bootstrap a new WSL install
 	sudo scripts/wsl_bootstrap_debian.sh
@@ -54,14 +54,14 @@ etc: ## Installs the etc directory files.
 	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -not -name "*.desktop" -not -name "*.laptop" -not -name ".*.swp"); do \
 		f=$$(echo $$file | sed -e 's|$(CURDIR)||'); \
 		sudo mkdir -p $$(dirname $$f); \
-		sudo ln -f $$file $$f; \
+		sudo ln -sf $$file $$f; \
 	done
 ifeq (${CHASSIS}, Desktop)
 	@echo ==linking desktop files==
 	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -name "*.desktop" -not -name ".*.swp"); do \
 		f=$$(echo $$file | sed -e 's|$(CURDIR)||' -e 's|.desktop||'); \
 		sudo mkdir -p $$(dirname $$f); \
-		sudo ln -f $$file $$f; \
+		sudo ln -sf $$file $$f; \
 	done
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
@@ -71,7 +71,7 @@ else
 	@for file in $(shell find $(CURDIR)/etc -type f -not -name "*.disable" -name "*.laptop" -not -name ".*.swp"); do \
 		f=$$(echo $$file | sed -e 's|$(CURDIR)||' -e 's|.laptop||'); \
 		sudo mkdir -p $$(dirname $$f); \
-		sudo ln -f $$file $$f; \
+		sudo ln -sf $$file $$f; \
 	done
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
