@@ -63,7 +63,7 @@ apt-get install -y \
 install_docker "${TARGET_USER}"
 install_google_drive "${TARGET_USER}"
 install_oh_my_zsh "${TARGET_USER}"
-install_fonts "${TARGET_USER}"
+# install_fonts "${TARGET_USER}" # These are already comitted in the .fonts dir
 
 # Window manager
 install_awesome "${TARGET_USER}"
