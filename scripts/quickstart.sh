@@ -38,5 +38,7 @@ if [[ ! -d "/home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles" ]
 	sudo -u ${TARGET_USER} mkdir -p "/home/${TARGET_USER}/development/src/github.com/rjszynal/"
 	sudo -u ${TARGET_USER} git clone git@github.com:RJSzynal/dotfiles.git "/home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles/"
 fi
+(cd "/home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles/" \
+&& git submodule update --init --recursive)
 
 (cd /home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles && make desktop)

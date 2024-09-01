@@ -100,18 +100,17 @@ for repo in dotfiles dockerfiles; do
 		sudo -u ${TARGET_USER} git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@bitbucket.org:RJSzynal/${repo}.git
 		sudo -u ${TARGET_USER} git --git-dir="/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/.git" remote set-url --add --push origin git@github.com:RJSzynal/${repo}.git
 	fi
+	(cd "/home/${TARGET_USER}/development/src/github.com/rjszynal/${repo}/" \
+	&& git submodule update --init --recursive)
 done
 
 # Enable services
-if [ ${#SERVICE_LIST[@]} -gt 0 }; then
+if [ ${#SERVICE_LIST[@]} -gt 0 ]; then
 	systemctl daemon-reload
 fi
 for service in ${SERVICE_LIST}; do
 	sudo systemctl enable ${service}
-	sudo systemctl start ${service}
 done
-
-(cd /home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles && make all)
 
 # Cleanup
 apt autoremove

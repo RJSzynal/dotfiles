@@ -2,15 +2,19 @@
 
 install_fonts() {
 	# Ubuntu
-	wget https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip -qO /tmp/ubuntu-font.zip
-	mkdir -p /home/${1}/.local/share/fonts/Ubuntu
-	unzip /tmp/ubuntu-font.zip -d /home/${1}/.local/share/fonts/Ubuntu/
-	rm -f /tmp/ubuntu-font.zip
+	if [[ ! -d "/home/${1}/.local/share/fonts/Ubuntu" ]]; then
+		wget https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip -qO /tmp/ubuntu-font.zip
+		mkdir -p "/home/${1}/.local/share/fonts/Ubuntu"
+		unzip /tmp/ubuntu-font.zip -d "/home/${1}/.local/share/fonts/Ubuntu/"
+		rm -f /tmp/ubuntu-font.zip
+	fi
 	# NerdFont Ubuntu Mono
-	wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/UbuntuMono.zip -qO /tmp/UbuntuMono.zip
-	mkdir -p /home/${1}/.local/share/fonts/NerdFonts
-	unzip /tmp/UbuntuMono.zip -d /home/${1}/.local/share/fonts/NerdFonts/
-	rm -f /tmp/UbuntuMono.zip
+	if [[ ! -d "/home/${1}/.local/share/fonts/NerdFonts" ]]; then
+		wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/UbuntuMono.zip -qO /tmp/UbuntuMono.zip
+		mkdir -p "/home/${1}/.local/share/fonts/NerdFonts"
+		unzip /tmp/UbuntuMono.zip -d "/home/${1}/.local/share/fonts/NerdFonts/"
+		rm -f /tmp/UbuntuMono.zip
+	fi
 }
 
 install_zsh() {
@@ -19,22 +23,28 @@ install_zsh() {
 
 install_oh_my_zsh() {
 	install_zsh
-	KEEP_ZSHRC=yes RUNZSH=no sudo -u ${1} sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	if [[ ! -d "/home/${1}/.oh-my-zsh" ]]; then
+		sudo -u ${1} sh -c "KEEP_ZSHRC=yes RUNZSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	fi
 	# Install zsh theme
-	sudo -u ${1} git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k"
+	if [[ ! -d "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k" ]]; then
+		sudo -u ${1} git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k"
+	fi
 }
 
 install_autofs() {
 	apt-get install -y --no-install-recommends autofs
 	mkdir -p /etc/auto.master.d
-	read -rp "Enter mount password: " mount_pass
-	echo "user=administrator" > /root/.storage.creds
-	echo "pass=${mount_pass}" >> /root/.storage.creds
+	if [[ ! -f /root/.storage.creds ]]; then
+		read -rp "Enter mount password: " mount_pass
+		echo "user=administrator" > /root/.storage.creds
+		echo "pass=${mount_pass}" >> /root/.storage.creds
+	fi
 	SERVICE_LIST+=( autofs )
 }
 
 install_chrome() {
-	sudo bash -c 'curl -s https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor --yes -o /usr/share/keyrings/chrome.gpg'
+	curl -s https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor --yes -o /usr/share/keyrings/chrome.gpg
 	echo "deb [signed-by=/usr/share/keyrings/chrome.gpg arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
 		> /etc/apt/sources.list.d/google-chrome.list
 	apt-get update -y
@@ -49,7 +59,7 @@ install_docker() {
 		jq --null-input '.features.buildkit = true' > /etc/docker/daemon.json
 	fi
 	# Setup APT repository
-	sudo bash -c 'curl -s https://download.docker.com/linux/debian/gpg | gpg --dearmor --yes -o /usr/share/keyrings/docker.gpg'
+	curl -s https://download.docker.com/linux/debian/gpg | gpg --dearmor --yes -o /usr/share/keyrings/docker.gpg
 	echo "deb [signed-by=/usr/share/keyrings/docker.gpg arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
 		> /etc/apt/sources.list.d/docker.list
 	# [ -z "$(uname -a | grep -i 'wsl')" ] || update-alternatives --set iptables /usr/sbin/iptables-legacy
@@ -66,19 +76,20 @@ install_docker() {
 	# Run the Docker daemon as a non-root user
 	if [ -z "$(uname -a | grep -i 'wsl')" ]; then
 		systemctl disable --now docker.service docker.socket
-		rm /var/run/docker.sock
+		rm /var/run/docker.sock || true
 		apt-get install -y \
 				dbus-user-session \
 				docker-ce-rootless-extras \
 				slirp4netns \
+				uidmap \
 			--no-install-recommends
 		sudo -u ${1} dockerd-rootless-setuptool.sh install
 	fi
 }
 
 install_google_drive() {
-	mkdir "/home/${1}/googledrive-home"
-	#mkdir "/home/${1}/googledrive-work"
+	mkdir -p "/home/${1}/googledrive-home"
+	#mkdir -p "/home/${1}/googledrive-work"
 	chown "${1}": "/home/${1}/googledrive-home"
 	#chown "${1}": "/home/${1}/googledrive-work"
 
@@ -94,7 +105,7 @@ install_google_drive() {
 	apt-get update -y
 	apt-get install -y --no-install-recommends google-drive-ocamlfuse
 
-	google-drive-ocamlfuse "/home/${1}/googledrive-home"
+	#google-drive-ocamlfuse "/home/${1}/googledrive-home"
 	#google-drive-ocamlfuse -label work "/home/${1}/googledrive-work"
 }
 
@@ -119,7 +130,7 @@ install_lmms() {
 }
 
 install_spotify() {
-	sudo bash -c 'curl -s https://download.spotify.com/debian/pubkey.gpg | gpg --dearmor --yes -o /usr/share/keyrings/spotify.gpg'
+	curl -s https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | gpg --dearmor --yes -o /usr/share/keyrings/spotify.gpg
 	echo 'deb [signed-by=/usr/share/keyrings/spotify.gpg arch=amd64] http://repository.spotify.com stable non-free' \
 		> /etc/apt/sources.list.d/spotify.list
 	apt-get update -y
@@ -127,8 +138,8 @@ install_spotify() {
 }
 
 install_vscodium() {
-	sudo bash -c 'curl -s https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor --yes -o /usr/share/keyrings/vscodium.gpg'
-	echo 'deb [signed-by=/usr/share/keyrings/vscodium.gpg arch=amd64] https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/repos/debs/ vscodium main' \
+	curl -s https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor --yes -o /usr/share/keyrings/vscodium.gpg
+	echo 'deb [signed-by=/usr/share/keyrings/vscodium.gpg arch=amd64] https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/debs vscodium main' \
 		> /etc/apt/sources.list.d/vscodium.list
 	apt-get update -y
 	apt-get install -y --no-install-recommends codium
