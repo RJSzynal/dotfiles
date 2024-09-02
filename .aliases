@@ -160,6 +160,9 @@ alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> P
 # Use Neovim
 alias vi=nvim
 
+# Use VSCodium
+alias code=codium
+
 # Webapps
 alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
 alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
