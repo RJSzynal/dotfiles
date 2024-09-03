@@ -2,7 +2,7 @@
 
 # Make vim the default editor
 export EDITOR=/usr/bin/nvim
-export TERMINAL="gnome-terminal"
+export TERMINAL="terminator"
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 # Larger bash history (allow 32³ entries; default is 500)
@@ -41,6 +41,7 @@ export MANPAGER="less -X"
 #export GO15VENDOREXPERIMENT=1
 
 #export DOCKER_CONTENT_TRUST=1
+export DOCKER_HOST=unix:///run/user/1000/docker.sock
 
 # if it's an ssh session export GPG_TTY
 if [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]] || uname -a | grep microsoft >/dev/null; then
@@ -48,5 +49,5 @@ if [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]] || uname -a | grep microsoft >/
 	export GPG_TTY
 fi
 
-# Dockerfunc fucntions will use the x11 socket
+# Dockerfunc functions will use the x11 socket
 export use_x11_socket=true
