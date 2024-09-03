@@ -903,7 +903,7 @@ function hollywood {
 function hostess {
 	local container_name="hostess"
 	local container_home="/root"
-	local image_name="ondrejmo/hostess:latest"
+	local image_name="rjszynal/hostess:latest"
 	local restart_policy="no"
 	local attach_tty=true
 	local network="trusted"
@@ -1557,7 +1557,8 @@ function privoxy {
 
 	add_to_hosts "${container_name}" "${container_ip}"
 }
-function pulseaudio {
+#alias pulseaudio=docker_pulseaudio
+function docker_pulseaudio {
 	local container_name="pulseaudio"
 	local container_home="/root"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/pulseaudio:latest"
@@ -1829,7 +1830,8 @@ function sshb0t {
 		r.j3ss.co/sshb0t \
 		--user "${GITHUB_USER}" --keyfile /root/.ssh/authorized_keys --once
 }
-function steam {
+#alias steam=docker_steam
+function docker_steam {
 	del_stopped steam
 	relies_on pulseaudio
 
@@ -1858,7 +1860,8 @@ function tarsnap {
 		-v "${HOME}:/root/workdir" \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/tarsnap "${@}"
 }
-function telnet {
+#alias telnet=docker_telnet
+function docker_telnet {
 	docker run --rm -it \
 		--log-driver none \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/telnet "${@}"
@@ -2125,7 +2128,8 @@ function vscodium {
 
 	docker_run
 }
-function vlc {
+#alias vlc=docker_vlc
+function docker_vlc {
 	local container_name="vlc"
 	local container_home="/home/vlc"
 	local image_name="${JESSFRAZ_DOCKER_REPO_PREFIX}/vlc:latest"
