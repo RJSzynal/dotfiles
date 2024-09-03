@@ -53,7 +53,8 @@ config_dir = gears.filesystem.get_configuration_dir()
 beautiful.init(config_dir .. "themes/default/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
-terminal = "gnome-terminal"
+terminal = "terminator"
+file_browser = "thunar"
 editor = os.getenv("EDITOR") or "nvim"
 editor_cmd = terminal .. " -e " .. editor
 lock = "i3lock -ui " .. os.getenv("HOME") .. "/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png"
