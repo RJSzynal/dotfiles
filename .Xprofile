@@ -6,13 +6,47 @@ command -v xset > /dev/null && {
 	xset s noblank
 }
 
+# The script contains some bash only parts
+dockerfunc () {
+	bash -c "source /home/robert/.dockerfunc; ${1}"
+}
+
+## Containerised PulseAudio
+#dockerfunc pulseaudio
+
+## Video sync
+(
+	# Wait for the remote machine to be available
+	#until ping -c1 pi4.szynal.co.uk >/dev/null 2>&1
+	until ping -c1 nordelle.szynal.co.uk >/dev/null 2>&1
+		do sleep 1
+	done
+	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' nordelle.szynal.co.uk:/home/robert/torrent/download/ /home/robert/Videos/
+	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' nordelle.szynal.co.uk:/home/robert/torrent/download/*/ /home/robert/Videos/
+	#rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/ /home/robert/Videos/
+	#rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
+) &
+
+# Google drive mount
+(
+	# Wait for the internet connection to be operational
+	until ping -c1 google.com >/dev/null 2>&1
+		do sleep 1
+	done
+	mount | grep "/home/robert/googledrive-home" >/dev/null || /usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/robert/googledrive-home"
+	#mount | grep "/home/robert/googledrive-work" >/dev/null || /usr/bin/google-drive-ocamlfuse -label work "/home/robert/googledrive-work"
+) &
+
+## Spotifyd
+# dockerfunc spotifyd
+
 ## Keepass
 (
 	# Wait for the google drive mount to be available
 	until [ -f /home/robert/googledrive-home/backup/keepass/home.kdbx ]
 		do sleep 1
 	done
-	exec keepassxc
+	exec keepassxc /home/robert/googledrive-home/backup/keepass/home.kdbx
 ) &
 
 ## Firefox
@@ -24,11 +58,16 @@ command -v xset > /dev/null && {
 	exec firefox
 ) &
 
+## Set wallpaper
 if [ "${XDG_CURRENT_DESKTOP}" == "i3" ]; then
-    feh --bg-fill ~/Pictures/Wallpapers/disney_me_lidia.jpg
+    feh --bg-fill ~/Pictures/Wallpapers/Disney_2015.jpg
 fi
 
-gnome-terminal
-i3lock -ui ~/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png
+## Terminal
+terminator &
 
+## Lock screen
+i3lock -ui ~/Pictures/Wallpapers/linux_wood.png
+
+## Compositing Manager
 xcompmgr -c &

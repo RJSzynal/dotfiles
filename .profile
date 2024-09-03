@@ -8,10 +8,6 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
-dockerfunc () {
-	bash -c "source /home/robert/.dockerfunc; ${1}"
-}
-
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
@@ -27,32 +23,3 @@ if [ -n "$ZSH_VERSION" ]; then
 	. "/home/robert/.zshrc"
     fi
 fi
-
-## Containerised PulseAudio
-#dockerfunc pulseaudio
-
-## Video sync
-(
-	# Wait for the remote machine to be available
-	#until ping -c1 pi4.szynal.co.uk >/dev/null 2>&1
-	until ping -c1 nordelle.szynal.co.uk >/dev/null 2>&1
-		do sleep 1
-	done
-	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' nordelle.szynal.co.uk:/home/robert/torrent/download/ /home/robert/Videos/
-	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' nordelle.szynal.co.uk:/home/robert/torrent/download/*/ /home/robert/Videos/
-	#rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/ /home/robert/Videos/
-	#rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
-) &
-
-# Google drive mount
-(
-	# Wait for the internet connection to be operational
-	until ping -c1 google.com >/dev/null 2>&1
-		do sleep 1
-	done
-	mount | grep "/home/robert/googledrive-home" >/dev/null || /usr/bin/google-drive-ocamlfuse -o allow_root "/home/robert/googledrive-home"
-	#mount | grep "/home/robert/googledrive-work" >/dev/null || /usr/bin/google-drive-ocamlfuse -label work "/home/robert/googledrive-work"
-) &
-
-## Spotifyd
-dockerfunc spotifyd
