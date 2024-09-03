@@ -112,3 +112,7 @@ for file in ~/.{aliases,functions,path,dockerfunc,extra,exports}; do
 done
 unset file
 
+# Start X11
+if [[ $(tty) = /dev/tty1 ]]; then
+	exec startx
+fi

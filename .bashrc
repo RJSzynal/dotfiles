@@ -195,3 +195,8 @@ for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports}; do
 	fi
 done
 unset file
+
+# Start X11
+if [[ $(tty) = /dev/tty1 ]]; then
+	exec startx
+fi
