@@ -1,35 +1,14 @@
 #!/bin/bash
 
-install_fonts() {
-	# Ubuntu
-	if [[ ! -d "/home/${1}/.local/share/fonts/Ubuntu" ]]; then
-		wget https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip -qO /tmp/ubuntu-font.zip
-		mkdir -p "/home/${1}/.local/share/fonts/Ubuntu"
-		unzip /tmp/ubuntu-font.zip -d "/home/${1}/.local/share/fonts/Ubuntu/"
-		rm -f /tmp/ubuntu-font.zip
-	fi
-	# NerdFont Ubuntu Mono
-	if [[ ! -d "/home/${1}/.local/share/fonts/NerdFonts" ]]; then
-		wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/UbuntuMono.zip -qO /tmp/UbuntuMono.zip
-		mkdir -p "/home/${1}/.local/share/fonts/NerdFonts"
-		unzip /tmp/UbuntuMono.zip -d "/home/${1}/.local/share/fonts/NerdFonts/"
-		rm -f /tmp/UbuntuMono.zip
-	fi
-}
-
-install_zsh() {
-	apt-get install -y --no-install-recommends zsh
-}
-
-install_oh_my_zsh() {
-	install_zsh
-	if [[ ! -d "/home/${1}/.oh-my-zsh" ]]; then
-		sudo -u ${1} sh -c "KEEP_ZSHRC=yes RUNZSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-	fi
-	# Install zsh theme
-	if [[ ! -d "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k" ]]; then
-		sudo -u ${1} git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k"
-	fi
+install_awesome() {
+	apt-get install -y \
+		--no-install-recommends \
+		awesome \
+		i3lock \
+		maim \
+		xclip \
+		xorg
+	SERVICE_LIST+=( i3lock@${1} )
 }
 
 install_autofs() {
@@ -87,6 +66,28 @@ install_docker() {
 	fi
 }
 
+install_folding() {
+	scp nordelle.szynal.co.uk:/mnt/nordelle/backup/services/folding.service.local /etc/systemd/system/folding.service
+	SERVICE_LIST+=( folding )
+}
+
+install_fonts() {
+	# Ubuntu
+	if [[ ! -d "/home/${1}/.local/share/fonts/Ubuntu" ]]; then
+		wget https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip -qO /tmp/ubuntu-font.zip
+		mkdir -p "/home/${1}/.local/share/fonts/Ubuntu"
+		unzip /tmp/ubuntu-font.zip -d "/home/${1}/.local/share/fonts/Ubuntu/"
+		rm -f /tmp/ubuntu-font.zip
+	fi
+	# NerdFont Ubuntu Mono
+	if [[ ! -d "/home/${1}/.local/share/fonts/NerdFonts" ]]; then
+		wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/UbuntuMono.zip -qO /tmp/UbuntuMono.zip
+		mkdir -p "/home/${1}/.local/share/fonts/NerdFonts"
+		unzip /tmp/UbuntuMono.zip -d "/home/${1}/.local/share/fonts/NerdFonts/"
+		rm -f /tmp/UbuntuMono.zip
+	fi
+}
+
 install_google_drive() {
 	mkdir -p "/home/${1}/googledrive-home"
 	#mkdir -p "/home/${1}/googledrive-work"
@@ -97,16 +98,26 @@ install_google_drive() {
 		--no-install-recommends \
 		fuse \
 		dirmngr
-	cat > /etc/apt/sources.list.d/alessandro-strada-ubuntu-ppa-jammy.list <<-"EOF"
-		deb http://ppa.launchpad.net/alessandro-strada/ppa/ubuntu jammy main
-		deb-src http://ppa.launchpad.net/alessandro-strada/ppa/ubuntu jammy main
-	EOF
-	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AD5F235DF639B041
+	curl -s 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA7AFF39895544C77C124BB46FEAC8456AF83AFEB' | gpg --dearmor --yes -o /usr/share/keyrings/alessandro-strada.gpg
+	echo 'deb [signed-by=/usr/share/keyrings/alessandro-strada.gpg arch=amd64] http://ppa.launchpad.net/alessandro-strada/ppa/ubuntu jammy main' \
+		> /etc/apt/sources.list.d/alessandro-strada-ubuntu-ppa-jammy.list
 	apt-get update -y
 	apt-get install -y --no-install-recommends google-drive-ocamlfuse
 
 	#google-drive-ocamlfuse "/home/${1}/googledrive-home"
 	#google-drive-ocamlfuse -label work "/home/${1}/googledrive-work"
+}
+
+install_i3() {
+	apt-get install -y \
+		--no-install-recommends \
+		feh \
+		i3 \
+		i3lock \
+		maim \
+		xclip \
+		xorg
+	SERVICE_LIST+=( i3lock@${1} )
 }
 
 install_lmms() {
@@ -129,12 +140,39 @@ install_lmms() {
 	EOF
 }
 
+install_oh_my_zsh() {
+	install_zsh
+	if [[ ! -d "/home/${1}/.oh-my-zsh" ]]; then
+		sudo -u ${1} sh -c "KEEP_ZSHRC=yes RUNZSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	fi
+	# Install zsh theme
+	if [[ ! -d "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k" ]]; then
+		sudo -u ${1} git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k"
+	fi
+}
+
 install_spotify() {
 	curl -s https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | gpg --dearmor --yes -o /usr/share/keyrings/spotify.gpg
 	echo 'deb [signed-by=/usr/share/keyrings/spotify.gpg arch=amd64] http://repository.spotify.com stable non-free' \
 		> /etc/apt/sources.list.d/spotify.list
 	apt-get update -y
 	apt-get install -y --no-install-recommends spotify-client
+}
+
+install_steam() {
+	dpkg --add-architecture i386
+	apt-get update
+	apt-get install -y \
+			mesa-vulkan-drivers \
+			libglx-mesa0:i386 \
+			mesa-vulkan-drivers:i386 \
+			libgl1-mesa-dri:i386 \
+			steam-installer
+}
+
+install_traefik() {
+	scp nordelle.szynal.co.uk:/mnt/nordelle/backup/services/traefik.service.notls /etc/systemd/system/traefik.service
+	SERVICE_LIST+=( traefik )
 }
 
 install_vscodium() {
@@ -145,35 +183,6 @@ install_vscodium() {
 	apt-get install -y --no-install-recommends codium
 }
 
-install_traefik() {
-	scp nordelle.szynal.co.uk:/mnt/nordelle/backup/services/traefik.service.notls /etc/systemd/system/traefik.service
-	SERVICE_LIST+=( traefik )
-}
-
-install_folding() {
-	scp nordelle.szynal.co.uk:/mnt/nordelle/backup/services/folding.service.local /etc/systemd/system/folding.service
-	SERVICE_LIST+=( folding )
-}
-
-install_i3() {
-	apt-get install -y \
-		--no-install-recommends \
-		feh \
-		i3 \
-		i3lock \
-		maim \
-		xclip \
-		xorg
-	SERVICE_LIST+=( i3lock@${1} )
-}
-
-install_awesome() {
-	apt-get install -y \
-		--no-install-recommends \
-		awesome \
-		i3lock \
-		maim \
-		xclip \
-		xorg
-	SERVICE_LIST+=( i3lock@${1} )
+install_zsh() {
+	apt-get install -y --no-install-recommends zsh
 }

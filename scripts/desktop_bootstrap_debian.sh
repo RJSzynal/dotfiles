@@ -36,6 +36,7 @@ source ./library_debian.sh
 # Base
 apt-get update -y
 apt-get install -y \
+		alsa-utils \
 		apt-transport-https \
 		ca-certificates \
 		curl \
@@ -44,11 +45,14 @@ apt-get install -y \
 		git \
 		gnupg2 \
 		jq \
+		libavcodec59 \
+		libavfilter8 \
 		libgl1-mesa-dri \
 		libglx-mesa0 \
 		make \
 		mesa-vulkan-drivers \
 		neovim \
+		pulseaudio \
 		rsync \
 		silversearcher-ag \
 		software-properties-common \
@@ -80,14 +84,19 @@ update-alternatives --set editor /usr/bin/nvim
 
 # Desktop applications
 apt-get install -y \
+		firefox-esr \
+		gnome-terminal \
+		keepassxc \
+		terminator \
+		vlc \
 	--no-install-recommends \
-	firefox-esr \
-	gnome-terminal \
-	keepassxc \
-	terminator
 install_vscodium
 install_spotify
+install_steam
 # install_lmms "${TARGET_USER}" "${STORAGE_DIR}"
+
+# Set Terminator as global terminal
+update-alternatives --set x-terminal-emulator /usr/bin/terminator
 
 # Set up dev repos
 sudo -u ${TARGET_USER} git config --global pull.ff only
