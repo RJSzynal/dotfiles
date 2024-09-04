@@ -88,6 +88,14 @@ install_fonts() {
 	fi
 }
 
+install_ckb-next() {
+	curl -s 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x0A27146C4BA99E385BA62766BA84DB44A908C515' | gpg --dearmor --yes -o /usr/share/keyrings/tatokis.gpg
+	echo 'deb [signed-by=/usr/share/keyrings/tatokis.gpg arch=amd64] https://ppa.launchpadcontent.net/tatokis/ckb-next/ubuntu noble main ' \
+		> /etc/apt/sources.list.d/tatokis-ubuntu-ppa-noble.list
+	apt-get update
+	apt-get install -y --no-install-recommends ckb-next
+}
+
 install_google_drive() {
 	mkdir -p "/home/${1}/googledrive-home"
 	#mkdir -p "/home/${1}/googledrive-work"
@@ -101,7 +109,7 @@ install_google_drive() {
 	curl -s 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA7AFF39895544C77C124BB46FEAC8456AF83AFEB' | gpg --dearmor --yes -o /usr/share/keyrings/alessandro-strada.gpg
 	echo 'deb [signed-by=/usr/share/keyrings/alessandro-strada.gpg arch=amd64] http://ppa.launchpad.net/alessandro-strada/ppa/ubuntu jammy main' \
 		> /etc/apt/sources.list.d/alessandro-strada-ubuntu-ppa-jammy.list
-	apt-get update -y
+	apt-get update
 	apt-get install -y --no-install-recommends google-drive-ocamlfuse
 
 	#google-drive-ocamlfuse "/home/${1}/googledrive-home"
