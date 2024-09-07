@@ -1,0 +1,14 @@
+[Unit]
+Description=Google Drive OCAML FUSE
+After=network-online.target
+
+[Service]
+Type=forking
+Restart=always
+# ExecCondition=sh -c "mount | grep '/home/robert/googledrive-home' >/dev/null && false || true"
+ExecStart=/usr/bin/google-drive-ocamlfuse -f -o allow_root -label home "/home/robert/googledrive-home"
+ExecStop=/usr/bin/fusermount -u "/home/robert/googledrive-home"
+
+
+[Install]
+WantedBy=multi-user.target
