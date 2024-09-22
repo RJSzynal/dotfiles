@@ -1,3 +1,5 @@
-Section "Extensions"
-    Option      "DPMS" "Disable"
+Section "ServerFlags"
+    Option "StandbyTime" "30"
+    Option "SuspendTime" "60"
+    Option "OffTime" "90"
 EndSection
