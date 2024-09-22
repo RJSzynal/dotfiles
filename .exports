@@ -51,3 +51,14 @@ fi
 
 # Dockerfunc functions will use the x11 socket
 export use_x11_socket=true
+
+# Allow Keepass to auto-type in Wayland
+export QT_QPA_PLATFORM=xcb
+
+# Fix for Firefox for Logitech mice (X11 only)
+export MOZ_USE_XINPUT2=1
+
+# Fix for Steam not scaling in KDE
+STEAM_FORCE_DESKTOPUI_SCALING=1.5
+GDK_SCALE=1.5
+GDK_DPI_SCALE=1.5
