@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Set screen scale to 60% of monitor res
+xrandr --output HDMI-A-0 --scale 0.6x0.6
+
 ## Disable screen blanking/screensaver
 command -v xset > /dev/null && {
 	xset s off
@@ -7,38 +10,12 @@ command -v xset > /dev/null && {
 }
 
 # The script contains some bash only parts
-dockerfunc () {
-	bash -c "source /home/robert/.dockerfunc; ${1}"
-}
+# dockerfunc () {
+# 	bash -c "source /home/robert/.dockerfunc; ${1}"
+# }
 
 ## Containerised PulseAudio
 #dockerfunc pulseaudio
-
-## Video sync
-(
-	# Wait for the remote machine to be available
-	#until ping -c1 pi4.szynal.co.uk >/dev/null 2>&1
-	until ping -c1 nordelle.szynal.co.uk >/dev/null 2>&1
-		do sleep 1
-	done
-	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' nordelle.szynal.co.uk:/home/robert/torrent/download/ /home/robert/Videos/
-	rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' nordelle.szynal.co.uk:/home/robert/torrent/download/*/ /home/robert/Videos/
-	#rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/ /home/robert/Videos/
-	#rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
-) &
-
-# Google drive mount
-(
-	# Wait for the internet connection to be operational
-	until ping -c1 google.com >/dev/null 2>&1
-		do sleep 1
-	done
-	mount | grep "/home/robert/googledrive-home" >/dev/null || /usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/robert/googledrive-home"
-	#mount | grep "/home/robert/googledrive-work" >/dev/null || /usr/bin/google-drive-ocamlfuse -label work "/home/robert/googledrive-work"
-) &
-
-## Spotifyd
-# dockerfunc spotifyd
 
 ## Keepass
 (
@@ -66,8 +43,8 @@ fi
 ## Terminal
 terminator &
 
-## Lock screen
-i3lock -ui ~/Pictures/Wallpapers/linux_wood.png
-
 ## Compositing Manager
 xcompmgr -c &
+
+## Lock screen
+i3lock --show-failed-attempts --image ~/Pictures/Wallpapers/linux_wood.png
