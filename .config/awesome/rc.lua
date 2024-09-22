@@ -57,7 +57,7 @@ terminal = "terminator"
 file_browser = "thunar"
 editor = os.getenv("EDITOR") or "nvim"
 editor_cmd = terminal .. " -e " .. editor
-lock = "i3lock -ui " .. os.getenv("HOME") .. "/Pictures/Wallpapers/Disney/disney-wooden-383301-dual.png"
+lock = "i3lock --show-failed-attempts --image " .. os.getenv("HOME") .. "/Pictures/Wallpapers/linux_wood.png"
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
