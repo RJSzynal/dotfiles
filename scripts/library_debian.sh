@@ -26,8 +26,22 @@ install_chrome() {
 	curl -s https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor --yes -o /usr/share/keyrings/chrome.gpg
 	echo "deb [signed-by=/usr/share/keyrings/chrome.gpg arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
 		> /etc/apt/sources.list.d/google-chrome.list
+	
 	apt-get update -y
 	apt-get install -y --no-install-recommends google-chrome-stable
+}
+
+install_firefox() {
+	curl -s https://packages.mozilla.org/apt/repo-signing-key.gpg | gpg --dearmor --yes -o /usr/share/keyrings/mozilla.gpg
+	echo "deb [signed-by=/usr/share/keyrings/mozilla.gpg arch=amd64] https://packages.mozilla.org/apt mozilla main" \
+		> /etc/apt/sources.list.d/mozilla.list
+	cat > /etc/apt/preferences.d/mozilla.pref <<-PREF
+		Package: *
+		Pin: origin packages.mozilla.org
+		Pin-Priority: 1000
+	PREF
+	apt-get update -y
+	apt-get install -y --no-install-recommends firefox
 }
 
 install_docker() {
