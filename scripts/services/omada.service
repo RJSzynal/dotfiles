@@ -28,7 +28,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-e MANAGE_HTTP_PORT=8088 \
 	-e MANAGE_HTTPS_PORT=8043 \
 	-e PGID=508 \
-	-e PORTAL_HTTP_PORT=8088 \
+	-e PORTAL_HTTP_PORT=8888 \
 	-e PORTAL_HTTPS_PORT=8843 \
 	-e PORT_ADOPT_V1=29812 \
 	-e PORT_APP_DISCOVERY=27001 \
@@ -46,8 +46,15 @@ ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-l traefik.http.routers.${NAME}.tls=true \
 	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcoukchallenge \
 	-l traefik.http.routers.${NAME}.middlewares=internal-only@file \
-	-l traefik.http.services.${NAME}.loadbalancer.server.port=8043 \
-	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=https \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=8088 \
+	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	-l traefik.http.routers.${NAME}-portal.rule=Host(\"portal.szynal.co.uk\") \
+	-l traefik.http.routers.${NAME}-portal.entrypoints=websecure \
+	-l traefik.http.routers.${NAME}-portal.tls=true \
+	-l traefik.http.routers.${NAME}-portal.tls.certresolver=szynalcoukchallenge \
+	-l traefik.http.routers.${NAME}-portal.middlewares=internal-only@file \
+	-l traefik.http.services.${NAME}-portal.loadbalancer.server.port=8888 \
+	-l traefik.http.services.${NAME}-portal.loadbalancer.server.scheme=http \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /root/.omada/data:/opt/tplink/EAPController/data \
 	-v /root/.omada/work:/opt/tplink/EAPController/work \
