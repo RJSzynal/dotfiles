@@ -16,8 +16,10 @@ ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-p 443:443 \
 	-p 6443:6443 \
 	-p 8080:8080 \
-	-e GODADDY_API_KEY_FILE=/home/robert/torrent/configs/godaddy/.creds_key \
-	-e GODADDY_API_SECRET_FILE=/home/robert/torrent/configs/godaddy/.creds_secret \
+	-e GODADDY_API_KEY_FILE=/root/.creds_key \
+	-e GODADDY_API_SECRET_FILE=/root/.creds_secret \
+	-v /home/robert/torrent/configs/godaddy/.creds_key:/root/.creds_key:ro \
+	-v /home/robert/torrent/configs/godaddy/.creds_secret:/root/.creds_secret:ro \
 	-v /root/.traefik:/etc/traefik \
 	-v /var/run/docker.sock:/var/run/docker.sock:ro \
 	${IMAGE}
