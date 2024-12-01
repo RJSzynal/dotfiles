@@ -7,7 +7,7 @@ Requires=traefik.service
 
 [Service]
 Environment="NAME=omada-controller"
-Environment="IMAGE=mbentley/omada-controller:5.12"
+Environment="IMAGE=mbentley/omada-controller:latest"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
