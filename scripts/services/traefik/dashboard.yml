@@ -1,17 +1,7 @@
 http:
     routers:
-        dashboard:
-            rule: Host("szynal.co.uk")&&PathPrefix("/dashboard")
-            entrypoints:
-                - websecure
-            tls:
-                certresolver: szynalcoukchallenge
-            service: dashboard@internal
-            middlewares:
-                - internal-only
-                - dashboard_stripprefix@file
         api:
-            rule: Host("szynal.co.uk")&&PathPrefix("/api")
+            rule: Host("szynal.co.uk")&&PathPrefix("/api")||PathPrefix("/dashboard")
             entrypoints:
                 - websecure
             tls:
