@@ -5,12 +5,4 @@ http:
                 sourceRange:
                     - 192.168.1.0/24
                     - 127.0.0.1/32
-        omada_stripprefix:
-            stripPrefix:
-                prefixes:
-                    - /omada
-        folding_stripprefix:
-            stripPrefix:
-                prefixes:
-                    - /folding
 
