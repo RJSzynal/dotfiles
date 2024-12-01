@@ -7,7 +7,7 @@ Requires=traefik.service
 
 [Service]
 Environment="NAME=ollama"
-Environment="IMAGE=ollama/ollama:rocm"
+Environment="IMAGE=ollama/ollama"
 TimeoutStartSec=0
 TimeoutStopSec=40
 Restart=always
@@ -15,8 +15,6 @@ ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-h ${NAME} \
-	--device /dev/kfd \
-	--device /dev/dri \
 	-p 11434:11434 \
 	-v /root/.ollama:/root/.ollama \
 	${IMAGE}
