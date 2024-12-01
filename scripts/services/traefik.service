@@ -6,19 +6,19 @@ Requires=docker.service
 [Service]
 TimeoutStartSec=0
 Restart=always
-Environment="PROXY_IMAGE=traefik:latest"
-Environment="PROXY_NAME=traefik"
-ExecStartPre=/usr/bin/docker pull ${PROXY_IMAGE}
-ExecStartPre=-/usr/bin/docker rm -fv ${PROXY_NAME}
-ExecStart=/usr/bin/docker run --rm -t --name ${PROXY_NAME} \
-	-h ${PROXY_NAME} \
+Environment="IMAGE=traefik:latest"
+Environment="NAME=traefik"
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
+	-h ${NAME} \
 	-p 80:80 \
 	-p 443:443 \
 	-p 6443:6443 \
 	-p 8080:8080 \
 	-v /root/.traefik:/etc/traefik \
 	-v /var/run/docker.sock:/var/run/docker.sock:ro \
-	${PROXY_IMAGE}
+	${IMAGE}
 
 [Install]
 WantedBy=multi-user.target

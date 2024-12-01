@@ -6,16 +6,16 @@ After=traefik.service
 Requires=traefik.service
 
 [Service]
-Environment="OMADA_NAME=omada-controller"
-Environment="OMADA_IMAGE=mbentley/omada-controller:5.12"
+Environment="NAME=omada-controller"
+Environment="IMAGE=mbentley/omada-controller:5.12"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
-ExecStartPre=/usr/bin/docker pull ${OMADA_IMAGE}
-ExecStartPre=-/usr/bin/docker stop -t 60 ${OMADA_NAME}
-ExecStartPre=-/usr/bin/docker rm -fv ${OMADA_NAME}
-ExecStart=/usr/bin/docker run --rm -t --name ${OMADA_NAME} \
-	-h ${OMADA_NAME} \
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker stop -t 60 ${NAME}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
+	-h ${NAME} \
 	-p 8088:8088 \
 	-p 8043:8043 \
 	-p 8843:8843 \
@@ -41,20 +41,20 @@ ExecStart=/usr/bin/docker run --rm -t --name ${OMADA_NAME} \
 	-e SHOW_MONGODB_LOGS=false \
 	-e TZ \
 	-l traefik.enable=true \
-	-l traefik.http.routers.${OMADA_NAME}.rule=Host(\"omada.szynal.co.uk\") \
-	-l traefik.http.routers.${OMADA_NAME}.entrypoints=websecure \
-	-l traefik.http.routers.${OMADA_NAME}.tls=true \
-	-l traefik.http.routers.${OMADA_NAME}.tls.certresolver=szynalcoukchallenge \
-	-l traefik.http.routers.${OMADA_NAME}.middlewares=internal-only@file \
-	-l traefik.http.services.${OMADA_NAME}.loadbalancer.server.port=8043 \
-	-l traefik.http.services.${OMADA_NAME}.loadbalancer.server.scheme=https \
+	-l traefik.http.routers.${NAME}.rule=Host(\"omada.szynal.co.uk\") \
+	-l traefik.http.routers.${NAME}.entrypoints=websecure \
+	-l traefik.http.routers.${NAME}.tls=true \
+	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcoukchallenge \
+	-l traefik.http.routers.${NAME}.middlewares=internal-only@file \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=8043 \
+	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=https \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /root/.omada/data:/opt/tplink/EAPController/data \
 	-v /root/.omada/work:/opt/tplink/EAPController/work \
 	-v /root/.omada/logs:/opt/tplink/EAPController/logs \
 	-v /root/.omada/cert:/cert \
-	${OMADA_IMAGE}
-ExecStop=-/usr/bin/docker stop -t 60 ${OMADA_NAME} && /usr/bin/docker rm -fv ${OMADA_NAME}
+	${IMAGE}
+ExecStop=-/usr/bin/docker stop -t 60 ${NAME} && /usr/bin/docker rm -fv ${NAME}
 
 [Install]
 WantedBy=multi-user.target

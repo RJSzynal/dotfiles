@@ -6,30 +6,30 @@ After=traefik.service
 Requires=traefik.service
 
 [Service]
-Environment="PIHOLE_IMAGE=pihole/pihole:latest"
-Environment="PIHOLE_NAME=pihole"
+Environment="IMAGE=pihole/pihole:latest"
+Environment="NAME=pihole"
 Environment="IP4=192.168.1.140"
 Environment="IP6=fd9c:8004:3164:0:8ae7:3007:9274:387"
 TimeoutStartSec=0
 Restart=always
-ExecStartPre=/usr/bin/docker pull ${PIHOLE_IMAGE}
-ExecStartPre=-/usr/bin/docker rm -fv ${PIHOLE_NAME}
-ExecStart=/usr/bin/docker run --rm -t --name ${PIHOLE_NAME} \
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-p 53:53/tcp -p 53:53/udp \
 	-p 80 \
 	-e ServerIP=${IP4} \
 #	-e ServerIPv6=${IP6} \
-	-e VIRTUAL_HOST=${PIHOLE_NAME}.pi4.szynal.co.uk \
+	-e VIRTUAL_HOST=${NAME}.pi4.szynal.co.uk \
 	-l traefik.enable=true \
-	-l traefik.http.routers.${PIHOLE_NAME}.rule=Host(\"pi.hole\") \
-	-l traefik.http.routers.${PIHOLE_NAME}.entrypoints=web \
-	-l traefik.http.routers.${PIHOLE_NAME}.middlewares=internal-only@file \
+	-l traefik.http.routers.${NAME}.rule=Host(\"pi.hole\") \
+	-l traefik.http.routers.${NAME}.entrypoints=web \
+	-l traefik.http.routers.${NAME}.middlewares=internal-only@file \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /root/.pihole/etc/pihole/:/etc/pihole/ \
 	-v /root/.pihole/etc/dnsmasq.d/:/etc/dnsmasq.d/ \
 	--dns=127.0.0.1 --dns=192.168.1.1 \
-	${PIHOLE_IMAGE}
-ExecStop=-/usr/bin/docker rm -fv ${PIHOLE_NAME}
+	${IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${NAME}
 
 [Install]
 WantedBy=multi-user.target
