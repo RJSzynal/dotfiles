@@ -17,7 +17,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-h ${NAME} \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${NAME}.rule=(Host(\"szynal.co.uk\")||Host(\"robert.szynal.co.uk\"))&&(Path(\"/\")||PathPrefix(\"/cv\")) \
-	-l traefik.http.routers.${NAME}.entrypoints=websecure,websecure-external \
+	-l traefik.http.routers.${NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${NAME}.tls=true \
 	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcoukchallenge \
 	-v /etc/localtime:/etc/localtime:ro \

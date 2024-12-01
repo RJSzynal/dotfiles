@@ -20,14 +20,9 @@ entryPoints:
                 entryPoint:
                     to: websecure
     websecure:
-        address: ":6443"
-        http:
-            middleware:
-            tls:
-                certResolver: szynalcoukchallenge
-    websecure-external:
         address: ":443"
         http:
+            middleware:
             tls:
                 certResolver: szynalcoukchallenge
 
