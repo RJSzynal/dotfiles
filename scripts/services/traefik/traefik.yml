@@ -34,7 +34,8 @@ entryPoints:
 certificatesresolvers:
     szynalcoukchallenge:
         acme:
-            tlsChallenge: true
+            httpChallenge:
+                entryPoint: web
             email: robert@szynal.co.uk
             storage: /etc/traefik/letsencrypt/szynal.co.uk.json
 
