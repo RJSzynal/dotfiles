@@ -41,11 +41,11 @@ ExecStart=/usr/bin/docker run --rm -t --name ${OMADA_NAME} \
 	-e SHOW_MONGODB_LOGS=false \
 	-e TZ \
 	-l traefik.enable=true \
-	-l traefik.http.routers.${OMADA_NAME}.rule=Host(\"szynal.co.uk\")&&PathPrefix(\"/omada\") \
+	-l traefik.http.routers.${OMADA_NAME}.rule=Host(\"omada.szynal.co.uk\") \
 	-l traefik.http.routers.${OMADA_NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${OMADA_NAME}.tls=true \
 	-l traefik.http.routers.${OMADA_NAME}.tls.certresolver=szynalcoukchallenge \
-	-l traefik.http.routers.${OMADA_NAME}.middlewares=internal-only@file,omada_stripprefix@file \
+	-l traefik.http.routers.${OMADA_NAME}.middlewares=internal-only@file \
 	-l traefik.http.services.${OMADA_NAME}.loadbalancer.server.port=8043 \
 	-l traefik.http.services.${OMADA_NAME}.loadbalancer.server.scheme=https \
 	-v /etc/localtime:/etc/localtime:ro \
@@ -54,8 +54,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${OMADA_NAME} \
 	-v /root/.omada/logs:/opt/tplink/EAPController/logs \
 	-v /root/.omada/cert:/cert \
 	${OMADA_IMAGE}
-ExecStopPre=-/usr/bin/docker stop -t 60 ${OMADA_NAME}
-ExecStop=-/usr/bin/docker rm -fv ${OMADA_NAME}
+ExecStop=-/usr/bin/docker stop -t 60 ${OMADA_NAME} && /usr/bin/docker rm -fv ${OMADA_NAME}
 
 [Install]
 WantedBy=multi-user.target
