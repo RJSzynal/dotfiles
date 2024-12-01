@@ -15,7 +15,7 @@ ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-h ${NAME} \
-	-p 10200:10200
+	-p 10200:10200 \
 	-v /root/.piper:/data \
 	${IMAGE} \
 	--voice en_GB-southern_english_female-low

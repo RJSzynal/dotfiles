@@ -15,7 +15,7 @@ ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-h ${NAME} \
-	-p 10300:10300
+	-p 10300:10300 \
 	-v /root/.faster-whisper:/data \
 	${IMAGE} \
 	--model tiny-int8 \

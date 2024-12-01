@@ -17,7 +17,7 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-h ${NAME} \
 	--device /dev/kfd \
 	--device /dev/dri \
-	-p 11434:11434
+	-p 11434:11434 \
 	-v /root/.ollama:/root/.ollama \
 	${IMAGE}
 ExecStop=-/usr/bin/docker rm -fv ${NAME}
