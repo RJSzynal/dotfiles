@@ -1,0 +1,33 @@
+[Unit]
+Description=Home Assistant Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="NAME=home-assistant"
+Environment="IMAGE=ghcr.io/home-assistant/home-assistant:stable"
+Environment="WEB_PORT=8123"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm --name ${NAME} \
+	-h ${NAME} \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${NAME}.rule=Host(\"ha.szynal.co.uk\") \
+	-l traefik.http.routers.${NAME}.entrypoints=websecure,websecure-external \
+	-l traefik.http.routers.${NAME}.tls=true \
+	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcoukchallenge \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=${WEB_PORT} \
+	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	-v /root/.home-assistant:/config \
+	-v /etc/localtime:/etc/localtime:ro \
+	${IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${NAME}
+
+[Install]
+WantedBy=multi-user.target
+
