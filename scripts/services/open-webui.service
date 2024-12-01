@@ -23,9 +23,14 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcoukchallenge \
 	-l traefik.http.services.${NAME}.loadbalancer.server.port=${WEB_PORT} \
 	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	-e WEBUI_URL=https://ai.szynal.co.uk \
 	-e OLLAMA_BASE_URLS=http://192.168.1.9:11434;http://ollama:11434 \
 	-e OPENAI_API_KEY=sk-111111111 \
-	-e OPENAI_API_BASE_URL=http://openedai-speech:8000/v1 \
+	-e OPENAI_API_BASE_URL=http://192.168.1.9:8000;http://openedai-speech:8000/v1 \
+	-e ENABLE_RAG_WEB_SEARCH=True \
+	-e ENABLE_SEARCH_QUERY=True \
+	-e RAG_WEB_SEARCH_ENGINE=duckduckgo \
+	-e WHISPER_MODEL_AUTO_UPDATE=True \
 	-e AUDIO_TTS_ENGINE=openai \
 	-e AUDIO_TTS_VOICE=fable \
 	-v /root/.open-webui:/app/backend/data \
