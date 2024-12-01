@@ -5,7 +5,7 @@ http:
             entrypoints:
                 - websecure
             tls:
-                certresolver: szynalcoukchallenge
+                certresolver: szynalcouk
             service: api@internal
             middlewares:
                 - internal-only

@@ -24,10 +24,10 @@ entryPoints:
         http:
             middleware:
             tls:
-                certResolver: szynalcoukchallenge
+                certResolver: szynalcouk
 
 certificatesresolvers:
-    szynalcoukchallenge:
+    szynalcouk:
         acme:
             httpChallenge:
                 entryPoint: web
