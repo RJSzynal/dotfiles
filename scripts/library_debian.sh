@@ -142,6 +142,33 @@ install_i3() {
 	SERVICE_LIST+=( i3lock@${1} )
 }
 
+install_keepassxc() {
+	apt-get update
+	apt-get install -y \
+			keepassxc-full \
+			g++ \
+			linux-headers-amd64 \
+			libsystemd-dev \
+			libsystemd-dev \
+			libxkbcommon-dev \
+			mono-complete \
+		--no-install-recommends
+	TMP_DIR=$(mktemp -d)
+	wget https://keepass.info/extensions/v2/kpuinput/KPUInput-1.4.zip -qO ${TMP_DIR}/kpuinput.zip
+	unzip ${TMP_DIR}/kpuinput.zip -d "${TMP_DIR}"
+	chmod +x ${TMP_DIR}/KPUInputN.sh
+	(cd ${TMP_DIR}; ./KPUInputN.sh)
+	mv ${TMP_DIR}/KPUInput{.*,N.so} /usr/lib/x86_64-linux-gnu/keepassxc/
+	rm -rf ${TMP_DIR}
+	apt-get remove -y \
+			g++ \
+			linux-headers-amd64 \
+			libsystemd-dev \
+			libsystemd-dev \
+			libxkbcommon-dev \
+			mono-complete
+}
+
 install_lmms() {
 	download_url=$(curl --silent "https://api.github.com/repos/LMMS/lmms/releases/latest" | grep -Po '"browser_download_url": "\K.*?(?=")' | grep linux)
 	wget "${download_url}" -o "/home/${1}/Downloads/lmms.AppImage"

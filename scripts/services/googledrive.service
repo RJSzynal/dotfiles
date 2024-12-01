@@ -11,4 +11,4 @@ ExecStop=/usr/bin/fusermount -u "/home/robert/googledrive-home"
 
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
