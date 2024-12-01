@@ -1,20 +1,20 @@
 http:
     middlewares:
         internal-only:
-            ipwhitelist:
+            ipAllowList:
                 sourceRange:
                     - 192.168.1.0/24
                     - 127.0.0.1/32
         dashboard_stripprefix:
-            stripprefix:
+            stripPrefix:
                 prefixes:
                     - /dashboard
         omada_stripprefix:
-            stripprefix:
+            stripPrefix:
                 prefixes:
                     - /omada
         folding_stripprefix:
-            stripprefix:
+            stripPrefix:
                 prefixes:
                     - /folding
 
