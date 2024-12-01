@@ -29,8 +29,8 @@ entryPoints:
 certificatesresolvers:
     szynalcouk:
         acme:
-            httpChallenge:
-                entryPoint: web
+            dnsChallenge:
+                provider: godaddy
             email: robert@szynal.co.uk
             storage: /etc/traefik/letsencrypt/szynal.co.uk.json
 
