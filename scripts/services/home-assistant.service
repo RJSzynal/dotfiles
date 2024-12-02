@@ -8,7 +8,6 @@ Requires=traefik.service
 [Service]
 Environment="NAME=home-assistant"
 Environment="IMAGE=ghcr.io/home-assistant/home-assistant:stable"
-Environment="WEB_PORT=8123"
 TimeoutStartSec=0
 TimeoutStopSec=40
 Restart=always
@@ -21,7 +20,7 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-l traefik.http.routers.${NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${NAME}.tls=true \
 	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcouk \
-	-l traefik.http.services.${NAME}.loadbalancer.server.port=${WEB_PORT} \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=8123 \
 	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
 	-v /root/.home-assistant:/config \
 	-v /etc/localtime:/etc/localtime:ro \

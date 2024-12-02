@@ -8,7 +8,6 @@ Requires=traefik.service
 [Service]
 Environment="NAME=folding"
 Environment="IMAGE=foldingathome/fah-gpu-amd:latest"
-Environment="WEB_PORT=7396"
 TimeoutStartSec=0
 TimeoutStopSec=40
 Restart=always
@@ -19,7 +18,7 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${NAME}-80.rule=Host(\"${NAME}.local\") \
 	-l traefik.http.routers.${NAME}-80.entrypoints=web \
-	-l traefik.http.services.${NAME}.loadbalancer.server.port=${WEB_PORT} \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=7396 \
 	--gpus=all \
 	-v /root/.fah:/fah \
 	${IMAGE} \
