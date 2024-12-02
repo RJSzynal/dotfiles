@@ -256,12 +256,13 @@ read -rp "Where should the remote share be mounted locally? e.g. ${remote_share_
 
 
 ## Keep the domain IP address updated in godaddy nameservers
-cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
+cat > /usr/bin/cloudflare-ddns-updater <<-"SCRIPT"
 	#!/bin/bash
 
+	# Modified to use Cloudflare instead by RJSzynal
 	# GoDaddy.sh v1.3 by Nazar78 @ TeaNazaR.com
 	###########################################
-	# Simple DDNS script to update GoDaddy's DNS. Just schedule every 5mins in crontab.
+	# Simple DDNS script to update Cloudflare's DNS. Just schedule every 5mins in crontab.
 	# With options to run scripts/programs/commands on update failure/success.
 	#
 	# Requirements:
@@ -272,6 +273,7 @@ cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
 	# v1.1 - 20170130 - Improved compatibility.
 	# v1.2 - 20180416 - GoDaddy API changes - thanks Timson from Russia for notifying.
 	# v1.3 - 20180419 - GoDaddy API changes - thanks Rene from Mexico for notifying.
+	# v2.0 - 20241202 - Re-write to use Cloudflare - RJSzynal
 	#
 	# PS: Feel free to distribute but kindly retain the credits (-:
 	###########################################
@@ -279,33 +281,33 @@ cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
 	if [ $# -lt 2 ] || [ $# -gt 5 ]
 	then
 	  echo "Usage: $0 credentials domain [sub-domain] [ttl] [record_type]"
-	  echo "  credentials: GoDaddy developer API in the format 'key:secret' or"
+	  echo "  credentials: Cloudflare API token with DNS:Edit permmission or"
 	  echo "               location of file containing that value on the first line"
 	  echo "  domain: The domain you're setting. e.g. mydomain.com"
 	  echo "  sub-domain: Record name, as seen in the DNS setup page. Default: @ (apex domain)"
-	  echo "  ttl: Time To Live in seconds. Default: 600 (10 minutes)"
+	  echo "  ttl: Time To Live in seconds. Default: 300 (5 minutes)"
 	  echo "  record_type: Record type, as seen in the DNS setup page. Default: A"
 	  exit 1
 	fi
 
 	## Set and validate the variables
-	# Get the Production API key/secret from https://developer.godaddy.com/keys/.
-	# Ensure it's for "Production" as first time it's created for "Test".
+	# Get the API token from https://dash.cloudflare.com/profile/api-tokens.
+	# Ensure it has "Zone:DNS:Edit" and "Zone:Zone:Read" permissions.
 	if [ -z "${1}" ]
 	then
-	  echo "Error: Requires API 'Key:Secret' value. Can be a file location containing the value."
+	  echo "Error: Requires API token value. Can be a file location containing the value."
 	  exit 1
 	else
-	  if [ -e "${1}" ]
+	  if [ -f "${1}" ]
 	  then
-	      Credentials=$(head -n 1 ${1})
+	      Token=$(head -n 1 ${1})
 	  else
-	      Credentials=${1}
+	      Token=${1}
 	  fi
 	fi
-	if [ -z "${Credentials}" ] # Check this again in case the file had a blank line
+	if [ -z "${Token}" ] # Check this again in case the file had a blank line
 	then
-	  echo "Error: Requires API 'Key:Secret' value. Can be a file location containing the value."
+	  echo "Error: Requires API token value. Can be a file location containing the value."
 	  exit 1
 	fi
 
@@ -323,11 +325,11 @@ cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
 	Name=${3-@}
 	[ -z "${Name}" ] && Name=@ # To catch any bad value passed in as an argument
 
-	# Time To Live in seconds, minimum default 600 (10mins).
-	# If your public IP seldom changes, set it to 3600 (1hr) or more for DNS servers cache performance.
-	TTL=${4-600}
-	[ -z "${TTL}" ] && TTL=600
-	[ "${TTL}" -lt 600 ] && TTL=600 # 600 is the minimum
+	# Time To Live in seconds, minimum 60 (1min), default 300 (5mins).
+	# If your public IP regularly changes, set it to 60 (1min).
+	TTL=${4-300}
+	[ -z "${TTL}" ] && TTL=300
+	[ "${TTL}" -lt 60 ] && TTL=60 # 60 is the minimum
 
 	# Record type, as seen in the DNS setup page, default A.
 	Type=${5-A}
@@ -336,11 +338,11 @@ cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
 	# Writable path to last known Public IP record cached. Best to place in tmpfs.
 	CacheFilename=${Domain}_${Type}_${Name}
 	# This cleans up any illegal characters e.g. When setting the * record
-	CachedIP=/tmp/${CacheFilename//[*\/]/_}
-	echo -n>>${CachedIP} 2>/dev/null
+	CachedIPFile=/tmp/${CacheFilename//[*\/]/_}
+	echo -n>>${CachedIPFile} 2>/dev/null
 	if [ $? -ne 0 ]
 	then
-	  echo "Error: Can't write to ${CachedIP}."
+	  echo "Error: Can't write to ${CachedIPFile}."
 	  exit 1
 	fi
 
@@ -358,7 +360,7 @@ cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
 	# This variable will be evaluated at runtime but will not be parsed for errors nor execution guaranteed.
 	# Take note of the single quotes. If it's a script, ensure it's executable i.e. chmod 755 ./script.
 	# Example: FailedExec='/some/path/something-went-wrong.sh ${Update} && /some/path/email-script.sh ${PublicIP}'
-	FailedExec=''
+	FailedExec='/bin/echo "Fail!\nDomain: ${Domain}\nRecord: ${Name}\nType: ${Type}\nIP: ${PublicIP}\nERROR:${ErrorMsg}" | mail -s "DNS update failed" rjszynal@gmail.com'
 	# End settings
 
 	# Find the locally installed curl to use
@@ -378,72 +380,112 @@ cat > /usr/bin/godaddy-ddns-updater <<-"SCRIPT"
 	then
 	  echo "${PublicIP}"
 	else
-	  echo "Fail! ${PublicIP}"
+	  ErrorMsg="Failed to check current public IP.\nResponse: ${PublicIP}"
+	  echo "${ErrorMsg}"
 	  eval ${FailedExec}
 	  exit 1
 	fi
 
 
 	## Compare the current public IP to the cached IP from the last run
-	if [ "$(cat ${CachedIP} 2>/dev/null)" = "${PublicIP}" ]
+	if [ "$(cat ${CachedIPFile} 2>/dev/null)" = "${PublicIP}" ]
 	then
 	  echo "Current 'Public IP' matches 'Cached IP' recorded. No update required!"
 	  exit 0
 	fi
 
 
-	## Get the currently set IP from the GoDaddy record
-	echo -n "Checking '${Domain}' IP records from 'GoDaddy'..."
+	## Get the currently set IP from the Cloudflare record
+	echo -n "Checking '${Domain}' IP records from 'Cloudflare'..."
 
-	Check=$(${Curl} -kLs \
-	-H "Authorization: sso-key ${Credentials}" \
-	-H "Content-type: application/json" \
-	https://api.godaddy.com/v1/domains/${Domain}/records/${Type}/${Name} \
-	2>/dev/null | grep -Eo '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' 2>/dev/null)
+	response=$(${Curl} -Ls \
+	    -X GET \
+	    -H "Authorization: Bearer ${Token}" \
+	    -H "Content-type: application/json" \
+	    https://api.cloudflare.com/client/v4/zones)
+	if [ "$(echo ${response} | jq '.success' -r)" != "true" ]; then
+	    ErrorMsg="Error getting Zone ID\n${response}"
+		echo "Failed!\n${ErrorMsg}"
+		eval ${failedExec}
+	    exit 1
+	fi
+	ZoneID=$(echo ${response} | jq ".result[] | select(.name==\"${Domain}\") | .id" -r)
+	RecordName="${Name}.${Domain}"
+	if [ "${Name}" = "@" ]; then 
+		RecordName="${Domain}"
+	fi
+	response=$(${Curl} -Ls \
+	    -X GET \
+	    -H "Authorization: Bearer ${Token}" \
+	    -H "Content-type: application/json" \
+	    https://api.cloudflare.com/client/v4/zones/${ZoneID}/dns_records)
+	if [ "$(echo ${response} | jq '.success' -r)" != "true" ]; then
+	    ErrorMsg="Error getting Record ID\n${response}"
+		echo "Failed!\n${ErrorMsg}"
+		eval ${failedExec}
+	    exit 1
+	fi
+	RecordID=$(echo ${response} | jq ".result[] | select(.type==\"${Type}\" and .name==\"${RecordName}\") | .id" -r)
+	if [ -z "${RecordID}" ]; then
+	    ErrorMsg="Error getting Record ID. Record doesn't exist.\n${response}"
+	    printf "${ErrorMsg}"
+	    eval ${failedExec}
+	    exit 1
+	fi
+	response=$(${Curl} -Ls \
+	    -X GET \
+	    -H "Authorization: Bearer ${Token}" \
+	    -H "Content-type: application/json" \
+	    https://api.cloudflare.com/client/v4/zones/${ZoneID}/dns_records/${RecordID})
+	if [ "$(echo ${response} | jq '.success' -r)" != "true" ]; then
+	    ErrorMsg="Error getting current IP\n${response}"
+		echo "Failed!\n${ErrorMsg}"
+		eval ${failedExec}
+	    exit 1
+	fi
+	CurrentCFIP=$(echo ${response} | jq ".result.content" -r )
 
 
-	## Compare the current public IP to the GoDaddy record
-	if [ $? -eq 0 ] && [ "${Check}" = "${PublicIP}" ]
+	## Compare the current public IP to the Cloudflare record
+	if [ $? -eq 0 ] && [ "${CurrentCFIP}" = "${PublicIP}" ]
 	then
-	  echo -n "${Check}" > ${CachedIP} # Record the current public IP in the cache file
+	  echo -n "${CurrentCFIP}" > ${CachedIPFile} # Record the current public IP in the cache file
 	  echo "unchanged"
-	  echo "Current 'Public IP' matches 'GoDaddy' records. No update required."
+	  echo "Current 'Public IP' matches 'Cloudflare' records. No update required."
 	  exit 0
 	fi
 
 
-	## Update the GoDaddy record with the current IP
+	## Update the Cloudflare record with the current IP
 	echo "changed"
 	echo -n "Updating '${Domain}'..."
 
-	Update=$(${Curl} -kLs \
-	-X PUT \
-	-H "Authorization: sso-key ${Credentials}" \
-	-H "Content-type: application/json" \
-	-w "%{http_code}" \
-	-o /dev/null \
-	https://api.godaddy.com/v1/domains/${Domain}/records/${Type}/${Name} \
-	-d "[{\"data\":\"${PublicIP}\",\"ttl\":${TTL}}]" 2>/dev/null)
-
-	if [ $? -eq 0 ] && [ "${Update}" -eq 200 ]
-	then
-	  echo -n "${PublicIP}" > ${CachedIP} # Record the current public IP in the cache file
-	  echo "Success"
-	  eval ${SuccessExec}
-	  exit 0
-	else
-	  echo "Fail! HTTP_ERROR:${Update}"
-	  eval ${FailedExec}
-	  exit 1
+	response=$(${Curl} -kLs \
+	    -X PATCH \
+	    -H "Authorization: Bearer ${Token}" \
+	    -H "Content-type: application/json" \
+	    https://api.cloudflare.com/client/v4/zones/${ZoneID}/dns_records/${RecordID} \
+	    -d "{\"comment\": \"Managed by ${0}\",\"name\": \"${RecordName}\",\"ttl\": ${TTL},\"content\": \"${PublicIP}\",\"type\": \"${Type}\"}")
+	if [ "$(echo ${response} | jq '.success' -r)" != "true" ]; then
+	    ErrorMsg="Error setting new IP\n${response}"
+		printf "Failed!\n${ErrorMsg}"
+		eval ${failedExec}
+	    exit 1
 	fi
+	Update=$(echo ${response} | jq ".result" -r )
+
+	echo -n "${PublicIP}" > ${CachedIPFile} # Record the current public IP in the cache file
+	echo "Success"
+	eval ${SuccessExec}
+	exit 0
 SCRIPT
-chmod +x /usr/bin/godaddy-ddns-updater
-read -rp "What is the domain name to update with godaddy? stoneholme.szynal.co.uk: " web_domain
-(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${TARGET_USER}/torrent/configs/godaddy/.creds szynal.co.uk ${web_domain%.szynal.co.uk} 1800 > /dev/null") | crontab -
+chmod +x /usr/bin/cloudflare-ddns-updater
+read -rp "What is the domain name to update with Cloudflare? stoneholme.szynal.co.uk: " web_domain
+(crontab -l ; echo "*/5 * * * * /usr/bin/cloudflare-ddns-updater /home/${TARGET_USER}/torrent/configs/cloudflare/.dns_api_token szynal.co.uk ${web_domain%.szynal.co.uk} > /dev/null") | crontab -
 read -rp "Is this the root domain?: " is_root_domain
 if [ "${is_root_domain}" = "Y" ] || [ "${is_root_domain}" = "y" ]; then
-	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${TARGET_USER}/torrent/configs/godaddy/.creds szynal.co.uk '@' 1800 > /dev/null") | crontab -
-	(crontab -l ; echo "*/5 * * * * /usr/bin/godaddy-ddns-updater /home/${TARGET_USER}/torrent/configs/godaddy/.creds szynal.co.uk '*' 1800 > /dev/null") | crontab -
+	(crontab -l ; echo "*/5 * * * * /usr/bin/cloudflare-ddns-updater /home/${TARGET_USER}/torrent/configs/cloudflare/.dns_api_token szynal.co.uk '@' > /dev/null") | crontab -
+	(crontab -l ; echo "*/5 * * * * /usr/bin/cloudflare-ddns-updater /home/${TARGET_USER}/torrent/configs/cloudflare/.dns_api_token szynal.co.uk '*' > /dev/null") | crontab -
 fi
 
 # Install Docker

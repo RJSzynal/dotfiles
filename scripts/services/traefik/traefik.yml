@@ -30,7 +30,7 @@ certificatesresolvers:
     szynalcouk:
         acme:
             dnsChallenge:
-                provider: godaddy
+                provider: cloudflare
             email: robert@szynal.co.uk
             storage: /etc/traefik/letsencrypt/szynal.co.uk.json
 
