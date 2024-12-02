@@ -10,6 +10,7 @@ Environment="NAME=omada"
 Environment="IMAGE=mbentley/omada-controller:latest"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
+RuntimeMaxSec=7d
 Restart=always
 ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker stop -t 60 ${NAME}
