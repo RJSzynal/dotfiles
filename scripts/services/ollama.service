@@ -22,6 +22,7 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-l traefik.http.routers.${NAME}.entrypoints=websecure \
 	-l traefik.http.routers.${NAME}.tls=true \
 	-l traefik.http.routers.${NAME}.tls.certresolver=szynalcouk \
+	-l traefik.http.routers.${NAME}.middlewares=internal-only@file \
 	-l traefik.http.services.${NAME}.loadbalancer.server.port=11434 \
 	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
 	${IMAGE}
