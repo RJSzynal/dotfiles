@@ -66,6 +66,8 @@ install_docker() {
 			docker-compose-plugin \
 		--no-install-recommends
 	usermod -aG docker "${1}"
+	# Created "trusted" user-defined bridge network
+	docker network create trusted
 	# Run the Docker daemon as a non-root user
 	if [ -z "$(uname -a | grep -i 'wsl')" ]; then
 		systemctl disable --now docker.service docker.socket

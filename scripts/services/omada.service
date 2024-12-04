@@ -17,6 +17,7 @@ ExecStartPre=-/usr/bin/docker stop -t 60 ${NAME}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-h ${NAME} \
+	--net trusted \
 	-p 8088:8088 \
 	-p 8888:8888 \
 	-p 8043:8043 \
