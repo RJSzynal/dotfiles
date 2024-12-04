@@ -23,10 +23,11 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
 	-l traefik.http.routers.${NAME}.middlewares=internal-only@file \
 	-l traefik.http.services.${NAME}.loadbalancer.server.port=8123 \
 	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	-e TZ \
 	-v /root/.home-assistant:/config \
 	-v /etc/localtime:/etc/localtime:ro \
 	${IMAGE}
-ExecStop=-/usr/bin/docker rm -fv ${NAME}
+ExecStop=-/usr/bin/docker stop -t 60 ${NAME} && /usr/bin/docker rm -fv ${NAME}
 
 [Install]
 WantedBy=multi-user.target
