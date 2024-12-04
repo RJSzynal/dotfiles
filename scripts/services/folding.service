@@ -26,7 +26,7 @@ ExecStart=/usr/bin/docker run --rm --name ${NAME} \
         -v /root/.fah:/fah \
         ${IMAGE} \
         --user=RJSzynal \
-        --team=236269 \
+        --team=223518 \
         --gpu=false \
 	--smp=true \
         --priority=idle \
