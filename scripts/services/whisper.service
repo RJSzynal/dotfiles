@@ -6,7 +6,7 @@ After=traefik.service
 Requires=traefik.service
 
 [Service]
-Environment="NAME=faster-whisper"
+Environment="NAME=whisper"
 Environment="IMAGE=rhasspy/wyoming-whisper"
 TimeoutStartSec=0
 TimeoutStopSec=40
