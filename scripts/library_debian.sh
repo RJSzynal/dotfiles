@@ -112,6 +112,26 @@ install_ckb-next() {
 	apt-get install -y --no-install-recommends ckb-next
 }
 
+install_dcaenc() {
+	curl -s 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x04BB583E2349E139' | gpg --dearmor --yes -o /usr/share/keyrings/rebuntu16.gpg
+	echo 'deb [signed-by=/usr/share/keyrings/rebuntu16.gpg arch=amd64] https://ppa.launchpadcontent.net/rebuntu16/avidemux+unofficial/ubuntu trusty main ' \
+		> /etc/apt/sources.list.d/rebuntu16-ubuntu-ppa-trusty.list
+	apt-get update
+	TEMP_DIR=$(mktemp -d)
+	(
+		cd ${TEMP_DIR}
+		wget https://launchpad.net/\~rebuntu16/+archive/ubuntu/avidemux+unofficial/+files/libdcaenc0_2+git2014.06.17-1\~ppa+trusty0_amd64.deb
+		ar x libdcaenc0_2+git2014.06.17-1\~ppa+trusty0_amd64.deb
+		tar xzf control.tar.gz
+		sed -i '/Pre-Depends: multiarch-support/d' control
+		tar --ignore-failed-read -cvzf control.tar.gz post{inst,rm} md5sums control shlibs
+		ar rcs libdcaenc0_2+git2014.06.17-1~ppa+trusty0_amd64_new.deb debian-binary control.tar.gz data.tar.xz
+		dpkg -i libdcaenc0_2+git2014.06.17-1~ppa+trusty0_amd64_new.deb
+	)
+	rm -rf ${TEMP_DIR}
+	sudo apt install -y dcaenc
+}
+
 install_google_drive() {
 	mkdir -p "/home/${1}/googledrive-home"
 	#mkdir -p "/home/${1}/googledrive-work"
