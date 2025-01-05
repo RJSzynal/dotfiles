@@ -1,23 +1,25 @@
-#cm.!default {
-#type plug:surroundaudio
-#}
-#
-#ctl.!default {
-#type plug:surroundaudio
-#}
-#
-#pcm.a52encode {
-#type a52
-#format S16_LE
-#channels 6
-#rate 48000
-#bitrate 448
-#}
-#
-#pcm.surroundaudio a52encode
-#
-#ctl.surroundaudio {
-#type hw
-#card 0
-#device 1
-#}
+# cm.!default {
+#     type plug:surroundaudio
+# }
+
+# ctl.!default {
+#     type plug:surroundaudio
+# }
+
+# pcm.a52encode {
+#     type a52
+#     format S16_LE
+#     channels 6
+#     rate 48000
+#     bitrate 448
+# }
+
+# pcm.surroundaudio a52encode
+
+# ctl.surroundaudio {
+#     type hw
+#     card 0
+#     device 1
+# }
+
+<confdir:pcm/dca.conf>
