@@ -1,0 +1,1 @@
+deb [signed-by=/usr/share/keyrings/mozilla.gpg arch=amd64] https://packages.mozilla.org/apt mozilla main

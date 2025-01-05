@@ -1,0 +1,1 @@
+deb [signed-by=/usr/share/keyrings/alessandro-strada.gpg arch=amd64] http://ppa.launchpad.net/alessandro-strada/ppa/ubuntu jammy main

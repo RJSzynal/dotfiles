@@ -1,0 +1,1 @@
+deb [signed-by=/usr/share/keyrings/tatokis.gpg arch=amd64] https://ppa.launchpadcontent.net/tatokis/ckb-next/ubuntu noble main 
