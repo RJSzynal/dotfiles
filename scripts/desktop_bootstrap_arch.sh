@@ -66,7 +66,12 @@ install_oh_my_zsh "${TARGET_USER}"
 # Audio
 pacman --noconfirm -S \
 		alsa-utils \
-		pulseaudio
+		pipewire \
+		pipewire-audio \
+		pipewire-alsa \
+		pipewire-jack \
+		pipewire-pulse \
+		wireplumber
 aur_install dcaenc
 
 # Graphics drivers
