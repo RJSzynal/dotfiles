@@ -94,14 +94,16 @@ install_gnome() {
 
 install_google_drive() {
 	mkdir -p "/home/${1}/googledrive-home"
-	#mkdir -p "/home/${1}/googledrive-work"
 	chown "${1}": "/home/${1}/googledrive-home"
-	#chown "${1}": "/home/${1}/googledrive-work"
+	# mkdir -p "/home/${1}/googledrive-work"
+	# chown "${1}": "/home/${1}/googledrive-work"
 
 	aur_install google-drive-ocamlfuse
 
-	#google-drive-ocamlfuse "/home/${1}/googledrive-home"
-	#google-drive-ocamlfuse -label work "/home/${1}/googledrive-work"
+	rsync -av "${1}@nordelle.szynal.co.uk:/home/${1}/.gdfuse" "/home/${1}/.gdfuse"
+
+	/usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/${1}/googledrive-home"
+	# /usr/bin/google-drive-ocamlfuse -o allow_root -label work "/home/${1}/googledrive-work"
 }
 
 install_i3() {
