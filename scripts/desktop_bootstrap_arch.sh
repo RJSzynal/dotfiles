@@ -67,6 +67,7 @@ install_oh_my_zsh "${TARGET_USER}"
 pacman --noconfirm -S \
 		alsa-utils \
 		pulseaudio
+aur_install dcaenc
 
 # Graphics drivers
 pacman --noconfirm -S \
@@ -76,8 +77,8 @@ pacman --noconfirm -S \
 
 # Window manager
 # install_awesome "${TARGET_USER}"
-# install_gnome "${TARGET_USER}"
-install_kde "${TARGET_USER}"
+install_gnome "${TARGET_USER}"
+# install_kde "${TARGET_USER}"
 
 # Set up locale
 sed -i -e 's|^# \(en_GB.UTF-8\)|\1|' /etc/locale.gen
