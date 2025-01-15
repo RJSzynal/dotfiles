@@ -161,7 +161,7 @@ alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> P
 alias vi=nvim
 
 # Use VSCodium
-alias code=codium
+alias code=/usr/bin/codium --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland
 
 # Webapps
 alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
