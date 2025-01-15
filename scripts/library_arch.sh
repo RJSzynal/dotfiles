@@ -92,6 +92,7 @@ install_gnome() {
 
 	gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
 	gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+	gsettings set org.gnome.SessionManager logout-prompt false
 }
 
 install_google_drive() {
