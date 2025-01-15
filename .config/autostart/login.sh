@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## KDE autostart script
+## KDE/Gnome autostart script
 
 for file in ~/.{aliases,functions,path,dockerfunc,extra,exports}; do
     if [[ -r "$file" ]] && [[ -f "$file" ]]; then
