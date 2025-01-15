@@ -54,6 +54,7 @@ yay --needed --noconfirm -Syu \
 		linux-headers \
 		make \
 		neovim \
+		nfs-utils \
 		rsync \
 		the_silver_searcher \
 		tig \
