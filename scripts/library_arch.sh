@@ -106,7 +106,7 @@ install_google_drive() {
 		rsync -av "${1}@nordelle.szynal.co.uk:/home/${1}/.gdfuse" "/home/${1}/.gdfuse"
 	fi
 
-	#/usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/${1}/googledrive-home"
+	/usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/${1}/googledrive-home"
 	# /usr/bin/google-drive-ocamlfuse -o allow_root -label work "/home/${1}/googledrive-work"
 }
 
