@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install_awesome() {
-	pacman --noconfirm -S \
+	yay --needed --noconfirm -S \
 		awesome \
 		gnome-keyring \
 		i3lock \
@@ -12,7 +12,7 @@ install_awesome() {
 }
 
 install_autofs() {
-	pacman --noconfirm -S autofs
+	sudo -u ${1} yay --needed --noconfirm -S autofs
 
 	mkdir -p /etc/auto.master.d
 	if [[ ! -f /root/.storage.creds ]]; then
@@ -28,19 +28,21 @@ install_docker() {
 	if [ -f /etc/docker/daemon.json ]; then
 		cat /etc/docker/daemon.json | jq '.features.buildkit = true' > /etc/docker/daemon.json.tmp && mv /etc/docker/daemon.json{.tmp,}
 	else
+		mkdir -p /etc/docker
 		jq --null-input '.features.buildkit = true' > /etc/docker/daemon.json
 	fi
 	# [ -z "$(uname -a | grep -i 'wsl')" ] || update-alternatives --set iptables /usr/sbin/iptables-legacy
 
 	# Install Docker
-	pacman --noconfirm -S \
+	yay --needed --noconfirm -S \
 			docker \
 			docker-buildx
 	usermod -aG docker "${1}"
+	systemctl start docker.socket
 	SERVICE_LIST+=( docker.socket )
 
 	# Created "trusted" user-defined bridge network
-	docker network create trusted
+	docker network create trusted || true
 
 	# # Run the Docker daemon as a non-root user
 	# if [ -z "$(uname -a | grep -i 'wsl')" ]; then
@@ -80,16 +82,16 @@ install_fonts() {
 
 install_gnome() {
 	pacman -Sgq gnome \
-	| grep -v \
-		epiphany \
-		gnome-contacts \
-		gnome-music \
-		gnome-remote-desktop \
-		gnome-weather \
-	| pacman --noconfirm -S -
-
-	pacman --noconfirm -S \
+	| grep -Ev \
+		'(epiphany|gnome-contacts|gnome-music|gnome-remote-desktop|gnome-weather)' \
+	| yay --needed --noconfirm -S -
+	
+	yay --needed --noconfirm -S \
+		gnome-tweaks \
 		spectacle
+
+	gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
+	gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 }
 
 install_google_drive() {
@@ -98,16 +100,18 @@ install_google_drive() {
 	# mkdir -p "/home/${1}/googledrive-work"
 	# chown "${1}": "/home/${1}/googledrive-work"
 
-	aur_install google-drive-ocamlfuse
+	sudo -u ${1} yay --needed --noconfirm -S google-drive-ocamlfuse
 
-	rsync -av "${1}@nordelle.szynal.co.uk:/home/${1}/.gdfuse" "/home/${1}/.gdfuse"
+	if [ ! -d "/home/${1}/.gdfuse" ]; then
+		rsync -av "${1}@nordelle.szynal.co.uk:/home/${1}/.gdfuse" "/home/${1}/.gdfuse"
+	fi
 
-	/usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/${1}/googledrive-home"
+	#/usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/${1}/googledrive-home"
 	# /usr/bin/google-drive-ocamlfuse -o allow_root -label work "/home/${1}/googledrive-work"
 }
 
 install_i3() {
-	pacman --noconfirm -S \
+	yay --needed --noconfirm -S \
 		feh \
 		i3-wm \
 		i3lock \
@@ -120,22 +124,24 @@ install_kde() {
 	pacman -Sgq plasma \
 	| grep -v \
 		plasma-welcome \
-	| pacman --noconfirm -S -
+	| yay --needed --noconfirm -S -
 
-	pacman --noconfirm -S \
+	yay --needed --noconfirm -S \
 		spectacle
 }
 
 install_keepassxc() {
+	echo '==Installing KeepassXC=='
 	temp_pkgs=()
-	for pkg in gcc linux-headers libsystemd libxkbcommon; do
+	for pkg in gcc linux-headers systemd-libs libxkbcommon unzip; do
 		if [ -z "$(pacman -Q | grep ${pkg})" ]; then
 			temp_pkgs+=( ${pkg} )
+		fi
 	done
-	pacman --noconfirm -S \
+	yay --needed --noconfirm -S \
 			keepassxc \
 			mono-tools \
-			${temp_pkgs}
+			${temp_pkgs[@]}
 
 	TMP_DIR=$(mktemp -d)
 	wget https://keepass.info/extensions/v2/kpuinput/KPUInput-1.4.zip -qO ${TMP_DIR}/kpuinput.zip
@@ -146,15 +152,18 @@ install_keepassxc() {
 	cp -f /usr/lib/{keepassxc/,}KPUInputN.so
 	rm -rf ${TMP_DIR}
 
-	groupadd uinputg
-	usermod -a -G uinputg ${TARGET_USER}
+	getent group uinputg || groupadd uinputg
+	usermod -aG uinputg ${TARGET_USER}
 	echo 'KERNEL=="uinput", GROUP="uinputg", MODE="0660", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/89-uinput-u.rules
 
-	pacman --noconfirm -R ${temp_pkgs}
+	if [ "${#temp_pkgs[@]}" -gt 0 ]; then
+		yay --noconfirm -R ${temp_pkgs[@]}
+	fi
 }
 
 install_lmms() {
-	pacman --noconfirm -R lmms
+	echo '==Installing LMMS=='
+	yay --noconfirm -S lmms
 
 	cat > "/home/${1}/lmms.sh" <<-EOF
 		#!/bin/bash
@@ -173,19 +182,20 @@ install_lmms() {
 }
 
 install_oh_my_zsh() {
-	install_zsh
+	yay --needed --noconfirm -S zsh
 	if [[ ! -d "/home/${1}/.oh-my-zsh" ]]; then
-		sudo -u ${1} sh -c "KEEP_ZSHRC=yes RUNZSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+		sudo -u "${1}" sh -c "KEEP_ZSHRC=yes RUNZSH=no $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 	fi
 	# Install zsh theme
 	if [[ ! -d "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k" ]]; then
-		sudo -u ${1} git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k"
+		sudo -u "${1}" git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "/home/${1}/.oh-my-zsh/custom/themes/powerlevel10k"
 	fi
 }
 
 install_steam() {
+	echo '==Installing Steam=='
 	sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-	pacman -Syu \
+	yay --needed --noconfirm -Syu \
 		lib32-mesa \
 		lib32-vulkan-radeon \
 		steam
@@ -196,20 +206,13 @@ install_traefik() {
 	SERVICE_LIST+=( traefik )
 }
 
-install_vscodium() {
-	aur_install vscodium
-}
-
 aur_install() {
+	rm -rf /tmp/${1}
 	(
 		cd /tmp
-		git clone https://aur.archlinux.org/${1}.git
+		sudo -u "${2}" git clone https://aur.archlinux.org/${1}.git
 		cd ${1}
-		makepkg -si
+		sudo -u "${2}" makepkg -si
 	)
 	rm -rf /tmp/${1}
-}
-
-install_zsh() {
-	pacman --noconfirm -S zsh
 }
