@@ -95,7 +95,7 @@ install_gnome() {
 	# Allow fractional scaling
 	gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 	# Extend "not responding" timeout to 10 seconds
-	gsettings set org.gnome.mutter check-alive-timeout 10000
+	gsettings set org.gnome.mutter check-alive-timeout 15000
 	# Can't do the following as it just makes poweroff do nothing at all
 	#gsettings set org.gnome.SessionManager logout-prompt false
 }
