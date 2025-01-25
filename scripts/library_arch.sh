@@ -83,7 +83,7 @@ install_fonts() {
 install_gnome() {
 	pacman -Sgq gnome \
 	| grep -Ev \
-		'(epiphany|gnome-contacts|gnome-music|gnome-remote-desktop|gnome-weather)' \
+		'(epiphany|gnome-contacts|gnome-music|gnome-remote-desktop|gnome-weather|gnome-connections)' \
 	| yay --needed --noconfirm -S -
 	
 	yay --needed --noconfirm -S \
