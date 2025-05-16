@@ -9,39 +9,10 @@ command -v xset > /dev/null && {
 	xset s noblank
 }
 
-# The script contains some bash only parts
-# dockerfunc () {
-# 	bash -c "source /home/robert/.dockerfunc; ${1}"
-# }
-
-## Containerised PulseAudio
-#dockerfunc pulseaudio
-
-## Keepass
-(
-	# Wait for the google drive mount to be available
-	until [ -f /home/robert/googledrive-home/backup/keepass/home.kdbx ]
-		do sleep 1
-	done
-	exec keepassxc /home/robert/googledrive-home/backup/keepass/home.kdbx
-) &
-
-## Firefox
-(
-	# Wait for the internet connection to be operational
-	until ping -c1 google.com >/dev/null 2>&1
-		do sleep 1
-	done
-	exec firefox
-) &
-
 ## Set wallpaper
 if [ "${XDG_CURRENT_DESKTOP}" == "i3" ]; then
     feh --bg-fill ~/Pictures/Wallpapers/Disney_2015.jpg
 fi
-
-## Terminal
-terminator &
 
 ## Compositing Manager
 xcompmgr -c &
