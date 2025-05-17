@@ -35,6 +35,13 @@ source ./library_arch.sh
 sed -i -e 's|^#\(en_GB.UTF-8\)|\1|' /etc/locale.gen
 locale-gen
 
+# Set up time sync
+cat >> /etc/systemd/timesyncd.conf <<-"ENTRY"
+	NTP=0.arch.pool.ntp.org 1.arch.pool.ntp.org 2.arch.pool.ntp.org 3.arch.pool.ntp.org
+	FallbackNTP=0.pool.ntp.org 1.pool.ntp.org 0.fr.pool.ntp.org
+ENTRY
+SERVICE_LIST+=(systemd-timesyncd)
+
 # Yay package manager (wraps Pacman and supports AUR)
 aur_install yay "${TARGET_USER}"
 pacman --needed --noconfirm -Syu \
@@ -108,10 +115,14 @@ chmod +x /etc/profile.d/global_editor.sh
 yay --needed --noconfirm -S \
 		firefox \
 		gnome-terminal \
+		lutris \
 		spotify-launcher \
 		terminator \
-		vlc
+		vlc \
+		wine \
+		wine-mono
 sudo -u "${TARGET_USER}" yay --needed --noconfirm -S \
+		legendary \
 		vscodium
 install_keepassxc
 install_steam
