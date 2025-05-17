@@ -11,6 +11,7 @@ Environment="IMAGE=ghcr.io/matatonic/openedai-speech"
 TimeoutStartSec=0
 TimeoutStopSec=40
 Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
 ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm --name ${NAME} \

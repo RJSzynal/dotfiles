@@ -11,6 +11,7 @@ Environment="IMAGE=nginx:latest"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
 Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
 ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \

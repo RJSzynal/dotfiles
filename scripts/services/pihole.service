@@ -12,6 +12,7 @@ Environment="IP4=192.168.1.140"
 Environment="IP6=fd9c:8004:3164:0:8ae7:3007:9274:387"
 TimeoutStartSec=0
 Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
 ExecStartPre=/usr/bin/docker pull ${IMAGE}
 ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
 ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
