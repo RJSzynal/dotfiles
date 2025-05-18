@@ -93,7 +93,7 @@ runuser -u ${TARGET_USER} ln -sfn /home/${TARGET_USER}/{development/src/github.c
 source /home/${TARGET_USER}/development/src/github.com/rjszynal/dotfiles/scripts/library_debian.sh
 
 cat >> /home/${TARGET_USER}/.bashrc <<-BASHRC
-	for file in /home/${TARGET_USER}/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports}; do
+	for file in /home/${TARGET_USER}/.{bash_prompt,aliases,functions,path,dockerfunc,exports,extra}; do
 	    if [[ -r "\${file}" ]] && [[ -f "\${file}" ]]; then
 	        # shellcheck source=/dev/null
 	        source "\${file}"

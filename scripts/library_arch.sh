@@ -94,7 +94,7 @@ install_gnome() {
 	gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
 	# Allow fractional scaling
 	gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
-	# Extend "not responding" timeout to 10 seconds
+	# Extend "not responding" timeout to 15 seconds
 	gsettings set org.gnome.mutter check-alive-timeout 15000
 	# Can't do the following as it just makes poweroff do nothing at all
 	#gsettings set org.gnome.SessionManager logout-prompt false

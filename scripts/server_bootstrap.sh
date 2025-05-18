@@ -40,7 +40,7 @@ ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.exports
 ln -sfn ~/{development/src/github.com/rjszynal/dotfiles/,}.aliases
 
 cat >> ${HOME}/.bashrc <<-"BASHRC"
-	for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports}; do
+	for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,exports,extra}; do
 	    if [[ -r "${file}" ]] && [[ -f "${file}" ]]; then
 	        # shellcheck source=/dev/null
 	        source "${file}"
