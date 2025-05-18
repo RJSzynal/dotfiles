@@ -15,6 +15,5 @@ Session.vim
 
 .uuid
 
-.gitconfig
 .i3/logfile
 .nginx/conf.d/*

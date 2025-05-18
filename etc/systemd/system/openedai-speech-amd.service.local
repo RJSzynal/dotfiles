@@ -1,0 +1,38 @@
+[Unit]
+Description=OpenedAI Speech Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="NAME=openedai-speech"
+Environment="IMAGE=ghcr.io/matatonic/openedai-speech"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	--device /dev/kfd \
+	--device /dev/dri \
+	-p 8000:8000 \
+	-v /root/.openedai-speech/voices:/app/voices \
+	-v /root/.openedai-speech/config:/app/config \
+	-e TTS_HOME=voices \
+	-e HF_HOME=voices \
+	-e USE_ROCM=1 \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${NAME}.rule=Host(\"${NAME}.local\") \
+	-l traefik.http.routers.${NAME}.entrypoints=web \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=8000 \
+	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	${IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${NAME}
+
+[Install]
+WantedBy=multi-user.target
+

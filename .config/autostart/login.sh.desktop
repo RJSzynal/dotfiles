@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=login.sh
-Comment=Login shell script
-Keywords=login;
-Categories=Settings;System;
-Exec=/home/robert/.config/autostart/login.sh
-StartupNotify=true

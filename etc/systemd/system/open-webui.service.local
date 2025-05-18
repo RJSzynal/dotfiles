@@ -1,0 +1,46 @@
+[Unit]
+Description=Open WebUI Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+After=ollama.service
+Requires=ollama.service
+After=openedai-speech.service
+Requires=openedai-speech.service
+
+[Service]
+Environment="NAME=open-webui"
+Environment="IMAGE=ghcr.io/open-webui/open-webui:main"
+TimeoutStartSec=0
+TimeoutStopSec=40
+RuntimeMaxSec=7d
+Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${NAME}.rule=Host(\"${NAME}.local\") \
+	-l traefik.http.routers.${NAME}.entrypoints=web \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=8080 \
+	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	-e WEBUI_URL=http://${NAME}.local \
+	-e OLLAMA_BASE_URLS=http://ollama:11434 \
+	-e OPENAI_API_KEY=sk-111111111 \
+	-e OPENAI_API_BASE_URL=http://openedai-speech:8000/v1 \
+	-e ENABLE_RAG_WEB_SEARCH=True \
+	-e ENABLE_SEARCH_QUERY=True \
+	-e RAG_WEB_SEARCH_ENGINE=duckduckgo \
+	-e WHISPER_MODEL_AUTO_UPDATE=True \
+	-e AUDIO_TTS_ENGINE=openai \
+	-e AUDIO_TTS_VOICE=fable \
+	-v /root/.open-webui:/app/backend/data \
+	${IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${NAME}
+
+[Install]
+WantedBy=multi-user.target
+

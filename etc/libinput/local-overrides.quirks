@@ -1,5 +1,0 @@
-[Logitech MX Master]
-MatchVendor=0x46d           
-MatchProduct=0x4071      
-AttrEventCode=-REL_WHEEL_HI_RES;-REL_HWHEEL_HI_RES;
-

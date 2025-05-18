@@ -1,0 +1,35 @@
+[Unit]
+Description=Folding@Home Container
+After=docker.service
+Requires=docker.service
+After=traefik.service
+Requires=traefik.service
+
+[Service]
+Environment="NAME=folding"
+Environment="IMAGE=foldingathome/fah-gpu-amd:latest"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${NAME}.rule=Host(\"${NAME}.local\") \
+	-l traefik.http.routers.${NAME}.entrypoints=web \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=7396 \
+	--gpus=all \
+	-v /root/.fah:/fah \
+	${IMAGE} \
+		--user=RJSzynal \
+		--team=236269 \
+		--priority=idle \
+		--power=full
+ExecStop=-docker exec ${NAME} FAHClient --send-command shutdown &; sleep 35; /usr/bin/docker rm -fv ${NAME}
+
+[Install]
+WantedBy=multi-user.target
+
