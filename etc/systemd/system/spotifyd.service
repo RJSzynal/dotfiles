@@ -1,0 +1,28 @@
+[Unit]
+Description=Spotify Daemon Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+Environment="NAME=spotifyd"
+Environment="IMAGE=rjszynal/spotifyd:latest"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=-/usr/bin/docker network create trusted
+ExecStartPre=/usr/bin/docker pull ${IMAGE}
+ExecStartPre=-/usr/bin/docker rm -fv ${NAME}
+ExecStart=/usr/bin/docker run --rm --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	--device /dev/snd \
+	--group-add audio \
+	-p 1234:1234 \
+	-v "/root/.spotifyd/config:/home/spotify/.config/spotifyd" \
+	-v "/root/.spotifyd/cache:/home/spotify/.cache/spotifyd" \
+	${IMAGE}
+ExecStop=-/usr/bin/docker rm -fv ${NAME}
+
+[Install]
+WantedBy=multi-user.target
+

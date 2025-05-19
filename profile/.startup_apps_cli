@@ -24,22 +24,3 @@
 	# rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/ /home/robert/Videos/
 	# rsync -a --protect-args --prune-empty-dirs --include='*.mkv' --include='*.mp4' --exclude='*' pi4.szynal.co.uk:/home/pi/torrent/download/*/ /home/robert/Videos/
 ) &
-
-## Google drive mount
-# Need to change this to an fstab entry
-(
-	# Wait for the internet connection to be operational
-	until ping -c1 google.com >/dev/null 2>&1
-		do sleep 1
-	done
-	printf "%s %s %s:%s\n" $(date -u +'%T') "${0}" 'INFO' 'Mounting Google Drive (Home)' >> ${HOME}/log/$(date +%F)-userscript.log
-	mount | grep "/home/robert/googledrive-home" >/dev/null || /usr/bin/google-drive-ocamlfuse -o allow_root -label home "/home/robert/googledrive-home"
-	# printf "%s %s %s:%s\n" $(date -u +'%T') "${0}" 'INFO' 'Mounting Google Drive (Work)' >> ${HOME}/log/$(date +%F)-userscript.log
-	# mount | grep "/home/robert/googledrive-work" >/dev/null || /usr/bin/google-drive-ocamlfuse -label work "/home/robert/googledrive-work"
-) &
-# systemctl --user restart googledrive &
-
-## Spotifyd
-# If I ever use this again it can be a systemd service
-# printf "%s %s %s:%s\n" $(date -u +'%T') "${0}" 'INFO' 'Running Spotify Daemon' >> ${HOME}/log/$(date +%F)-userscript.log
-# dockerfunc spotifyd
