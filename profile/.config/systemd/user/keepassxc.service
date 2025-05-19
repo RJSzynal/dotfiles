@@ -1,0 +1,12 @@
+[Unit]
+Description=KeepassXC
+Requires=googledrive.service
+After=googledrive.service
+
+[Service]
+Type=simple
+Restart=on-failure
+ExecStart=/usr/bin/keepassxc "/home/robert/googledrive-home/backup/keepass/home.kdbx"
+
+[Install]
+WantedBy=graphical-session.target
