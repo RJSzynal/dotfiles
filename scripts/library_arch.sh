@@ -41,6 +41,11 @@ install_docker() {
 	systemctl start docker.socket
 	SERVICE_LIST+=( docker.socket )
 
+	DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+	sudo -u ${1} mkdir -p ${DOCKER_CONFIG}/cli-plugins
+	sudo -u ${1} curl -SL https://github.com/docker/compose/releases/download/v2.36.2/docker-compose-linux-x86_64 -o ${DOCKER_CONFIG}/cli-plugins/docker-compose
+	sudo -u ${1} chmod +x ${DOCKER_CONFIG}/cli-plugins/docker-compose
+
 	# Created "trusted" user-defined bridge network
 	docker network create trusted || true
 
