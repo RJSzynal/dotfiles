@@ -120,7 +120,8 @@ yay --needed --noconfirm -S \
 		terminator \
 		vlc \
 		wine \
-		wine-mono
+		wine-mono \
+		winetricks
 sudo -u "${TARGET_USER}" yay --needed --noconfirm -S \
 		legendary \
 		vscodium
