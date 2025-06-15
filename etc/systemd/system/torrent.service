@@ -6,7 +6,7 @@ After=traefik.service
 Requires=traefik.service
 
 [Service]
-Environment="IMAGE=haugene/transmission-openvpn:4.3-fix"
+Environment="IMAGE=haugene/transmission-openvpn:5"
 Environment="NAME=transmission"
 Environment="LOCAL_USER=robert"
 TimeoutStartSec=0
@@ -30,6 +30,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
 	-v /etc/localtime:/etc/localtime:ro \
 	-v /home/${LOCAL_USER}/torrent:/data \
+	-v /home/${LOCAL_USER}/torrent/configs/transmission:/config/transmission-home \
 	--env-file /home/${LOCAL_USER}/torrent/configs/${NAME}/DockerEnv \
 	${IMAGE}
 ExecStop=-/usr/bin/docker rm -fv ${NAME}
