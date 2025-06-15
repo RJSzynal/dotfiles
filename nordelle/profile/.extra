@@ -1,0 +1,2 @@
+# Centos only includes Zsh 5.0 but 10k depends on zsh>=5.3
+ZSH_THEME="powerlevel9k/powerlevel9k"

@@ -76,8 +76,6 @@ COMPLETION_WAITING_DOTS="true"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git)
 
-source $ZSH/oh-my-zsh.sh
-
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -111,6 +109,8 @@ for file in ~/.{aliases,functions,path,dockerfunc,exports,extra}; do
     fi
 done
 unset file
+
+source $ZSH/oh-my-zsh.sh
 
 # Start X11
 if [[ $(tty) = /dev/tty1 ]]; then
