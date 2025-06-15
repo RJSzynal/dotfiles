@@ -79,7 +79,7 @@ etc: ## Installs the etc directory files.
 			dst_file=$$(echo $${src_file} | sed -e 's|$(CURDIR)/$(shell uname -n)||'); \
 			echo "$${dst_file}"; \
 			sudo mkdir -p $$(dirname $${dst_file}); \
-			sudo cp $${src_file} $${dst_file}; \
+			sudo cp --remove-destination $${src_file} $${dst_file}; \
 		done; \
 		echo "Reload systemd daemon"; \
 		sudo systemctl daemon-reload; \
