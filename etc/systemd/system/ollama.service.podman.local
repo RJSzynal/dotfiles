@@ -1,0 +1,29 @@
+[Unit]
+Description=Ollama Container
+After=podman.socket
+Requires=podman.socket
+RequiresMountsFor=${HOME}/.ollama
+
+[Service]
+Environment="NAME=ollama"
+Environment="IMAGE=ollama/ollama"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=-/usr/bin/podman network create trusted
+ExecStartPre=/usr/bin/podman pull ${IMAGE}
+ExecStartPre=-/usr/bin/podman rm -fv ${NAME}
+ExecStartPre=-/usr/bin/mkdir -p ${HOME}/.ollama
+ExecStart=/usr/bin/podman run --rm --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	-p 11434:11434 \
+	--device /dev/dri \
+	--security-opt label=type:container_runtime_t \
+	-v ${HOME}/.ollama:/root/.ollama:rw \
+	${IMAGE}
+ExecStop=-/usr/bin/podman rm -fv ${NAME}
+
+[Install]
+WantedBy=default.target
+

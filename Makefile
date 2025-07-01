@@ -25,11 +25,19 @@ config: ## Installs the .config directory.
 	@echo '==Linking ~/.config files=='
 	@if [ -d $(CURDIR)/$$(uname -n)/profile/.config ]; then \
 		mkdir -p $(HOME)/.config; \
-		for src_file in $(shell find -L $(CURDIR)/$$(uname -n)/profile/.config -maxdepth 1 -mindepth 1 -not -name ".*.swp"); do \
+		for src_file in $(shell find -L $(CURDIR)/$$(uname -n)/profile/.config -maxdepth 1 -mindepth 1 -not -name ".*.swp" -not -name "systemd"); do \
 			dst_file=$$(basename $${src_file}); \
 			echo "$${dst_file}"; \
 			ln -sfn $${src_file} $(HOME)/.config/$${dst_file}; \
 		done; \
+		if [ -d $(CURDIR)/$$(uname -n)/profile/.config/systemd ]; then \
+			for src_file in $(shell find -L $(CURDIR)/$$(uname -n)/profile/.config/systemd -type f -not -name ".*.swp"); do \
+				dst_file=$(HOME)$$(echo $${src_file} | sed -e 's|$(CURDIR)/$(shell uname -n)/profile||'); \
+				echo "$${dst_file}"; \
+				mkdir -p $$(dirname $${dst_file}); \
+				ln -sfn $${src_file} $${dst_file}; \
+			done; \
+		fi; \
 		ln -snf $(CURDIR)/$$(uname -n)/profile/.config/i3 $(HOME)/.config/sway; \
 		SERVICE_LIST=( $(shell ls $(CURDIR)/$$(uname -n)/profile/.config/systemd/user) ); \
 		if [ $${#SERVICE_LIST[@]} -gt 0 ]; then  \

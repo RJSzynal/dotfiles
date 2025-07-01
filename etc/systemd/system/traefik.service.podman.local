@@ -1,0 +1,32 @@
+[Unit]
+Description=Traefik Container
+After=podman.socket
+Requires=podman.socket
+RequiresMountsFor=${HOME}/.traefik
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+Environment="IMAGE=traefik:latest"
+Environment="NAME=traefik"
+ExecStartPre=-/usr/bin/podman network create trusted
+ExecStartPre=/usr/bin/podman pull ${IMAGE}
+ExecStartPre=-/usr/bin/podman rm -fv ${NAME}
+ExecStartPre=-/usr/bin/mkdir -p ${HOME}/.traefik/letsencrypt
+ExecStart=/usr/bin/podman run --rm -t --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	-p 1080:80 \
+	-p 8080:8080 \
+	--security-opt label=type:container_runtime_t \
+	-v ${HOME}/.traefik/letsencrypt:/letsencrypt \
+	-v %t/podman/podman.sock:/var/run/docker.sock:ro \
+	${IMAGE} \
+		--api.insecure=true \
+		--global.sendAnonymousUsage=true \
+		--providers.docker=true \
+		--providers.docker.exposedbydefault=false \
+		--entrypoints.web.address=:80
+
+[Install]
+WantedBy=default.target

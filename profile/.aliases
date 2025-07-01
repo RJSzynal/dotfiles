@@ -160,9 +160,6 @@ alias prikey="more ~/.ssh/personal.key | xclip -selection clipboard | echo '=> P
 # Use Neovim
 alias vi=nvim
 
-# Use VSCodium
-alias code=/usr/bin/codium --enable-features=UseOzonePlatform,WaylandWindowDecorations --ozone-platform=wayland
-
 # Webapps
 alias youtube="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=adnlfjpnmidfimlkaohpidplnoimahfh'"
 alias netflix="/bin/bash -c 'source /home/robert/.dockerfunc && chrome --profile-directory=Default --app-id=eppojlglocelodeimnohnlnionkobfln'"
@@ -171,4 +168,3 @@ alias dotfiles='codium development/src/github.com/rjszynal/dotfiles/'
 alias dockerfiles='codium development/src/github.com/rjszynal/dockerfiles/'
 alias sd='shutdown now'
 alias get_videos='bash -c "rsync -a --protect-args --prune-empty-dirs --include=\"*.mkv\" --include=\"*.mp4\" --exclude=\"*\" nordelle.szynal.co.uk:/home/robert/torrent/download/ /home/robert/Videos/; rsync -a --protect-args --prune-empty-dirs --include=\"*.mkv\" --include=\"*.mp4\" --exclude=\"*\" nordelle.szynal.co.uk:/home/robert/torrent/download/*/ /home/robert/Videos/"'
-

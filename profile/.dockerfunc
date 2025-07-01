@@ -400,7 +400,7 @@ function audacity {
 
 	docker_run
 }
-function aws {
+function aws_docker {
 	local container_name="aws"
 	local container_home="/home/aws"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/awscli:latest"
@@ -583,7 +583,8 @@ function chrome {
 
 	docker_run
 }
-function chromium {
+
+function chromium_docker {
 	local run_type=
 	if [[ "${1}" == "secure" ]] || [[ "${1}" == "tor" ]]; then
 		run_type="${1}"
@@ -591,7 +592,7 @@ function chromium {
 	fi
 	local container_name="chromium"
 	local container_home="/home/chromium"
-	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium:78"
+	local image_name="${MY_DOCKER_REPO_PREFIX}/chromium:latest"
 	local use_host_video=true
 	local use_host_audio=true
 	local network="trusted"

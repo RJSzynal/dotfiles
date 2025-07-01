@@ -39,7 +39,9 @@ dnf install -y \
 	curl \
 	flatpak \
 	git \
+	glab \
 	gnupg2 \
+	i2c-tools \
 	jq \
 	lastpass-cli \
 	make \
@@ -57,6 +59,11 @@ dnf install -y \
 	wget
 SERVICE_LIST+=( podman.socket )
 
+podman login docker.io
+
+git clone  https://github.com/DemonChocolatine/tas2781.git ~/development/src/github.com/DemonChocolatine/tas2781
+(cd ~/development/src/github.com/DemonChocolatine/tas2781 && ./tas2781-fix.sh --install)
+
 # Created "trusted" user-defined bridge network
 docker network create trusted || true
 install_google_drive "${TARGET_USER}"
@@ -64,6 +71,8 @@ install_onedrive "${TARGET_USER}"
 install_oh_my_zsh "${TARGET_USER}"
 install_terraform "${TARGET_USER}"
 install_vagrant "${TARGET_USER}"
+install_vscode "${TARGET_USER}"
+install_lastpass ${TARGET_USER}"
 # install_fonts "${TARGET_USER}" # These are already comitted in the .fonts dir
 
 # # Set up locale
@@ -93,8 +102,7 @@ for flat in \
 	com.mongodb.Compass \
 	com.spotify.Client \
 	com.thincast.client \
-	com.valvesoftware.Steam \
-	com.vscodium.codium
+	com.valvesoftware.Steam
 do
 	flatpak install --noninteractive flathub ${flat}
 done

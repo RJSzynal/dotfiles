@@ -1,0 +1,39 @@
+[Unit]
+Description=OpenedAI Speech Container
+After=podman.socket
+Requires=podman.socket
+After=traefik.service
+Requires=traefik.service
+RequiresMountsFor=${HOME}/.openedai-speech
+
+[Service]
+Environment="NAME=openedai-speech"
+Environment="IMAGE=ghcr.io/matatonic/openedai-speech"
+TimeoutStartSec=0
+TimeoutStopSec=40
+Restart=always
+ExecStartPre=-/usr/bin/podman network create trusted
+ExecStartPre=/usr/bin/podman pull ${IMAGE}
+ExecStartPre=-/usr/bin/podman rm -fv ${NAME}
+ExecStartPre=-/usr/bin/mkdir -p ${HOME}/.openedai-speech/config ${HOME}/.openedai-speech/voices
+ExecStart=/usr/bin/podman run --rm --name ${NAME} \
+	-h ${NAME} \
+	--net trusted \
+	--device /dev/dri \
+	--security-opt label=type:container_runtime_t \
+	-p 8000:8000 \
+	-v ${HOME}/.openedai-speech/voices:/app/voices \
+	-v ${HOME}/.openedai-speech/config:/app/config \
+	-e TTS_HOME=voices \
+	-e HF_HOME=voices \
+	-l traefik.enable=true \
+	-l traefik.http.routers.${NAME}.rule=Host(\"${NAME}.local\") \
+	-l traefik.http.routers.${NAME}.entrypoints=web \
+	-l traefik.http.services.${NAME}.loadbalancer.server.port=8000 \
+	-l traefik.http.services.${NAME}.loadbalancer.server.scheme=http \
+	${IMAGE}
+ExecStop=-/usr/bin/podman rm -fv ${NAME}
+
+[Install]
+WantedBy=default.target
+

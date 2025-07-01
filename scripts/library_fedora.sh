@@ -62,6 +62,13 @@ install_fonts() {
 	fi
 }
 
+install_lastpass() {
+	mkdir -p /tmp/lastpass
+	wget https://download.cloud.lastpass.com/linux/lplinux.tar.bz2 -qO /tmp/lastpass/lplinux.tar.bz2
+	(cd /tmp/lastpass && tar xjvf lplinux.tar.bz2)
+	rm -f /tmp/lplinux.tar.bz2
+}
+
 install_dawn_of_the_tiberium_age() {
 	local wineprefix=/home/${1}/Games/dawn-of-the-tiberium-age
 	if [ ! -d "${wineprefix}" ]; then
@@ -245,6 +252,17 @@ install_keepassxc() {
 	fi
 }
 
+install_nvidia() {
+	dnf install -y \
+		akmod-nvidia \
+		xorg-x11-drv-nvidia-cuda
+
+	systemctl enable \
+		nvidia-suspend.service \
+		nvidia-hibernate.service \
+		nvidia-resume.service
+}
+
 install_oh_my_zsh() {
 	dnf install -y zsh
 	if [[ ! -d "/home/${1}/.oh-my-zsh" ]]; then
@@ -267,4 +285,11 @@ install_onedrive() {
 install_traefik() {
 	scp nordelle.szynal.co.uk:/mnt/nordelle/backup/services/traefik.service.notls /etc/systemd/system/traefik.service
 	SERVICE_LIST+=( traefik )
+}
+
+install_vscode() {
+	rpm --import https://packages.microsoft.com/keys/microsoft.asc
+	echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\nautorefresh=1\ntype=rpm-md\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | tee /etc/yum.repos.d/vscode.repo > /dev/null
+	dnf check-update
+	dnf install code
 }

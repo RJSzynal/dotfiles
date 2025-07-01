@@ -22,4 +22,4 @@
 #     device 1
 # }
 
-<confdir:pcm/dca.conf>
+# <confdir:pcm/dca.conf>
