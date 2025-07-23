@@ -122,6 +122,16 @@ for repo in dotfiles dockerfiles; do
 	&& git submodule update --init --recursive)
 done
 
+# Set Windows style buttons
+gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
+# Allow fractional scaling
+gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+# Extend "not responding" timeout to 15 seconds
+gsettings set org.gnome.mutter check-alive-timeout 15000
+
+# Restore gnupg from backup
+rsync -avh --delete nordelle.szynal.co.uk:/mnt/nordelle/backup/RJSzynal/home/robert/.gnupg/ ~/.gnupg/
+
 # Enable services
 if [ ${#SERVICE_LIST[@]} -gt 0 ]; then
 	systemctl daemon-reload
