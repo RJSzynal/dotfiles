@@ -7,7 +7,7 @@ RequiresMountsFor=${HOME}/.piper
 [Service]
 Environment="NAME=piper"
 Environment="IMAGE=rhasspy/wyoming-piper"
-TimeoutStartSec=0
+TimeoutStartSec=infinity
 TimeoutStopSec=40
 Restart=always
 ExecStartPre=-/usr/bin/podman network create trusted

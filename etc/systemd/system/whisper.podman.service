@@ -7,7 +7,7 @@ RequiresMountsFor=${HOME}/.faster-whisper
 [Service]
 Environment="NAME=whisper"
 Environment="IMAGE=rhasspy/wyoming-whisper"
-TimeoutStartSec=0
+TimeoutStartSec=infinity
 TimeoutStopSec=40
 Restart=always
 ExecStartPre=/usr/bin/podman pull ${IMAGE}

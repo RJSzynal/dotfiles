@@ -5,7 +5,7 @@ Requires=podman.socket
 RequiresMountsFor=${HOME}/.traefik
 
 [Service]
-TimeoutStartSec=0
+TimeoutStartSec=infinity
 Restart=always
 Environment="IMAGE=traefik:latest"
 Environment="NAME=traefik"

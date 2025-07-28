@@ -7,7 +7,7 @@ RequiresMountsFor=${HOME}/.ollama
 [Service]
 Environment="NAME=ollama"
 Environment="IMAGE=ollama/ollama"
-TimeoutStartSec=0
+TimeoutStartSec=infinity
 TimeoutStopSec=40
 Restart=always
 ExecStartPre=-/usr/bin/podman network create trusted

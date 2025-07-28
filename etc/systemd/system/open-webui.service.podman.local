@@ -13,7 +13,7 @@ RequiresMountsFor=${HOME}/.open-webui
 [Service]
 Environment="NAME=open-webui"
 Environment="IMAGE=ghcr.io/open-webui/open-webui:main"
-TimeoutStartSec=0
+TimeoutStartSec=infinity
 TimeoutStopSec=40
 RuntimeMaxSec=7d
 Restart=always

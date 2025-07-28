@@ -9,7 +9,7 @@ RequiresMountsFor=${HOME}/.fah
 [Service]
 Environment="NAME=folding"
 Environment="IMAGE=foldingathome/fah-gpu:latest"
-TimeoutStartSec=0
+TimeoutStartSec=infinity
 TimeoutStopSec=40
 Restart=always
 ExecStartPre=-/usr/bin/podman network create trusted
