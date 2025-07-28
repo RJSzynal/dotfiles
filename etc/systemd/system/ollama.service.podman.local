@@ -18,7 +18,7 @@ ExecStart=/usr/bin/podman run --rm --name ${NAME} \
 	-h ${NAME} \
 	--net trusted \
 	-p 11434:11434 \
-	--device /dev/dri \
+	--device nvidia.com/gpu=all \
 	--security-opt label=type:container_runtime_t \
 	-v ${HOME}/.ollama:/root/.ollama:rw \
 	${IMAGE}

@@ -8,7 +8,7 @@ RequiresMountsFor=${HOME}/.fah
 
 [Service]
 Environment="NAME=folding"
-Environment="IMAGE=foldingathome/fah-gpu-amd:latest"
+Environment="IMAGE=foldingathome/fah-gpu:latest"
 TimeoutStartSec=0
 TimeoutStopSec=40
 Restart=always
@@ -19,18 +19,18 @@ ExecStartPre=-/usr/bin/mkdir -p ${HOME}/.fah
 ExecStart=/usr/bin/podman run --rm --name ${NAME} \
 	-h ${NAME} \
 	--net trusted \
+	--device nvidia.com/gpu=all \
 	--security-opt label=type:container_runtime_t \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${NAME}.rule=Host(\"${NAME}.local\") \
 	-l traefik.http.routers.${NAME}.entrypoints=web \
 	-l traefik.http.services.${NAME}.loadbalancer.server.port=7396 \
-	--gpus=all \
 	-v ${HOME}/.fah:/fah \
 	${IMAGE} \
 		--user=RJSzynal \
 		--team=236269 \
 		--priority=idle \
-		--power=full
+		--power=medium
 ExecStop=-docker exec ${NAME} FAHClient --send-command shutdown &; sleep 35; /usr/bin/podman rm -fv ${NAME}
 
 [Install]
