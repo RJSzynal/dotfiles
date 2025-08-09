@@ -1,2 +1,7 @@
 # # Use rootless Docker 
 # export DOCKER_HOST=unix:///run/user/1000/docker.sock
+
+alias code=codium
+
+# AI
+alias ollama="sudo podman exec -it ollama ollama"
