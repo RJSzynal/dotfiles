@@ -21,6 +21,7 @@ ExecStart=/usr/bin/podman run --rm --name ${NAME} \
 	--device nvidia.com/gpu=all \
 	--security-opt label=type:container_runtime_t \
 	-v ${HOME}/.ollama:/root/.ollama:rw \
+	-e OLLAMA_CONTEXT_LENGTH=8192 \
 	${IMAGE}
 ExecStop=-/usr/bin/podman rm -fv ${NAME}
 
