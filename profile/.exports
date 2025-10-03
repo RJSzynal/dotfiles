@@ -61,3 +61,7 @@ export MOZ_USE_XINPUT2=1
 export STEAM_FORCE_DESKTOPUI_SCALING=1.5
 # export GDK_SCALE=1.5
 # export GDK_DPI_SCALE=1
+
+# AWS CLI
+export AWS_PAGER=""
+
