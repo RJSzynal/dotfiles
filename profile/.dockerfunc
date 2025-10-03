@@ -1876,7 +1876,7 @@ function termboy {
 		--name termboy \
 		${JESSFRAZ_DOCKER_REPO_PREFIX}/nes "/games/${game}.rom"
 }
-function terraform {
+function docker_terraform {
 	docker run --rm -it \
 		-v "${HOME}:${HOME}:ro" \
 		-v "$(pwd):/usr/src/repo" \
