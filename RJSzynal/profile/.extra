@@ -4,4 +4,7 @@
 alias code=codium
 
 # AI
-alias ollama="sudo podman exec -it ollama ollama"
+#alias ollama="sudo podman exec -it ollama ollama"
+alias ollama="docker exec -it ollama ollama"
+
+export OLLAMA_API_BASE=http://ollama.local
