@@ -1,0 +1,18 @@
+name: Dawn of the Tiberium Age
+game_slug: dawn-of-the-tiberium-age
+description: "Dawn of the Tiberium Age (DTA) is a stand-alone mod that combines and enhances Tiberian Dawn and Red Alert using a heavily customized Tiberian Sun engine. Featuring all 4 factions (GDI, Nod, Allies and Soviets) with extremely polished gameplay, DTA allows you to mix and match the factions as you'd like in tons of new multiplayer maps and challenge yourself in dozens of original missions. https://www.moddb.com/mods/the-dawn-of-the-tiberium-age"
+launcher: wine
+script:
+  game:
+    arch: win64
+    exe: drive_c/Program Files/Files/Dawn of the Tiberium Age/DTA.exe
+    prefix: $GAMEDIR
+    working_dir: $GAMEDIR/drive_c/Program Files/Dawn of the Tiberium Age
+  system:
+    prefer_system_libs: true
+  wine:
+    battleye: false
+    eac: false
+    esync: false
+    fsync: false
+    version: ge-proton

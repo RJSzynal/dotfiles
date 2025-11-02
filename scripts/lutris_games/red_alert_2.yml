@@ -1,0 +1,53 @@
+description: Red Alert 2 + Yuris Revenge
+game_slug: command-conquer-red-alert-2
+gogslug: ''
+humblestoreid: ''
+installer_slug: command-conquer-red-alert-2-cncnet
+name: 'Command & Conquer: Red Alert 2'
+notes: Launcher is in windowed mode, it's O.K for compatibility
+runner: wine
+script:
+  files:
+  - archive: https://archive.org/download/command-and-conquer-red-alert-2-incl-yuris-revenge-win-rip-en_202201/Command_and_Conquer_Red_Alert_2_Incl_Yuris_Revenge_Win_RIP_EN.zip
+  - cncnet: https://downloads.cncnet.org/CnCNet5_YR_Installer.exe
+  game:
+    exe: $GAMEDIR/drive_c/Program Files (x86)/Red Alert 2 Yuri's Revenge/CnCNetYRLauncher.exe
+    prefix: $GAMEDIR
+  installer:
+  - task:
+      arch: win64
+      description: Creating Wine prefix.
+      name: create_prefix
+      prefix: $GAMEDIR
+  - extract:
+      dst: $GAMEDIR/extracted
+      file: archive
+  - task:
+      description: Installing base game. Please do not change the destination directory.
+        When prompted generate a key once, then close the tool to proceed.
+      executable: $GAMEDIR/extracted/Game Files/Red Alert 2 Yuri's Revenge.exe
+      name: wineexec
+      prefix: $GAMEDIR
+  - task:
+      app: dotnet48
+      description: Installing NET Framework 4.8. This may take a while...
+      name: winetricks
+      silent: true
+  - task:
+      app: dotnet8
+      description: Installing NET Framework 8.0. This may take a while...
+      name: winetricks
+      silent: true
+  - task:
+      app: xna40
+      description: Installing MS XNA 4.0. This may take a while...
+      name: winetricks
+      silent: true
+  - task:
+      description: Installing CNCNET. Please close the launcher after setup is complete.
+      executable: cncnet
+      name: wineexec
+slug: command-conquer-red-alert-2-cncnet
+steamid: null
+version: CNCNet
+year: 2000

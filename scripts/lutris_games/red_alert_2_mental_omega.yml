@@ -1,0 +1,59 @@
+description: Red Alert 2 Mental Omega
+game_slug: ra2-mental-omega
+gogslug: ''
+humblestoreid: ''
+installer_slug: ra2-mental-omega
+name: 'Command & Conquer: Red Alert 2: Mental Omega'
+runner: wine
+script:
+  files:
+  - archive: https://archive.org/download/command-and-conquer-red-alert-2-incl-yuris-revenge-win-rip-en_202201/Command_and_Conquer_Red_Alert_2_Incl_Yuris_Revenge_Win_RIP_EN.zip
+  - mod: https://www.moddb.com/mods/mental-omega/downloads/mental-omega-330
+  - music: https://www.moddb.com/mods/mental-omega/downloads/soundtrack-for-mental-omega-33
+  - music2: https://www.moddb.com/mods/mental-omega/downloads/soundtrack-for-mental-omega-33-part-ii
+  game:
+    exe: /home/robert/Games/ra2-mental-omega/drive_c/Program Files (x86)/Red Alert 2 Yuri's Revenge/MentalOmegaClient.exe
+    prefix: /home/robert/Games/ra2-mental-omega
+  installer:
+  - task:
+      arch: win64
+      description: Creating Wine prefix.
+      name: create_prefix
+      prefix: /home/robert/Games/ra2-mental-omega
+  - extract:
+      dst: /home/robert/Games/ra2-mental-omega/extracted
+      file: archive
+  - task:
+      description: Installing base game. Please do not change the destination directory.
+        When prompted generate a key once, then close the tool to proceed.
+      executable: /home/robert/Games/ra2-mental-omega/extracted/Game Files/Red Alert 2 Yuri's Revenge.exe
+      name: wineexec
+      prefix: /home/robert/Games/ra2-mental-omega
+  - extract:
+      dst: /home/robert/Games/ra2-mental-omega/drive_c/Program Files (x86)/Red Alert 2 Yuri's Revenge/
+      file: mod
+  - extract:
+      dst: /home/robert/Games/ra2-mental-omega/drive_c/Program Files (x86)/Red Alert 2 Yuri's Revenge/
+      file: music
+  - extract:
+      dst: /home/robert/Games/ra2-mental-omega/drive_c/Program Files (x86)/Red Alert 2 Yuri's Revenge/
+      file: music2
+#   - task:
+#       app: dotnet48
+#       description: Installing NET Framework 4.8. This may take a while...
+#       name: winetricks
+#       silent: true
+#   - task:
+#       app: dotnet8
+#       description: Installing NET Framework 8.0. This may take a while...
+#       name: winetricks
+#       silent: true
+#   - task:
+#       app: xna40
+#       description: Installing MS XNA 4.0. This may take a while...
+#       name: winetricks
+#       silent: true
+slug: ra2-mental-omega
+steamid: null
+version: MentalOmega
+year: 2013

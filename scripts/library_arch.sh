@@ -105,6 +105,136 @@ install_gnome() {
 	#gsettings set org.gnome.SessionManager logout-prompt false
 }
 
+install_dawn_of_the_tiberium_age() {
+	local wineprefix=/home/${1}/Games/dawn-of-the-tiberium-age
+	if [ ! -d "${wineprefix}" ]; then
+		sudo -u ${1} mkdir  -p  $(dirname "${wineprefix}")
+		sudo -u ${1} WINEARCH=win64 WINEPREFIX=${wineprefix} wineboot -u
+	fi
+	if [ ! -d "${wineprefix}/drive_c/Program Files/Dawn of the Tiberium Age" ]; then
+		echo "You must manually download the file from the moddb website (https://www.moddb.com/mods/the-dawn-of-the-tiberium-age/downloads/dta135m). Type the location to continue. Leave blank to use default: /home/${1}/Downloads/DTA_13.5.3_Movies.zip"
+		read -r archive_path
+		archive_path=${archive_path:-/home/${1}/Downloads/DTA_13.5.3_Movies.zip}
+		sudo -u ${1} unzip "${archive_path}" -d "${wineprefix}/drive_c/Program Files/"
+	fi
+	if [ ! -d "${wineprefix}/drive_c/Program Files (x86)/Microsoft.NET" ]; then
+		sudo -u ${1} WINEPREFIX=${wineprefix} winetricks -q dotnet48
+	fi
+	cat > "/tmp/ddraw_override.reg" <<-EOF
+	Windows Registry Editor Version 5.00
+	
+	[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
+	"ddraw"="native,builtin"
+	EOF
+	sudo -u ${1} WINEPREFIX=${wineprefix} regedit /tmp/ddraw_override.reg
+	rm /tmp/ddraw_override.reg
+
+	# cat > "/tmp/dawn_of_the_tiberium_age.yaml" <<-EOF
+	# name: Dawn of the Tiberium Age
+	# game_slug: dawn-of-the-tiberium-age
+	# launcher: wine
+	# script:
+	#   game:
+	#     arch: win64
+	#     exe: drive_c/Program Files/Files/Dawn of the Tiberium Age/DTA.exe
+	#     prefix: ${wineprefix}
+	#     working_dir: ${wineprefix}/drive_c/Program Files/Dawn of the Tiberium Age
+	#   system:
+	#     prefer_system_libs: true
+	#   wine:
+	#     battleye: false
+	#     eac: false
+	#     esync: false
+	#     fsync: false
+	#     version: ge-proton
+	# EOF
+	# sudo -u ${1} lutris --import /tmp/dawn_of_the_tiberium_age.yaml
+	# rm /tmp/dawn_of_the_tiberium_age.yaml
+}
+
+install_tiberian_sun_client() {
+	local wineprefix=/home/${1}/Games/tibsun-client
+
+	if [ ! -d "${wineprefix}" ]; then
+		sudo -u ${1} mkdir  -p  $(dirname "${wineprefix}")
+		sudo -u ${1} WINEARCH=win64 WINEPREFIX=${wineprefix} wineboot -u
+	fi
+
+	if [ ! -d "${wineprefix}/drive_c/Program Files/cncnet-ts-client-package" ]; then
+		sudo -u ${1} git clone git@github.com:CnCNet/cncnet-ts-client-package.git "${wineprefix}/drive_c/Program Files/cncnet-ts-client-package"
+	fi
+
+	if [ ! -d "${wineprefix}/drive_c/Program Files \(x86\)/Microsoft.NET" ]; then
+		sudo -u ${1} WINEPREFIX=${wineprefix} winetricks -q dotnet48
+	fi
+
+	cat > "/tmp/ddraw_override.reg" <<-EOF
+	[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
+	"ddraw"="native,builtin"
+	EOF
+	sudo -u ${1} WINEPREFIX=${wineprefix} regedit /tmp/ddraw_override.reg
+	rm /tmp/ddraw_override.reg
+
+	cat > "/tmp/tiberian_sun_client.yaml" <<-EOF
+	game:
+	  arch: win64
+	  exe: ${wineprefix}/drive_c/Program Files/cncnet-ts-client-package/TiberianSun.exe
+	  prefix: ${wineprefix}
+	  working_dir: ${wineprefix}/drive_c/Program Files/cncnet-ts-client-package
+	system:
+	  prefer_system_libs: true
+	wine:
+	  battleye: false
+	  eac: false
+	  esync: false
+	  fsync: false
+	  version: ge-proton
+	EOF
+	sudo -u ${1} lutris -i /tmp/tiberian_sun_client.yaml
+	rm /tmp/tiberian_sun_client.yaml
+}
+
+install_tiberian_sun_twisted_insurrection() {
+	local wineprefix=/home/${1}/Games/twisted-insurrection
+
+	if [ ! -d "${wineprefix}" ]; then
+		sudo -u ${1} mkdir -p $(dirname "${wineprefix}")
+		sudo -u ${1} WINEARCH=win64 WINEPREFIX=${wineprefix} wineboot -u
+	fi
+
+	if [ ! -d "${wineprefix}/drive_c/Program Files/Twisted Insurrection" ]; then
+		echo "You must manually download the file from the moddb website (https://www.moddb.com/mods/twisted-insurrection/downloads/twisted-insurrection-09-full-version) and place it in /tmp directory before continuing. Type the location to continue. Leave blank to use default: /home/${1}/Downloads/Twisted_Insurrection.zip"
+		read -r archive_path
+		archive_path=${archive_path:-/home/${1}/Downloads/Twisted_Insurrection.zip}
+		sudo -u ${1} unzip "${archive_path}" -d "${wineprefix}/drive_c/Program Files/"
+	fi
+
+	cat > "/tmp/ddraw_override.reg" <<-EOF
+	[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
+	"ddraw"="native,builtin"
+	EOF
+	sudo -u ${1} WINEPREFIX=${wineprefix} regedit /tmp/ddraw_override.reg
+	rm /tmp/ddraw_override.reg
+
+	cat > "/tmp/twisted-insurrection.yaml" <<-EOF
+	game:
+	  arch: win64
+	  exe: ${wineprefix}/drive_c/Program Files/Twisted Insurrection/TwistedInsurrection.exe
+	  prefix: ${wineprefix}
+	  working_dir: ${wineprefix}/drive_c/Program Files/Twisted Insurrection
+	system:
+	  prefer_system_libs: true
+	wine:
+	  battleye: false
+	  eac: false
+	  esync: false
+	  fsync: false
+	  version: ge-proton
+	EOF
+	sudo -u ${1} lutris -i /tmp/twisted-insurrection.yaml
+	rm /tmp/twisted-insurrection.yaml
+}
+
 install_google_drive() {
 	mkdir -p "/home/${1}/googledrive-home"
 	chown "${1}": "/home/${1}/googledrive-home"
