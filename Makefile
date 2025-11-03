@@ -39,7 +39,7 @@ config: ## Installs the .config directory.
 			done; \
 		fi; \
 		ln -snf $(CURDIR)/$$(uname -n)/profile/.config/i3 $(HOME)/.config/sway; \
-		SERVICE_LIST=( $(shell ls $(CURDIR)/$$(uname -n)/profile/.config/systemd/user) ); \
+		SERVICE_LIST=( $(shell ls $(CURDIR)/$$(uname -n)/profile/.config/systemd/user | grep .service) ); \
 		if [ $${#SERVICE_LIST[@]} -gt 0 ]; then  \
 			echo "Reload systemd user daemon"; \
 			systemctl --user daemon-reload; \
