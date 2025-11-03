@@ -3,23 +3,12 @@ Description=Google Drive OCAML FUSE
 After=network-online.target
 
 [Service]
-Type=simple
+ExecStart=/home/robert/.opam/default/bin/google-drive-ocamlfuse \
+	/home/robert/googledrive-home \
+	-f -verbose -o uid=1000,gid=1000,nonempty,allow_other
+ExecStop=fusermount -u /home/robert/googledrive-home
 Restart=always
-ExecStart=/usr/bin/docker run -it \
-		--name googledrive-home \
-		--security-opt apparmor:unconfined \
-		--cap-add mknod \
-		--cap-add sys_admin \
-		--device=/dev/fuse \
-		-e MOUNT_OPTS="nonempty,allow_other" \
-		-e PUID="$(id -u robert)" \
-		-e PGID="$(id -g robert)" \
-		-v /home/robert/googledrive-home:/mnt/gdrive:shared \
-		-v /home/robert/.gdfuse/home:/home/gdrive/.gdfuse/default:shared \
-		rjszynal/google-drive-ocamlfuse:0.7.32 \
-			/mnt/gdrive \
-			-f -o uid=$(id -u robert),gid=$(id -g robert),nonempty,allow_other
-ExecStop=/usr/bin/docker rm -fv googledrive-home
+Type=simple
 
 [Install]
 WantedBy=default.target
