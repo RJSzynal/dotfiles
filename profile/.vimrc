@@ -1,4 +1,4 @@
-set mouse-=a                    " Don't take mouse inputs
+set mouse=                    " Don't take mouse inputs
 
 set encoding=utf-8              " Set default encoding to UTF-8
 set autowrite                   " Automatically save before :next, :make etc.
