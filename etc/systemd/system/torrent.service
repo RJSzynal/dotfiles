@@ -18,7 +18,7 @@ ExecStart=/usr/bin/docker run --rm -t --name ${NAME} \
 	-h ${NAME} \
 	--net trusted \
 	--cap-add=NET_ADMIN --device=/dev/net/tun \
-	--dns 8.8.8.8 --dns 8.8.4.4 \
+	--dns 9.9.9.10 --dns 149.112.112.10 \
 	-p 9091:9091 \
 	-l traefik.enable=true \
 	-l traefik.http.routers.${NAME}.rule=Host(\"szynal.co.uk\")&&PathPrefix(\"/transmission\") \
