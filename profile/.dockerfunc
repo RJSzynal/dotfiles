@@ -421,7 +421,7 @@ function aws_docker {
 
 	docker_run
 }
-function az {
+function az_docker {
 	local container_name="az"
 	local container_home="/root"
 	local image_name="${MY_DOCKER_REPO_PREFIX}/azure-cli:latest"
