@@ -3,11 +3,15 @@ alias codium=code
 
 # AI
 alias ollama="podman exec -it ollama ollama"
-alias hyperion="code ~/development/src/git.loan.co.uk/tools/hyperion"
 
+alias hyperion="code ~/development/src/git.loan.co.uk/tools/hyperion"
 alias gp="git push"
+alias ssm="aws ssm start-session --target"
 
 # Loan makefile global overrides
 export GLOBAL_DOCKER_BIN=podman
 export GLOBAL_EXTRA_DOCKER_ARGS='--security-opt label=type:container_runtime_t'
+
+# Secret env vars (Tokens and such)
+. ~/.secrets
 
