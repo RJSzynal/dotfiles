@@ -3,7 +3,7 @@ Name=Slack
 StartupWMClass=Slack
 Comment=Slack Desktop
 GenericName=Slack Client for Linux
-Exec=/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=com.slack.Slack --file-forwarding com.slack.Slack @@u %U @@
+Exec=/usr/bin/flatpak run --branch=stable --arch=x86_64 --socket=wayland --command=zypak-wrapper com.slack.Slack /app/extra/slack -s --file-forwarding com.slack.Slack @@u --enable-features=WebRTCPipeWireCapturer %U @@
 Icon=com.slack.Slack
 Type=Application
 Categories=GNOME;GTK;Network;InstantMessaging;
