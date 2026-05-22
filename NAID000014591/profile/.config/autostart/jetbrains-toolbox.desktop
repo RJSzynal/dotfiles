@@ -1,5 +1,5 @@
 [Desktop Entry]
-Icon=/home/robert/Downloads/jetbrains-toolbox-2.6.3.43718/bin/toolbox.svg
+Icon=toolbox
 Exec=/home/robert/Downloads/jetbrains-toolbox-2.6.3.43718/bin/jetbrains-toolbox --minimize
 Version=1.0
 Type=Application
@@ -7,8 +7,10 @@ Categories=Development
 Name=JetBrains Toolbox
 StartupWMClass=jetbrains-toolbox
 Terminal=false
-MimeType=x-scheme-handler/jetbrains;
+MimeType=
 X-GNOME-Autostart-enabled=true
+X-Icon-Path=/home/robert/.local/share/icons/hicolor/scalable/apps/toolbox.svg
+X-Installed-Icon-Cache-Path=/home/robert/.local/share/icons/hicolor
 StartupNotify=false
 X-GNOME-Autostart-Delay=10
 X-MATE-Autostart-Delay=10
