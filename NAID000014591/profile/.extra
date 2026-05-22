@@ -1,4 +1,5 @@
-alias ecr_login="aws ecr get-login-password | podman login --username AWS --password-stdin 889006281872.dkr.ecr.eu-west-1.amazonaws.com"
+alias ecr_login="aws ecr --profile loan-management get-login-password | podman login --username AWS --password-stdin 889006281872.dkr.ecr.eu-west-1.amazonaws.com"
+alias ghcr_login="gh auth token | podman login ghcr.io -u RSzynal-albot --password-stdin"
 alias codium=code
 
 # AI
@@ -6,7 +7,7 @@ alias ollama="podman exec -it ollama ollama"
 
 alias hyperion="code ~/development/src/git.loan.co.uk/tools/hyperion"
 alias gp="git push"
-alias ssm="aws ssm start-session --target"
+alias ssm="aws --profile loan-management-key ssm start-session --target"
 
 # Loan makefile global overrides
 export GLOBAL_DOCKER_BIN=podman
